@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Gribouillage</title>
+<meta name="description" content="L'un dessine, les autres devinent. Plus vous trouvez vite, plus vous marquez.">
+<meta name="theme-color" content="#19B5F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='10' width='52' height='40' fill='%23fff' stroke='%23111' stroke-width='4'/%3E%3Cpath d='M14 40c8-14 14 4 22-8s10 0 14-6' fill='none' stroke='%23FF2D2D' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icones/icone-180.png">
+<link rel="stylesheet" href="../commun/commun.css?v=5">
+<style>
+.toile-boite{position:relative;background:#fff;border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);line-height:0}
+#toile{width:100%;aspect-ratio:4/3;display:block;touch-action:none;cursor:crosshair}
+#toile.fige{cursor:default}
+.toile-boite .voile{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;line-height:1.2;font-family:var(--titre);font-size:26px;letter-spacing:1px;color:var(--noir);background:repeating-linear-gradient(45deg,rgba(255,230,0,.25) 0 14px,transparent 14px 28px)}
+.motif{display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:6px 12px;font-family:var(--titre);font-size:30px;letter-spacing:5px;line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.motif small{font-family:var(--texte);font-size:13px;letter-spacing:0}
+body.tele .motif{font-size:52px;letter-spacing:10px}
+.outils{display:flex;flex-direction:column;gap:10px}
+.palette{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.palette button{aspect-ratio:1;border:3px solid var(--noir);cursor:pointer;padding:0}
+.palette button[aria-pressed="true"]{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--noir);transform:scale(.9)}
+.rang-outils{display:flex;gap:8px}
+.rang-outils .btn{flex:1;min-height:46px;padding:4px 6px;font-size:15px}
+.rang-outils .epais{flex:none;width:52px}
+.rang-outils .epais span{display:block;border-radius:50%;background:var(--noir)}
+.rang-outils .btn[aria-pressed="true"]{background:var(--jaune)}
+.fil{display:flex;flex-direction:column;gap:4px;max-height:190px;overflow-y:auto;padding:8px 10px;font-size:15px;line-height:1.25}
+body.tele .fil{max-height:none;flex:1;font-size:20px}
+.fil p{margin:0}
+.fil b{font-weight:700}
+.fil .ok{color:#007A3D}
+.fil .presque{color:#B35C00}
+.fil .vide{color:#666}
+.saisie-essai{display:flex;gap:10px}
+.saisie-essai input{flex:1;min-width:0}
+.saisie-essai .btn{flex:none;width:64px;padding:0}
+.choix-mots{display:flex;flex-direction:column;gap:12px}
+.choix-mots .btn{font-size:26px}
+.trouve-local{display:flex;flex-wrap:wrap;gap:10px}
+.trouve-local .btn{flex:1 1 40%;min-height:50px;font-size:18px}
+.revele-mot{font-family:var(--titre);font-size:36px;letter-spacing:2px;text-align:center;line-height:1.1}
+body.tele .revele-mot{font-size:60px}
+.points-tour li{padding:5px 0;border-bottom:2px dashed rgba(0,0,0,.25)}
+.points-tour li:last-child{border-bottom:0}
+#local-noms{display:flex;flex-direction:column;gap:10px}
+.nom-ligne{display:flex;gap:10px}
+.nom-ligne input{flex:1}
+.nom-ligne .btn{flex:none;width:50px}
+.gens li.ok{background:#CFF5DD}
+.gens li.dessine{background:var(--jaune)}
+@media (prefers-reduced-motion:reduce){.motif{transition:none}}
+/* télé : le dessin en grand, qui tient dans l'écran */
+body.tele #s-jeu .grandecran{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+body.tele #s-jeu .plaques{display:none}
+body.tele #s-jeu .motif{font-size:40px;letter-spacing:6px;min-height:0;padding:4px 12px}
+body.tele .toile-boite{width:fit-content;max-width:100%;margin:0 auto}
+body.tele #toile{width:auto;height:calc(100vh - 290px);min-height:300px;max-width:100%}
+body.tele #role{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Réglages : déplacés dans le salon ou dans l'écran local -->
+  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:16px">
+    <h3 class="intertitre">Réglages</h3>
+    <div><label id="l-tours">Combien de fois chacun dessine</label><div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div></div>
+    <div><label id="l-temps">Temps pour dessiner</label><div class="jetons" role="radiogroup" aria-labelledby="l-temps" id="temps"></div></div>
+  </div>
+
+  <!-- LOCAL : les joueurs -->
+  <section class="screen" id="s-local">
+    <h2>Un seul téléphone</h2>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Les joueurs (2 à 8)</label>
+      <div id="local-noms"></div>
+      <button class="btn plat" id="ajout-joueur" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter un joueur</button>
+    </div>
+    <div id="place-local"></div>
+    <p class="bandeau alerte" id="err-local" role="alert" style="display:none"></p>
+    <div class="barre-bas">
+      <button class="btn" id="lancer-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
+    </div>
+  </section>
+
+  <!-- LOCAL : passer l'appareil -->
+  <section class="screen" id="s-passe">
+    <h2 id="passe-titre"></h2>
+    <div class="case"><p id="passe-texte"></p></div>
+    <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
+  </section>
+
+  <!-- PARTIE -->
+  <section class="screen" id="s-jeu">
+    <div class="plaques">
+      <div class="case jaune"><small id="lbl-score">Ton score</small><b id="score">0</b></div>
+      <div class="case"><small>Tour</small><b id="num"></b></div>
+    </div>
+    <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
+    <div class="grandecran">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p class="bandeau" id="role" aria-live="polite"></p>
+        <div class="case motif" id="motif" aria-live="polite"></div>
+        <button class="btn plat" id="voir-mot" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-oeil"/></svg><span>MAINTIENS POUR VOIR TON MOT</span></button>
+        <div id="chrono"></div>
+        <div class="choix-mots" id="bloc-choix" style="display:none"></div>
+        <div class="toile-boite"><canvas id="toile" width="800" height="600" aria-label="Le dessin"></canvas><div class="voile" id="voile" style="display:none"></div></div>
+        <div class="outils" id="outils" style="display:none">
+          <div class="palette" id="palette" role="radiogroup" aria-label="Couleur"></div>
+          <div class="rang-outils">
+            <button class="btn plat epais" type="button" data-e="0" aria-label="Trait fin"><span style="width:6px;height:6px"></span></button>
+            <button class="btn plat epais" type="button" data-e="1" aria-label="Trait moyen"><span style="width:12px;height:12px"></span></button>
+            <button class="btn plat epais" type="button" data-e="2" aria-label="Trait épais"><span style="width:22px;height:22px"></span></button>
+            <button class="btn plat" id="annuler" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Annuler</button>
+            <button class="btn plat" id="effacer" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Tout</button>
+          </div>
+        </div>
+        <div class="case" id="bloc-trouve-local" style="display:none;flex-direction:column;gap:10px">
+          <label style="margin:0">Qui a trouvé ?</label>
+          <div class="trouve-local" id="trouve-local"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="saisie-essai" id="bloc-essai" style="display:none">
+          <input type="text" id="essai" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse" aria-label="Ta réponse">
+          <button class="btn" id="envoyer-essai" type="button" aria-label="Envoyer"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg></button>
+        </div>
+        <div class="case fil" id="fil" aria-live="polite" style="display:none"></div>
+        <ul class="gens" id="gens-jeu" style="display:none"></ul>
+        <div class="case jaune" id="bloc-revele" style="display:none;flex-direction:column;gap:8px">
+          <div class="petit centre">C'était…</div>
+          <div class="revele-mot" id="revele-mot"></div>
+          <ul class="liste points-tour" id="points-tour"></ul>
+          <p class="petit centre" id="prochain"></p>
+        </div>
+        <div class="bas" style="margin-top:0">
+          <button class="btn" id="suivante" type="button" style="display:none">TOUR SUIVANT</button>
+          <button class="btn plat" id="arreter" type="button" style="display:none">Terminer la partie ici</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIN -->
+  <section class="screen" id="s-fin">
+    <h2>Partie terminée !</h2>
+    <div class="case jaune centre">
+      <div class="petit" id="fin-lbl">TON SCORE</div>
+      <div class="grand" id="fin-score"></div>
+      <div class="petit" id="fin-detail"></div>
+    </div>
+    <p class="bandeau centre" id="fin-gagnant"></p>
+    <div class="case"><ul class="liste" id="classement"></ul></div>
+    <h2 id="titre-badges">Les moments forts</h2>
+    <div class="badges" id="badges"></div>
+    <div class="bas">
+      <button class="btn" id="rejouer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rejouer"/></svg>REJOUER</button>
+      <button class="btn plat" id="changer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
+    </div>
+  </section>
+</div>
+
+<script src="../commun/avatars.js?v=3"></script>
+<script src="../commun/ambiance.js?v=1"></script>
+<script src="../commun/commun.js?v=5"></script>
+<script>
+"use strict";
+/* ---------- Mots à dessiner ---------- */
+const MOTS = ["chat", "chien", "lapin", "cheval", "vache", "cochon", "mouton", "poule", "canard", "poisson", "requin", "baleine", "dauphin", "pieuvre", "méduse", "crabe", "tortue", "serpent", "grenouille", "escargot", "papillon", "abeille", "araignée", "fourmi", "coccinelle", "souris", "éléphant", "girafe", "lion", "tigre", "singe", "zèbre", "kangourou", "panda", "koala", "ours", "pingouin", "hibou", "aigle", "perroquet", "flamant rose", "crocodile", "dinosaure", "licorne", "dragon", "chameau", "hérisson", "renard", "loup", "écureuil", "chauve-souris", "hippopotame", "rhinocéros", "pomme", "banane", "poire", "cerise", "fraise", "ananas", "pastèque", "citron", "raisin", "carotte", "tomate", "champignon", "brocoli", "maïs", "pizza", "hamburger", "frites", "hot-dog", "sandwich", "croissant", "baguette", "fromage", "gâteau", "donut", "glace", "bonbon", "sucette", "chocolat", "crêpe", "œuf", "saucisse", "spaghettis", "sushi", "popcorn", "biberon", "café", "thé", "soupe", "salade", "maison", "château", "tour", "église", "pont", "phare", "igloo", "tente", "cabane", "usine", "hôpital", "école", "magasin", "piscine", "plage", "montagne", "volcan", "île", "désert", "forêt", "cascade", "rivière", "grotte", "pyramide", "gratte-ciel", "moulin", "ferme", "cirque", "stade", "voiture", "camion", "moto", "vélo", "trottinette", "bus", "train", "avion", "hélicoptère", "fusée", "bateau", "sous-marin", "voilier", "tracteur", "ambulance", "taxi", "skateboard", "montgolfière", "parachute", "ascenseur", "soleil", "lune", "étoile", "nuage", "pluie", "neige", "arc-en-ciel", "éclair", "tornade", "vague", "feu", "fumée", "arbre", "fleur", "cactus", "palmier", "sapin", "feuille", "rose", "tournesol", "herbe", "chaise", "table", "lit", "canapé", "lampe", "horloge", "réveil", "télévision", "ordinateur", "téléphone", "clavier", "robot", "appareil photo", "guitare", "piano", "batterie", "violon", "trompette", "micro", "casque", "lunettes", "chapeau", "couronne", "casquette", "écharpe", "gant", "chaussure", "botte", "chaussette", "pantalon", "robe", "cravate", "parapluie", "valise", "sac à dos", "clé", "cadenas", "ciseaux", "crayon", "gomme", "règle", "livre", "cahier", "enveloppe", "cadeau", "ballon", "bougie", "loupe", "marteau", "tournevis", "échelle", "seau", "balai", "aspirateur", "brosse à dents", "dentifrice", "savon", "miroir", "baignoire", "toilettes", "fourchette", "cuillère", "couteau", "assiette", "verre", "bouteille", "tasse", "casserole", "poêle", "frigo", "four", "micro-ondes", "grille-pain", "ballon de foot", "panier de basket", "raquette", "but", "médaille", "trophée", "haltère", "trampoline", "toboggan", "balançoire", "château de sable", "bonhomme de neige", "cerf-volant", "dé", "carte à jouer", "puzzle", "échecs", "manette", "console", "pirate", "sorcière", "fantôme", "vampire", "zombie", "extraterrestre", "astronaute", "chevalier", "princesse", "roi", "clown", "cow-boy", "ninja", "super-héros", "sirène", "pompier", "policier", "cuisinier", "docteur", "facteur", "peintre", "jardinier", "plongeur", "dormir", "courir", "nager", "danser", "sauter", "pleurer", "rire", "éternuer", "applaudir", "pêcher", "skier", "surfer", "grimper", "cuisiner", "peindre", "chanter", "squelette", "cœur", "œil", "main", "pied", "nez", "bouche", "dent", "oreille", "moustache", "barbe", "cerveau", "trésor", "bombe", "aimant", "pansement", "seringue", "cible", "boussole", "carte au trésor", "ancre", "drapeau", "tambour", "cloche", "sablier", "boule de cristal", "baguette magique", "lampe magique"];
+const COUL_DESSIN = ["#111111", "#FFFFFF", "#FF2D2D", "#FF8A00", "#FFE600", "#00C46A", "#19B5F0", "#9B5CFF", "#FF4FB0", "#8B5A2B"];
+const EPAIS = [5, 12, 26];
+const TOURS = [1, 2, 3], TEMPS = [60, 80, 100];
+$("tours").innerHTML = TOURS.map(n => `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 1 ? "checked" : ""}><span>${n}</span></label>`).join("");
+$("temps").innerHTML = TEMPS.map(n => `<label class="jeton"><input type="radio" name="temps" value="${n}" ${n === 80 ? "checked" : ""}><span>${n} s</span></label>`).join("");
+const toursChoisis = () => +document.querySelector("#tours input:checked").value;
+const tempsChoisi = () => +document.querySelector("#temps input:checked").value;
+$("tours").onchange = $("temps").onchange = () => Lobby.envoyerReglages();
+
+/* ---------- État ---------- */
+const P = { mode: "local", joueurs: [], scores: {}, pid: 0, n: 0, total: 0, temps: 80, dess: null, choix: [], k: -1, mot: "", motif: "", revelees: [], traits: [], trouves: {}, temps_trouve: {}, fil: [], phase: "", journal: [], debut: 0 };
+const enLigne = () => P.mode === "ligne";
+const chef = () => !enLigne() || Salon.autorite();
+const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
+const jeDessine = () => !enLigne() || P.dess === Salon.id;
+let COULS = {};
+const couleurDe = id => COULS[id] || "#fff";
+const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
+const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
+const devineurs = () => P.joueurs.map(j => j.id).filter(id => id !== P.dess && (!enLigne() || Salon.present(id)));
+
+/* ---------- Mots : comparaison souple et lettres dévoilées ---------- */
+const simplifier = t => normaliser(t).replace(/^(le|la|les|un|une|des|l|du) /, "").replace(/ /g, "").replace(/(s|x)$/, "");
+function distance(a, b) { // nombre de lettres à changer pour passer de a à b
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+const estBon = (essai, mot) => simplifier(essai) === simplifier(mot) && simplifier(mot) !== "";
+const estPresque = (essai, mot) => { const a = simplifier(essai), b = simplifier(mot); return b.length >= 4 && Math.abs(a.length - b.length) <= 2 && distance(a, b) <= (b.length >= 8 ? 2 : 1); };
+const lettre = c => /[a-zà-ÿœæ]/i.test(c);
+function motifDe(mot, revelees) {
+  return [...mot].map((c, i) => c === " " ? "  " : !lettre(c) ? c : revelees.includes(i) ? c.toUpperCase() : "_").join(" ");
+}
+function majMotif() {
+  const el = $("motif");
+  if (P.phase === "choix") { el.innerHTML = jeDessine() && (enLigne() || P.vuChoix) ? "<small>Choisis ton mot</small>" : "<small>" + echapper(nomDe(P.dess)) + " choisit un mot…</small>"; return; }
+  if (enLigne() && jeDessine() && P.mot) { el.innerHTML = "<small>Ton mot :</small> " + echapper(P.mot.toUpperCase()); return; }
+  el.textContent = P.motif || "";
+}
+// Mots déjà tombés : gardés sur l'appareil pour ne pas les revoir d'une partie à l'autre.
+const Vus = {
+  lire() { try { return new Set(JSON.parse(localStorage.getItem("grib-vus") || "[]")); } catch (e) { return new Set(); } },
+  ajouter(mots) { const v = [...this.lire()].filter(x => !mots.includes(x)).concat(mots); try { localStorage.setItem("grib-vus", JSON.stringify(v.slice(-240))); } catch (e) {} },
+  tirer(n) {
+    const vus = this.lire(); let libres = MOTS.filter(m => !vus.has(m));
+    if (libres.length < n) { try { localStorage.removeItem("grib-vus"); } catch (e) {} libres = MOTS.slice(); }
+    const t = melange(libres).slice(0, n); this.ajouter(t); return t;
+  }
+};
+
+/* ---------- Mise en route ---------- */
+Lobby.monter({
+  jeu: "gribouillage", titre: "LE GRIBOUILLAGE", min: 2, max: 8,
+  texteLocal: "On dessine sur le téléphone, les autres crient leurs réponses.",
+  couverture: `<svg viewBox="0 0 220 130" aria-hidden="true" style="max-width:300px">
+      <rect x="22" y="12" width="176" height="104" fill="#111" transform="translate(6 6)"/>
+      <rect x="22" y="12" width="176" height="104" fill="#fff" stroke="#111" stroke-width="4"/>
+      <path d="M48 92c10-30 22-46 34-40s4 30 20 26 18-40 34-38 14 26 30 22" fill="none" stroke="#FF2D2D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="160" cy="42" r="12" fill="#FFE600" stroke="#111" stroke-width="4"/>
+      <path d="M150 104l40-56 10 8-40 56-14 6z" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+    </svg>
+    <p class="accroche">L'un dessine, les autres devinent. Plus vous trouvez vite, plus vous marquez !</p>`,
+  regles: `<ol>
+      <li>À chaque tour, un joueur choisit un mot parmi trois et le dessine. Interdit d'écrire des lettres ou des chiffres !</li>
+      <li>Les autres devinent le plus vite possible. Des lettres du mot apparaissent au fil du temps pour aider.</li>
+      <li>Points : celui qui trouve marque de 1 à 5 points selon sa rapidité (+1 pour le premier). Le dessinateur marque 1 point par joueur qui a trouvé (+1 si au moins un a trouvé).</li>
+    </ol>
+    <h4>Sur un appareil</h4><p class="petit">Le dessinateur tient le téléphone, les autres crient leurs réponses. Quand quelqu'un trouve, le dessinateur touche son nom.</p>
+    <h4>En ligne ou en salon</h4><p class="petit">Le dessin s'affiche en direct chez tout le monde, chacun tape ses réponses. En salon, la télé montre le dessin en grand.</p>`,
+  ecransJeu: ["jeu", "passe", "fin"],
+  ordre: ["g-tour", "g-debut", "g-lettres", "g-fin-tour", "g-fin"],
+  remise: ["g-tour"],
+  resume: () => (Salon.role === "ecran" ? "L'écran du salon" : Salon.nom) + " prépare une partie : chacun dessine " + toursChoisis() + " fois, " + tempsChoisi() + " s par dessin.",
+  enPartie: () => !!P.phase && P.phase !== "spectateur",
+  surLocal: () => { P.mode = "local"; $("place-local").append($("reglages-jeu")); if (!$("local-noms").children.length) { ajouterNom(pseudo.lire()); ajouterNom(""); } alerte("err-local"); ecran("local"); },
+  surLancer: () => { P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom, av: g.av })); nouvellePartie(); },
+  surMessage: m => recevoir(m),
+  // Reprise après un rechargement de la page (pour celui qui a créé le salon)
+  etat: () => ({ P: JSON.parse(JSON.stringify(P)), reste: Chrono.fin ? Math.max(0, Chrono.fin - Date.now()) / 1000 : 0 }),
+  restaurer: e => { Object.assign(P, e.P); P.mode = "ligne"; },
+  reprendre: e => {
+    const d = Salon.dernier, t = d["g-tour"], ph = e.P.phase;
+    COULS = Avatar.couleurs(P.joueurs);
+    if (ph === "fin" || !t) { if (ph === "fin") finir(); else Lobby.ouvrirSalon(); return; }
+    const garde = { traits: e.P.traits, trouves: e.P.trouves, temps_trouve: e.P.temps_trouve, fil: e.P.fil, revelees: e.P.revelees, journal: (e.P.journal || []).slice(0, t.n) };
+    debutTour(t); P.journal = garde.journal;
+    if (ph === "revele" && d["g-fin-tour"]) { P.traits = garde.traits; redessiner(); afficherFinTour(d["g-fin-tour"]); return; }
+    if (ph === "dessin" && d["g-debut"]) {
+      debutDessin(Object.assign({}, d["g-debut"], { reste: e.reste || 5 }));
+      Object.assign(P, { traits: garde.traits, trouves: garde.trouves, temps_trouve: garde.temps_trouve, fil: garde.fil, revelees: garde.revelees });
+      P.motif = motifDe(P.mot, P.revelees); majMotif(); redessiner(); dessinerFil(); majStatut(); Salon.rattraper();
+    }
+  },
+  surRattrapage: () => { if (P.phase === "dessin") Salon.envoyer({ t: "g-etat", pid: P.pid, n: P.n, traits: P.traits, trouves: P.trouves, fil: P.fil.slice(-30), reste: Math.max(0, Chrono.fin - Date.now()) / 1000 }); },
+  surGens: (nouveaux, partis) => surGens(nouveaux, partis),
+  surArret: () => { Chrono.arreter(); clearTimeout(minuSuite); P.phase = ""; P.mode = "local"; },
+  surRetourSalon: () => { Chrono.arreter(); clearTimeout(minuSuite); P.phase = ""; }
+});
+Chrono.monter($("chrono"));
+const ouvrirSalonOrig = Lobby.ouvrirSalon.bind(Lobby);
+Lobby.ouvrirSalon = t => { $("place-reglages").append($("reglages-jeu")); P.mode = "ligne"; ouvrirSalonOrig(t); };
+
+/* ---------- Local : liste des joueurs ---------- */
+function ajouterNom(nom) {
+  if ($("local-noms").children.length >= 8) return;
+  const d = document.createElement("div"), i = document.createElement("input"), b = document.createElement("button");
+  const n = $("local-noms").children.length + 1;
+  d.className = "nom-ligne"; i.type = "text"; i.maxLength = 14; i.placeholder = "Joueur " + n; i.value = nom || ""; i.setAttribute("aria-label", "Joueur " + n);
+  b.className = "btn plat"; b.type = "button"; b.innerHTML = ico("quitter"); b.setAttribute("aria-label", "Retirer ce joueur");
+  b.onclick = () => { if ($("local-noms").children.length > 2) d.remove(); };
+  d.append(i, b); $("local-noms").append(d);
+}
+$("ajout-joueur").onclick = () => { sons.clic(); ajouterNom(""); const l = $("local-noms").lastChild; if (l) l.querySelector("input").focus(); };
+$("lancer-local").onclick = () => {
+  const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
+  if (noms.length < 2) { alerte("err-local", "Il faut au moins 2 joueurs."); return; }
+  if (new Set(noms.map(n => n.toLowerCase())).size < noms.length) { alerte("err-local", "Deux joueurs ont le même nom."); return; }
+  alerte("err-local"); P.mode = "local"; P.joueurs = noms.map((nom, k) => ({ id: "j" + k, nom, av: Avatar.auto(k) }));
+  nouvellePartie();
+};
+
+/* ---------- Déroulé ---------- */
+let minuSuite = null, minuChoix = null, minuIndices = [];
+function nouvellePartie() {
+  P.temps = tempsChoisi(); P.pid++; P.n = 0; P.scores = {}; P.journal = [];
+  P.joueurs.forEach(j => { P.scores[j.id] = 0; });
+  P.total = toursChoisis() * P.joueurs.length;
+  sons.clic(); preparerTour();
+}
+// Celui qui tient la partie (l'appareil en local, le créateur du salon en ligne) lance chaque tour.
+function preparerTour() {
+  clearTimeout(minuSuite);
+  let dess = P.joueurs[P.n % P.joueurs.length].id, essais = 0;
+  while (enLigne() && !Salon.present(dess) && essais++ < P.joueurs.length) { P.n++; if (P.n >= P.total) { terminer(); return; } dess = P.joueurs[P.n % P.joueurs.length].id; }
+  const m = { t: "g-tour", pid: P.pid, n: P.n, total: P.total, dess, choix: Vus.tirer(3), joueurs: P.joueurs, scores: P.scores, temps: P.temps };
+  if (enLigne()) Salon.envoyer(m, true);
+  debutTour(m);
+}
+function debutTour(m) {
+  if (m.n === 0 || m.pid !== P.pid) P.journal = [];
+  Object.assign(P, { pid: m.pid, n: m.n, total: m.total, dess: m.dess, choix: m.choix, joueurs: m.joueurs, scores: Object.assign({}, m.scores), temps: m.temps || 80, k: -1, mot: "", motif: "", revelees: [], traits: [], trouves: {}, temps_trouve: {}, fil: [], phase: "choix", vuChoix: false });
+  COULS = Avatar.couleurs(P.joueurs);
+  Chrono.arreter(); clearTimeout(minuSuite); clearTimeout(minuChoix); minuIndices.forEach(clearTimeout); minuIndices = [];
+  enTete(); redessiner(); alerte("deco");
+  montrer([]); ["bloc-revele", "suivante", "arreter", "bloc-essai", "bloc-trouve-local", "voir-mot", "bloc-choix"].forEach(i => { $(i).style.display = "none"; });
+  $("toile").classList.add("fige"); $("prochain").textContent = "";
+  $("fil").style.display = enLigne() ? "" : "none"; dessinerFil(); majStatut();
+  if (!enLigne()) {
+    passe(nomDe(P.dess) + ", à toi de dessiner !", "Les autres ne regardent pas l'écran pendant que tu choisis ton mot.", "JE SUIS " + nomDe(P.dess).toUpperCase(), () => { P.vuChoix = true; afficherChoix(); ecran("jeu"); });
+    return;
+  }
+  if (jeDessine()) {
+    afficherChoix();
+    minuChoix = setTimeout(() => { if (P.phase === "choix" && jeDessine()) choisirMot(Math.floor(Math.random() * 3)); }, 20000);
+  } else { role(nomDe(P.dess) + " choisit un mot…"); voile(nomDe(P.dess) + " choisit un mot…"); }
+  majMotif(); ecran("jeu");
+}
+function passe(titre, texte, bouton, suite) {
+  $("passe-titre").textContent = titre; $("passe-texte").textContent = texte; $("passe-ok").textContent = bouton;
+  $("passe-ok").onclick = () => { sons.clic(); suite(); };
+  ecran("passe");
+}
+function afficherChoix() {
+  role("Choisis le mot que tu vas dessiner :"); voile("");
+  $("bloc-choix").innerHTML = P.choix.map((w, i) => `<button class="btn ${i === 1 ? "jaune" : i === 2 ? "plat" : ""}" type="button" data-k="${i}">${echapper(w.toUpperCase())}</button>`).join("");
+  $("bloc-choix").querySelectorAll("[data-k]").forEach(b => b.onclick = () => choisirMot(+b.dataset.k));
+  $("bloc-choix").style.display = "flex"; majMotif();
+}
+function choisirMot(k) {
+  if (P.phase !== "choix") return;
+  sons.clic(); clearTimeout(minuChoix); $("bloc-choix").style.display = "none";
+  if (chef()) commencerDessin(k);
+  else { P.mot = P.choix[k]; P.k = k; role("C'est parti…"); Salon.envoyer({ t: "g-mot", pid: P.pid, n: P.n, k }, true); }
+}
+function commencerDessin(k) {
+  const m = { t: "g-debut", pid: P.pid, n: P.n, k, motif: motifDe(P.choix[k], []), temps: P.temps };
+  if (enLigne()) Salon.envoyer(m, true);
+  debutDessin(m);
+}
+function debutDessin(m) {
+  P.phase = "dessin"; P.k = m.k; P.mot = P.choix[m.k] || ""; P.motif = m.motif; P.revelees = P.revelees || [];
+  const reste = typeof m.reste === "number" ? m.reste : m.temps || P.temps;
+  P.debut = Date.now() - (P.temps - reste) * 1000;
+  voile(""); $("bloc-choix").style.display = "none"; majMotif(); majStatut();
+  const moiDessine = jeDessine();
+  montrer(moiDessine ? ["outils"] : []);
+  $("toile").classList.toggle("fige", !moiDessine);
+  $("voir-mot").style.display = !enLigne() ? "" : "none";
+  $("bloc-trouve-local").style.display = !enLigne() ? "flex" : "none";
+  $("bloc-essai").style.display = enLigne() && jeJoue() && !moiDessine && !(Salon.id in P.trouves) ? "" : "none";
+  if (!enLigne()) {
+    role(nomDe(P.dess) + " dessine. Les autres, criez vos réponses !");
+    $("trouve-local").innerHTML = P.joueurs.filter(j => j.id !== P.dess).map(j => `<button class="btn plat" type="button" data-id="${j.id}">${Avatar.svg(avDe(j.id), 26, ' style="vertical-align:-7px;margin-right:6px"')}${echapper(j.nom)}</button>`).join("") + `<button class="btn rouge" type="button" data-id="">Personne</button>`;
+    $("trouve-local").querySelectorAll("[data-id]").forEach(b => b.onclick = () => finTourLocal(b.dataset.id || null));
+  } else role(moiDessine ? "Dessine ton mot ! Pas de lettres ni de chiffres." : Salon.role === "ecran" ? "Devinez sur vos téléphones !" : jeJoue() ? "Devine le dessin de " + nomDe(P.dess) + " !" : "Tu regardes la partie.");
+  Chrono.lancer(reste, () => {
+    if (P.phase !== "dessin") return;
+    if (!enLigne()) { finTourLocal(null); return; }
+    if (chef()) finTour();
+  });
+  // lettres dévoilées petit à petit (à la moitié, puis aux trois quarts du temps)
+  if (enLigne() && chef()) {
+    const pid = P.pid, n = P.n, ecoule = P.temps - reste;
+    [0.5, 0.75].forEach((f, i) => minuIndices.push(setTimeout(() => { if (P.phase === "dessin" && P.pid === pid && P.n === n) devoilerLettre(i + 1); }, Math.max(0, (P.temps * f - ecoule) * 1000))));
+  }
+  ecran("jeu");
+}
+function devoilerLettre(combien) {
+  const pos = [...P.mot].map((c, i) => lettre(c) ? i : -1).filter(i => i >= 0 && !P.revelees.includes(i));
+  const nb = Math.min(combien - P.revelees.length, pos.length - 1); // on ne dévoile jamais tout
+  for (let x = 0; x < nb; x++) P.revelees.push(pos.splice(Math.floor(Math.random() * pos.length), 1)[0]);
+  if (nb <= 0) return;
+  const m = { t: "g-lettres", pid: P.pid, n: P.n, motif: motifDe(P.mot, P.revelees) };
+  Salon.envoyer(m, true); P.motif = m.motif; majMotif(); sons.tic(1);
+}
+// Local : le dessinateur touche le nom de celui qui a trouvé (ou « Personne »).
+function finTourLocal(id) {
+  if (P.phase !== "dessin") return;
+  const reste = Math.max(0, Chrono.fin - Date.now()) / (P.temps * 1000), pts = {};
+  if (id) { pts[id] = 2 + Math.round(4 * reste); pts[P.dess] = 2; P.temps_trouve[id] = Math.round((Date.now() - P.debut) / 1000); }
+  P.trouves = id ? { [id]: pts[id] } : {};
+  Object.keys(pts).forEach(k => { P.scores[k] = (P.scores[k] || 0) + pts[k]; });
+  afficherFinTour({ t: "g-fin-tour", pid: P.pid, n: P.n, mot: P.mot, pts, scores: P.scores, trouves: P.trouves, temps_trouve: P.temps_trouve });
+}
+// En ligne : fin du tour (temps écoulé, tout le monde a trouvé, ou le dessinateur est parti).
+function finTour() {
+  if (P.phase !== "dessin" && P.phase !== "choix") return;
+  const nb = Object.keys(P.trouves).length, pts = Object.assign({}, P.trouves);
+  if (nb) pts[P.dess] = Math.min(8, nb + 1);
+  const scores = Object.assign({}, P.scores);
+  Object.keys(pts).forEach(k => { scores[k] = (scores[k] || 0) + pts[k]; });
+  const m = { t: "g-fin-tour", pid: P.pid, n: P.n, mot: P.mot || P.choix[0], pts, scores, trouves: P.trouves, temps_trouve: P.temps_trouve };
+  Salon.envoyer(m, true); afficherFinTour(m);
+}
+function afficherFinTour(m) {
+  P.phase = "revele"; Chrono.arreter(); minuIndices.forEach(clearTimeout); clearTimeout(minuChoix);
+  P.scores = Object.assign({}, m.scores); P.mot = m.mot;
+  P.journal = (P.journal || []).concat([{ dess: P.dess, mot: m.mot, trouves: m.trouves || {}, temps: m.temps_trouve || {} }]);
+  montrer([]); $("bloc-essai").style.display = "none"; $("bloc-trouve-local").style.display = "none"; $("voir-mot").style.display = "none"; $("bloc-choix").style.display = "none";
+  $("toile").classList.add("fige"); voile("");
+  P.motif = m.mot.toUpperCase(); $("motif").textContent = P.motif;
+  $("revele-mot").textContent = m.mot.toUpperCase(); rejouerAnim($("revele-mot"), "pop");
+  const ul = $("points-tour"); ul.textContent = "";
+  const ids = Object.keys(m.pts || {}).sort((a, b) => (a === P.dess) - (b === P.dess) || m.pts[b] - m.pts[a]);
+  if (!ids.length) { const li = document.createElement("li"); li.textContent = "Personne n'a trouvé…"; ul.append(li); }
+  ids.forEach(id => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b");
+    t.insertAdjacentHTML("beforeend", Avatar.svg(avDe(id), 22, ' style="vertical-align:-6px;margin-right:6px"'));
+    t.append(document.createTextNode(nomDe(id) + (id === P.dess ? " (dessin)" : m.temps_trouve && m.temps_trouve[id] !== undefined ? " · " + m.temps_trouve[id] + " s" : "")));
+    b.textContent = "+" + m.pts[id]; li.append(t, b); ul.append(li);
+  });
+  $("bloc-revele").style.display = "flex";
+  const moi = enLigne() ? Salon.id : null;
+  if (Object.keys(m.pts || {}).length) sons.bon(); else sons.rate();
+  enTete(); majStatut();
+  const derniere = P.n + 1 >= P.total;
+  role(derniere ? "Dernier dessin terminé !" : "Fin du tour !");
+  if (!enLigne()) {
+    $("suivante").textContent = derniere ? "VOIR LE CLASSEMENT" : "TOUR SUIVANT"; $("suivante").style.display = "";
+    $("arreter").style.display = derniere ? "none" : ""; $("prochain").textContent = "";
+  } else if (chef()) { // en ligne, le tour suivant arrive tout seul
+    let s = 6; const pid = P.pid, n = P.n;
+    const tic = () => { if (P.phase !== "revele" || P.pid !== pid || P.n !== n) return; $("prochain").textContent = (derniere ? "Classement" : "Tour suivant") + " dans " + s + " s"; if (s-- <= 0) avancer(); else minuSuite = setTimeout(tic, 1000); };
+    tic(); $("arreter").style.display = derniere ? "none" : "";
+  } else $("prochain").textContent = derniere ? "Le classement arrive…" : "Le tour suivant arrive…";
+  ecran("jeu");
+}
+function avancer() { clearTimeout(minuSuite); if (P.n + 1 >= P.total) terminer(); else { P.n++; preparerTour(); } }
+$("suivante").onclick = () => { sons.clic(); avancer(); };
+$("arreter").onclick = () => { sons.clic(); clearTimeout(minuSuite); terminer(); };
+function terminer() { if (enLigne()) Salon.envoyer({ t: "g-fin", pid: P.pid, scores: P.scores, journal: P.journal }, true); finir(); }
+
+/* ---------- Affichage ---------- */
+const BLOCS = ["outils"];
+function montrer(ids) { BLOCS.forEach(i => { $(i).style.display = ids.includes(i) ? "flex" : "none"; }); }
+function role(t) { $("role").textContent = t; }
+function voile(t) { $("voile").textContent = t; $("voile").style.display = t ? "" : "none"; }
+function enTete() {
+  const moi = enLigne() && jeJoue() ? Salon.id : null;
+  $("lbl-score").textContent = moi ? "Ton score" : "Meilleur score";
+  $("score").textContent = moi ? (P.scores[moi] || 0) : Math.max(0, ...Object.values(P.scores));
+  $("num").textContent = (P.n + 1) + " / " + P.total;
+}
+function majStatut() {
+  const ul = $("gens-jeu");
+  ul.style.display = P.joueurs.length ? "" : "none";
+  dessinerGens(ul, P.joueurs.map(j => ({ cle: j.id, nom: j.nom })), {
+    avatar: g => avDe(g.cle),
+    etiquette: g => (enLigne() && !Salon.present(g.cle) ? "Déconnecté" : g.cle === P.dess ? "Dessine" : g.cle in P.trouves ? "A trouvé" : P.phase === "dessin" ? "Cherche…" : "Joueur") + (enLigne() && g.cle === Salon.id ? " · toi" : ""),
+    classe: g => g.cle === P.dess ? "dessine" : g.cle in P.trouves ? "ok" : "",
+    score: g => P.scores[g.cle] || 0
+  });
+}
+function dessinerFil() {
+  const f = $("fil"); f.textContent = "";
+  if (!P.fil.length) { const p = document.createElement("p"); p.className = "vide"; p.textContent = P.phase === "dessin" ? "Les réponses apparaissent ici." : ""; f.append(p); return; }
+  P.fil.slice(-40).forEach(x => {
+    const p = document.createElement("p"), b = document.createElement("b");
+    b.textContent = nomDe(x.id);
+    if (x.type === "ok") { p.className = "ok"; p.append(b, document.createTextNode(" a trouvé ! ✓")); }
+    else if (x.type === "presque") { p.className = "presque"; p.textContent = "« " + x.texte + " » : presque !"; }
+    else if (x.type === "chaud") { p.className = "presque"; p.append(b, document.createTextNode(" brûle !")); }
+    else p.append(b, document.createTextNode(" : " + x.texte));
+    f.append(p);
+  });
+  f.scrollTop = f.scrollHeight;
+}
+function ajouterFil(x) { P.fil.push(x); if (P.fil.length > 60) P.fil.splice(0, P.fil.length - 60); dessinerFil(); }
+// Local : le dessinateur maintient le bouton pour revoir son mot (les autres regardent l'écran).
+(() => {
+  const b = $("voir-mot"), txt = b.querySelector("span"), on = v => { txt.textContent = v ? P.mot.toUpperCase() : "MAINTIENS POUR VOIR TON MOT"; b.classList.toggle("jaune", v); };
+  b.addEventListener("pointerdown", e => { e.preventDefault(); on(true); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(t => b.addEventListener(t, () => on(false)));
+  b.addEventListener("contextmenu", e => e.preventDefault());
+})();
+
+/* ---------- Dessin ---------- */
+const toile = $("toile"), ctx = toile.getContext("2d");
+let couleur = 0, epais = 1, trait = null, aEnvoyer = [], minuEnvoi = null;
+$("palette").innerHTML = COUL_DESSIN.map((c, i) => `<button type="button" role="radio" data-c="${i}" aria-label="${i === 1 ? "Gomme (blanc)" : "Couleur " + (i + 1)}" aria-pressed="${i === 0}" style="background:${c}"></button>`).join("");
+$("palette").querySelectorAll("[data-c]").forEach(b => b.onclick = () => { couleur = +b.dataset.c; $("palette").querySelectorAll("[data-c]").forEach(x => x.setAttribute("aria-pressed", x === b)); sons.clic(); });
+document.querySelectorAll(".epais").forEach(b => { b.setAttribute("aria-pressed", +b.dataset.e === epais); b.onclick = () => { epais = +b.dataset.e; document.querySelectorAll(".epais").forEach(x => x.setAttribute("aria-pressed", x === b)); sons.clic(); }; });
+function tracer(t, depuis) {
+  const p = t.p; if (!p || p.length < 2) return;
+  ctx.strokeStyle = ctx.fillStyle = COUL_DESSIN[t.c] || "#111"; ctx.lineWidth = EPAIS[t.w] || 12; ctx.lineCap = ctx.lineJoin = "round";
+  if (p.length === 2) { ctx.beginPath(); ctx.arc(p[0], p[1], ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); return; }
+  const i0 = Math.max(0, (depuis || 0) - 2);
+  ctx.beginPath(); ctx.moveTo(p[i0], p[i0 + 1]);
+  for (let i = i0 + 2; i < p.length; i += 2) ctx.lineTo(p[i], p[i + 1]);
+  ctx.stroke();
+}
+function redessiner() { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 800, 600); P.traits.forEach(t => t && tracer(t, 0)); }
+const peutDessiner = () => P.phase === "dessin" && jeDessine();
+function point(e) { const r = toile.getBoundingClientRect(); return [Math.round(Math.max(0, Math.min(800, (e.clientX - r.left) / r.width * 800))), Math.round(Math.max(0, Math.min(600, (e.clientY - r.top) / r.height * 600)))]; }
+toile.addEventListener("pointerdown", e => {
+  if (!peutDessiner()) return;
+  e.preventDefault(); toile.setPointerCapture(e.pointerId);
+  const [x, y] = point(e); trait = { c: couleur, w: epais, p: [x, y] }; P.traits.push(trait); tracer(trait, 0);
+  aEnvoyer = [x, y]; envoyerTrait(true);
+});
+toile.addEventListener("pointermove", e => {
+  if (!trait || !peutDessiner()) return;
+  const [x, y] = point(e), p = trait.p, dx = x - p[p.length - 2], dy = y - p[p.length - 1];
+  if (dx * dx + dy * dy < 9) return;
+  p.push(x, y); aEnvoyer.push(x, y); tracer(trait, p.length - 2);
+  if (!minuEnvoi) minuEnvoi = setTimeout(() => envoyerTrait(false), 130);
+});
+["pointerup", "pointercancel"].forEach(t => toile.addEventListener(t, () => { if (trait) { envoyerTrait(false); trait = null; } }));
+function envoyerTrait(nouveau) {
+  clearTimeout(minuEnvoi); minuEnvoi = null;
+  if (!enLigne() || !trait) { aEnvoyer = []; return; }
+  if (!aEnvoyer.length && !nouveau) return;
+  Salon.envoyer({ t: "g-trait", pid: P.pid, n: P.n, i: P.traits.indexOf(trait), c: trait.c, w: trait.w, p: aEnvoyer });
+  aEnvoyer = [];
+}
+function recevoirTrait(m) {
+  if (!Array.isArray(m.p) || typeof m.i !== "number" || m.i < 0 || m.i > 5000) return;
+  while (P.traits.length <= m.i) P.traits.push(null);
+  let t = P.traits[m.i];
+  if (!t) t = P.traits[m.i] = { c: m.c | 0, w: m.w | 0, p: [] };
+  const avant = t.p.length; t.p.push(...m.p.slice(0, 400).map(v => +v || 0)); tracer(t, avant);
+}
+$("annuler").onclick = () => {
+  if (!peutDessiner() || !P.traits.length) return;
+  envoyerTrait(false); trait = null; P.traits.pop(); redessiner(); sons.clic();
+  if (enLigne()) Salon.envoyer({ t: "g-annule", pid: P.pid, n: P.n, nb: P.traits.length });
+};
+$("effacer").onclick = () => {
+  if (!peutDessiner() || !P.traits.length) return;
+  envoyerTrait(false); trait = null; P.traits = []; redessiner(); sons.clic();
+  if (enLigne()) Salon.envoyer({ t: "g-efface", pid: P.pid, n: P.n });
+};
+
+/* ---------- Deviner (en ligne) ---------- */
+function envoyerEssai() {
+  const t = $("essai").value.trim().slice(0, 40);
+  if (!t || P.phase !== "dessin") return;
+  $("essai").value = ""; $("essai").focus();
+  if (chef()) traiterEssai(Salon.id, t); else Salon.envoyer({ t: "g-essai", pid: P.pid, n: P.n, id: Salon.id, texte: t });
+}
+$("envoyer-essai").onclick = envoyerEssai;
+$("essai").addEventListener("keydown", e => { if (e.key === "Enter") envoyerEssai(); });
+// Seul le créateur du salon vérifie les réponses et compte les points.
+function traiterEssai(id, texte) {
+  if (P.phase !== "dessin" || id === P.dess || id in P.trouves || !P.joueurs.some(j => j.id === id)) return;
+  if (estBon(texte, P.mot)) {
+    const reste = Math.max(0, Chrono.fin - Date.now()) / (P.temps * 1000), premier = !Object.keys(P.trouves).length;
+    const m = { t: "g-trouve", pid: P.pid, n: P.n, id, pts: 1 + Math.round(4 * reste) + (premier ? 1 : 0), s: Math.round((Date.now() - P.debut) / 1000) };
+    Salon.envoyer(m, true); recevoirTrouve(m);
+    if (devineurs().every(x => x in P.trouves)) setTimeout(() => { if (P.phase === "dessin") finTour(); }, 900);
+    return;
+  }
+  const presque = estPresque(texte, P.mot);
+  const m = { t: "g-msg", pid: P.pid, n: P.n, id, texte, presque };
+  Salon.envoyer(m); recevoirMsg(m);
+}
+function recevoirTrouve(m) {
+  P.trouves[m.id] = m.pts; P.temps_trouve[m.id] = m.s;
+  ajouterFil({ id: m.id, type: "ok" }); majStatut();
+  if (m.id === Salon.id) { $("bloc-essai").style.display = "none"; role("Bravo, tu as trouvé ! +" + m.pts + " (" + P.mot.toUpperCase() + ")"); $("motif").innerHTML = "<small>Trouvé :</small> " + echapper(P.mot.toUpperCase()); sons.bon(); }
+  else sons.moyen();
+}
+function recevoirMsg(m) {
+  if (m.presque) { ajouterFil(m.id === Salon.id ? { id: m.id, type: "presque", texte: String(m.texte).slice(0, 40) } : { id: m.id, type: "chaud" }); return; } // une réponse presque juste n'est montrée qu'à son auteur
+  ajouterFil({ id: m.id, type: "msg", texte: String(m.texte).slice(0, 40) });
+}
+
+/* ---------- Messages ---------- */
+function recevoir(m) {
+  const meme = m.pid === P.pid && m.n === P.n;
+  switch (m.t) {
+    case "g-tour":
+      if (Salon.autorite() || !Array.isArray(m.joueurs) || !Array.isArray(m.choix)) break;
+      if (!m.joueurs.some(j => j.id === Salon.id) && Salon.role !== "ecran") { if (!P.phase || P.phase === "spectateur") { P.phase = "spectateur"; Lobby.spectateur(); } break; }
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin" || P.phase === "spectateur"))) { P.mode = "ligne"; sons.arrivee(); debutTour(m); }
+      break;
+    case "g-mot": if (Salon.autorite() && meme && P.phase === "choix" && typeof m.k === "number" && P.choix[m.k]) commencerDessin(m.k); break;
+    case "g-debut": if (!Salon.autorite() && meme && P.phase === "choix" && typeof m.k === "number") debutDessin(m); break;
+    case "g-lettres": if (meme && P.phase === "dessin" && typeof m.motif === "string") { P.motif = m.motif; if (!(Salon.id in P.trouves)) majMotif(); sons.tic(1); } break;
+    case "g-etat": // rattrapage : le dessin, qui a trouvé, le temps restant
+      if (meme && P.phase === "dessin" && Array.isArray(m.traits)) {
+        P.traits = m.traits; redessiner();
+        P.trouves = m.trouves || {}; P.fil = Array.isArray(m.fil) ? m.fil : []; dessinerFil(); majStatut();
+        if (Salon.id in P.trouves) { $("bloc-essai").style.display = "none"; $("motif").innerHTML = "<small>Trouvé :</small> " + echapper(P.mot.toUpperCase()); }
+        if (typeof m.reste === "number") { const f = Chrono.surFin; Chrono.lancer(Math.max(1, m.reste), f); }
+      }
+      break;
+    case "g-trait": if (meme && P.phase === "dessin" && !jeDessine()) recevoirTrait(m); break;
+    case "g-annule": if (meme && !jeDessine() && typeof m.nb === "number") { P.traits.length = Math.max(0, Math.min(P.traits.length, m.nb)); redessiner(); } break;
+    case "g-efface": if (meme && !jeDessine()) { P.traits = []; redessiner(); } break;
+    case "g-essai": if (Salon.autorite() && meme && typeof m.texte === "string") traiterEssai(m.id, m.texte.slice(0, 40)); break;
+    case "g-msg": if (meme && P.phase === "dessin") recevoirMsg(m); break;
+    case "g-trouve": if (meme && P.phase === "dessin" && !(m.id in P.trouves)) recevoirTrouve(m); break;
+    case "g-fin-tour": if (!Salon.autorite() && meme && P.phase !== "revele" && m.pts) afficherFinTour(m); break;
+    case "suivante?": break;
+    case "g-fin": if (!Salon.autorite() && m.pid === P.pid && P.phase && P.phase !== "fin") { if (m.scores) P.scores = m.scores; if (Array.isArray(m.journal)) P.journal = m.journal; finir(); } break;
+    case "rejouer?": if (Salon.autorite() && P.phase === "fin") $("rejouer").onclick(); break;
+  }
+}
+function surGens(nouveaux, partis) {
+  if (!enLigne() || !P.phase) return;
+  majStatut();
+  const chefLa = Salon.gens.some(g => g.role !== "invite");
+  alerte("deco", chefLa ? "" : "Celui qui a créé le salon a perdu la connexion. S'il ne revient pas dans quelques secondes, le salon se ferme.");
+  if (!Salon.autorite()) return;
+  // le dessinateur est parti : on lui laisse quelques secondes, puis on passe au tour suivant
+  if ((P.phase === "dessin" || P.phase === "choix") && partis.includes(P.dess)) {
+    const pid = P.pid, n = P.n;
+    setTimeout(() => { if ((P.phase === "dessin" || P.phase === "choix") && P.pid === pid && P.n === n && !Salon.present(P.dess)) finTour(); }, 6000);
+  }
+  if (P.phase === "dessin" && devineurs().length && devineurs().every(x => x in P.trouves)) finTour();
+}
+
+/* ---------- Fin ---------- */
+function finir() {
+  P.phase = "fin"; Chrono.arreter(); clearTimeout(minuSuite);
+  const cl = P.joueurs.map(j => ({ id: j.id, nom: j.nom, s: P.scores[j.id] || 0 })).sort((a, b) => b.s - a.s);
+  const rangDe = sc => 1 + cl.filter(c => c.s > sc).length;
+  const moi = enLigne() ? cl.find(c => c.id === Salon.id) : null;
+  $("fin-lbl").textContent = moi ? "TON SCORE" : "MEILLEUR SCORE";
+  $("fin-score").textContent = moi ? moi.s : (cl[0] ? cl[0].s : 0);
+  $("fin-detail").textContent = moi ? (rangDe(moi.s) === 1 ? "Tu finis 1er" : "Tu finis " + rangDe(moi.s) + "e") + " sur " + cl.length : (P.journal || []).length + " dessins";
+  const best = cl.length ? cl[0].s : 0, gagnants = cl.filter(c => c.s === best).map(c => c.nom);
+  $("fin-gagnant").textContent = (gagnants.length > 1 ? "Égalité en tête : " : "Victoire de ") + gagnants.join(", ") + " !";
+  const ul = $("classement"); ul.textContent = "";
+  cl.forEach(c => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b");
+    t.insertAdjacentHTML("beforeend", Avatar.svg(avDe(c.id), 24, ' style="vertical-align:-7px;margin-right:6px"'));
+    t.append(document.createTextNode(rangDe(c.s) + ". " + c.nom + (enLigne() && c.id === Salon.id ? " (toi)" : "")));
+    b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
+  });
+  momentsForts();
+  $("rejouer").disabled = false; $("rejouer").innerHTML = ico("rejouer") + "REJOUER";
+  $("changer").style.display = chef() ? "" : "none";
+  sons.fin(); ecran("fin");
+}
+// Moments forts : le dessin trouvé par le plus de monde, la réponse la plus rapide, le dessin que personne n'a compris.
+function momentsForts() {
+  const J = P.journal || [], badges = [];
+  let top = null; J.forEach(e => { const n = Object.keys(e.trouves || {}).length; if (n && (!top || n > top.n)) top = { e, n }; });
+  if (top) badges.push({ titre: "PICASSO", qui: nomDe(top.e.dess), av: avDe(top.e.dess), detail: "« " + top.e.mot + " » trouvé par " + top.n + " joueur" + (top.n > 1 ? "s" : "") });
+  let vite = null; J.forEach(e => Object.keys(e.temps || {}).forEach(id => { const s = e.temps[id]; if (typeof s === "number" && (!vite || s < vite.s)) vite = { id, s, e }; }));
+  if (vite) badges.push({ titre: "L'ÉCLAIR", qui: nomDe(vite.id), av: avDe(vite.id), detail: "A trouvé « " + vite.e.mot + " » en " + vite.s + " s" });
+  const rate = J.find(e => !Object.keys(e.trouves || {}).length);
+  if (rate) badges.push({ titre: "INCOMPRIS", qui: nomDe(rate.dess), av: avDe(rate.dess), detail: "Personne n'a reconnu « " + rate.mot + " »" });
+  dessinerBadges($("badges"), badges); $("titre-badges").style.display = badges.length ? "" : "none";
+}
+$("rejouer").onclick = () => {
+  if (!chef()) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; Salon.envoyer({ t: "rejouer?" }); return; }
+  if (enLigne()) P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom, av: g.av }));
+  if (P.joueurs.length < 2) return;
+  nouvellePartie();
+};
+$("changer").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) Lobby.retourSalon(); else ecran("local"); };
+redessiner();
+</script>
+</body>
+</html>

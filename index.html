@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/icone-180.png">
 <meta name="theme-color" content="#19B5F0">
-<link rel="stylesheet" href="commun/commun.css?v=4">
+<link rel="stylesheet" href="commun/commun.css?v=5">
 <style>
 :root{--violet:#9B5CFF}
 #app{max-width:560px}
@@ -45,6 +45,7 @@
   <header>
     <h1>LA BOÎTE À JEUX</h1>
     <nav class="nav" aria-label="Menu">
+      <button class="btn icone" id="quitter-hub" type="button" aria-label="Quitter le salon" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg></button>
       <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg></button>
     </nav>
   </header>
@@ -56,6 +57,12 @@
       <div><label>Ton avatar (pour tous les jeux)</label><div id="choix-avatar"></div></div>
     </div>
 
+    <h2>Jouer ensemble</h2>
+    <div class="modes">
+      <button class="mode" id="creer-salon" type="button"><span class="mode-ico rouge"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg></span><span class="mode-txt"><b>Créer un salon</b><small>Chacun joue sur son téléphone. On choisit le jeu après.</small></span><svg class="ico" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <button class="mode" id="creer-tele" type="button"><span class="mode-ico noir"><svg class="ico" aria-hidden="true"><use href="#i-tele"/></svg></span><span class="mode-txt"><b>Salon télé</b><small>Sur la télé ou l'ordi : elle affiche, les téléphones jouent.</small></span><svg class="ico" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+    </div>
+    <p class="bandeau alerte" id="err-salon" role="alert" style="display:none"></p>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label for="code-saisi" style="margin:0">On t'a donné un code de salon ?</label>
       <div class="rejoindre-rang">
@@ -65,7 +72,7 @@
       <p class="bandeau alerte" id="err-code" role="alert" style="display:none"></p>
     </div>
 
-    <h2>Les jeux</h2>
+    <h2>Ou lancez directement un jeu</h2>
     <div class="jeux">
       <a class="tuile case" href="cadran/">
         <div class="vignette" style="background:#19B5F0">
@@ -116,6 +123,21 @@
           <div class="puces"><span class="puce"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>1 à 8</span><span class="puce">Appareil · En ligne · Salon</span></div>
         </div>
       </a>
+      <a class="tuile case" href="gribouillage/">
+        <div class="vignette" style="background:#00C46A">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <rect x="14" y="22" width="92" height="70" fill="#111" transform="translate(4 4)"/>
+            <rect x="14" y="22" width="92" height="70" fill="#fff" stroke="#111" stroke-width="4"/>
+            <path d="M28 76c6-18 12-28 20-24s2 18 12 15 10-24 20-22 8 14 14 12" fill="none" stroke="#FF2D2D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M74 98l26-36 8 6-26 36-10 4z" fill="#FFE600" stroke="#111" stroke-width="3.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h3>LE GRIBOUILLAGE</h3>
+          <p>L'un dessine, les autres devinent. Plus vous trouvez vite, plus vous marquez.</p>
+          <div class="puces"><span class="puce"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>2 à 8</span><span class="puce">Appareil · En ligne · Salon</span></div>
+        </div>
+      </a>
     </div>
 
     <h2>3 façons de jouer</h2>
@@ -125,11 +147,25 @@
       <div class="case facon jaune"><svg class="ico" aria-hidden="true"><use href="#i-tele"/></svg><div><b>SALON</b><br>La télé affiche, les téléphones jouent.</div></div>
     </div>
   </section>
+  <section class="screen" id="s-salon">
+    <div class="case jaune bloc-code">
+      <div class="qr" id="qr" style="display:none"></div>
+      <div class="code-zone">
+        <div class="petit" id="titre-code">Code du salon</div>
+        <div class="code" id="code-salon"></div>
+        <p class="adresse" id="adresse" style="display:none"></p>
+      </div>
+      <button class="btn plat" id="inviter" type="button"><svg class="ico" aria-hidden="true"><use href="#i-partager"/></svg><span>Inviter</span></button>
+    </div>
+    <div><h3 class="intertitre">Dans le salon <span class="compte" id="etat-salon" role="status"></span></h3><ul class="gens grille" id="gens-salon"></ul></div>
+    <h3 class="intertitre" id="titre-choix">Choisissez le jeu</h3>
+    <div class="modes" id="choix-jeux"></div>
+    <p class="bandeau centre" id="attente-choix" style="display:none"></p>
+  </section>
 </div>
-
 <script src="commun/avatars.js?v=3"></script>
 <script src="commun/ambiance.js?v=1"></script>
-<script src="commun/commun.js?v=4"></script>
+<script src="commun/commun.js?v=5"></script>
 <script>
 "use strict";
 brancherEntete();
@@ -137,7 +173,56 @@ ecran("accueil");
 $("pseudo").value = pseudo.lire();
 Avatar.choisisseur($("choix-avatar"), () => sons.clic());
 $("pseudo").addEventListener("change", () => { const n = $("pseudo").value.trim(); if (n) pseudo.ecrire(n); });
-// Rejoindre depuis l'accueil : on cherche à quel jeu appartient le salon, puis on y va.
+/* ---------- Salon de l'accueil : on se retrouve d'abord, on choisit le jeu ensuite ---------- */
+const JEUX = [
+  { id: "cadran", nom: "Le Cadran", min: 2, max: 6, ico: "jaune", ph: "Un indice, une aiguille." },
+  { id: "imposteur", nom: "L'Imposteur", min: 3, max: 8, ico: "rouge", ph: "Tous le même mot, sauf un." },
+  { id: "plus-ou-moins", nom: "Plus ou moins", min: 1, max: 8, ico: "jaune", ph: "Le plus proche gagne." },
+  { id: "gribouillage", nom: "Le Gribouillage", min: 2, max: 8, ico: "rouge", ph: "L'un dessine, les autres devinent." }
+];
+Salon.ordre = []; Salon.remise = [];
+const chef = () => Salon.autorite();
+function majSalon() {
+  const n = Salon.joueurs().length, c = Salon.gens.find(g => g.role !== "invite");
+  $("etat-salon").textContent = n + " joueur" + (n > 1 ? "s" : "");
+  dessinerGens($("gens-salon"), Salon.gens.length ? Salon.gens : [{ cle: Salon.id, nom: Salon.nom, role: Salon.role, av: Salon.av }], { avatar: g => g.role === "ecran" ? null : g.av });
+  $("choix-jeux").style.display = chef() ? "" : "none"; $("titre-choix").style.display = chef() ? "" : "none";
+  $("attente-choix").style.display = chef() ? "none" : "";
+  $("attente-choix").textContent = !c ? "Connexion…" : c.role === "ecran" ? "Le jeu se choisit sur la télé…" : c.nom + " choisit le jeu…";
+  if (!chef()) return;
+  $("choix-jeux").innerHTML = JEUX.map(j => {
+    const trop = n > j.max, peu = n < j.min;
+    return `<button class="mode" type="button" data-jeu="${j.id}" ${trop ? "disabled" : ""}><span class="mode-txt"><b>${j.nom}</b><small>${j.ph} De ${j.min} à ${j.max} joueurs.${trop ? " Vous êtes trop nombreux." : peu ? " Il manque encore du monde." : ""}</small></span>${ico("chevron")}</button>`;
+  }).join("");
+  $("choix-jeux").querySelectorAll("[data-jeu]").forEach(b => b.onclick = () => {
+    sons.clic(); b.disabled = true; Salon.envoyer({ t: "aller", jeu: b.dataset.jeu }); setTimeout(() => allerVers(b.dataset.jeu), 350);
+  });
+}
+function ouvrirSalonHub() {
+  const tele = Salon.role === "ecran";
+  document.body.classList.toggle("tele", tele);
+  $("code-salon").textContent = Salon.code;
+  $("qr").style.display = tele ? "" : "none"; $("adresse").style.display = tele ? "" : "none"; $("inviter").style.display = tele ? "none" : "";
+  $("titre-code").textContent = tele ? "Scannez ou tapez le code" : "Code du salon";
+  if (tele) { $("adresse").textContent = RACINE.replace(/^https?:\/\//, "") + " → code " + Salon.code; dessinerQR($("qr"), RACINE + "#" + Salon.code); }
+  $("quitter-hub").style.display = ""; alerte("err-code"); majSalon(); ecran("salon");
+}
+Salon.surCode = () => { if (ecranActuel === "salon") ouvrirSalonHub(); };
+Salon.surGens = () => { if (Salon.role === "invite" && ecranActuel !== "salon" && Salon.gens.some(g => g.role !== "invite")) ouvrirSalonHub(); else majSalon(); };
+Salon.surMessage = m => { if (m.t === "aller" && typeof m.jeu === "string" && !chef()) allerVers(m.jeu); };
+Salon.surErreur = msg => { document.body.classList.remove("tele"); $("quitter-hub").style.display = "none"; ecran("accueil"); alerte("err-code", msg); };
+async function creerSalon(role) {
+  let nom = "Écran";
+  if (role === "hote") { nom = $("pseudo").value.trim(); if (!nom) { alerte("err-salon", "Choisis d'abord un pseudo, tout en haut."); $("pseudo").focus(); return; } pseudo.ecrire(nom); }
+  sons.clic(); alerte("err-salon");
+  try { await Salon.creer("salon", nom, role, 8); } catch (e) { alerte("err-salon", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  ouvrirSalonHub();
+}
+$("creer-salon").onclick = () => creerSalon("hote");
+$("creer-tele").onclick = () => creerSalon("ecran");
+$("inviter").onclick = e => inviter("La Boîte à jeux", RACINE + "#" + Salon.code, Salon.code, e.currentTarget);
+$("quitter-hub").onclick = () => { sons.clic(); Salon.quitter(); document.body.classList.remove("tele"); $("quitter-hub").style.display = "none"; ecran("accueil"); };
+// Rejoindre depuis l'accueil : le salon de l'accueil, ou directement le salon d'un jeu.
 async function rejoindre() {
   const code = $("code-saisi").value.trim().toUpperCase(), nom = $("pseudo").value.trim();
   if (!/^[A-Z]{4}$/.test(code)) { alerte("err-code", "Le code d'un salon fait 4 lettres."); return; }
@@ -145,14 +230,32 @@ async function rejoindre() {
   sons.clic(); alerte("err-code", "Recherche du salon " + code + "…");
   let jeu = null;
   try { jeu = await Salon.decouvrir(code); } catch (e) { alerte("err-code", "Connexion impossible pour le moment. Réessaie dans un instant."); return; }
+  if (jeu === "salon") {
+    if (!nom) { alerte("err-code", "Choisis d'abord un pseudo, tout en haut."); $("pseudo").focus(); return; }
+    alerte("err-code", "Connexion au salon " + code + "…");
+    try { await Salon.rejoindre("salon", nom, code, 8); } catch (e) { alerte("err-code", "Connexion impossible pour le moment."); }
+    return;
+  }
   if (!jeu || !NOMS_JEUX[jeu]) { alerte("err-code", "Aucun salon ouvert avec le code " + code + "."); return; }
   alerte("err-code", "Direction " + NOMS_JEUX[jeu] + " !");
   location.href = RACINE + jeu + "/#" + code;
 }
 $("rejoindre").onclick = rejoindre;
 $("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") rejoindre(); });
-// Ancien lien d'invitation du Cadran (…/#ABCD) : on redirige vers le bon jeu.
-if (/^#[A-Za-z]{4}$/.test(location.hash)) { $("code-saisi").value = location.hash.slice(1).toUpperCase(); rejoindre(); }
+// Retour au salon de l'accueil (après un jeu, ou après un rechargement de la page)
+const retour = Reprise.lire();
+if (retour && retour.jeu === "salon") {
+  Reprise.effacer();
+  ecran("accueil"); alerte("err-code", "Retour au salon " + retour.code + "…");
+  chargerTempsReel().then(() => {
+    Salon.jeu = "salon"; Salon.max = 8; Salon.reprise = true; Salon.ouvrir(retour.code, retour.role, retour.nom, retour.t);
+    if (retour.role !== "invite") ouvrirSalonHub();
+  });
+} else if (/^#[A-Za-z]{4}$/.test(location.hash)) { // lien d'invitation (…/#ABCD)
+  $("code-saisi").value = location.hash.slice(1).toUpperCase();
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  rejoindre();
+}
 </script>
 </body>
 </html>

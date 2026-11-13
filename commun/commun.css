@@ -284,3 +284,4 @@ body.tele .badge-detail{font-size:17px}
 
 #reglages-jeu>div>label,.options-corps label{font-size:16px}
 body.tele #reglages-jeu,body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #s-reglages>#bloc-manches,body.tele #s-reglages>details{max-width:620px;width:100%}
+.mode[disabled]{opacity:.5;cursor:not-allowed;box-shadow:3px 3px 0 var(--noir)}

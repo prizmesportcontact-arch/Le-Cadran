@@ -429,6 +429,7 @@ body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #
     <div class="barre-bas">
       <p class="bandeau alerte" id="err-reglages" role="alert" style="display:none"></p>
       <button class="btn" id="lancer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
+      <button class="btn plat" id="changer-jeu" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg>Changer de jeu</button>
     </div>
   </section>
 
@@ -711,6 +712,7 @@ function ouvrirReglages() {
   $("titre-reglages").style.display = ligne ? "none" : "";
   $("titre-code").textContent = P.ecran ? "Scannez ou tapez le code" : "Code du salon";
   $("inviter").style.display = P.ecran ? "none" : "";
+  $("changer-jeu").style.display = ligne ? "" : "none";
   $("qr").style.display = P.ecran ? "" : "none"; $("adresse").style.display = P.ecran ? "" : "none";
   if (P.ecran) document.querySelector('#format input[value="groupe"]').checked = true;
   if (!ligne) { document.querySelector('#format input[value="duo"]').checked = true; }
@@ -1289,7 +1291,7 @@ $("quitter-fin").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil")
    et n'est envoyée à l'autre qu'au moment de la révélation.
    ===================================================================== */
 // id gardé pendant la session de l'onglet : après un rechargement, on retrouve sa place dans la partie.
-const idSession = (() => { try { let v = sessionStorage.getItem("cadran-id"); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("cadran-id", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
+const idSession = (() => { try { let v = sessionStorage.getItem("jeux-id"); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("jeux-id", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
 const S = { client: null, canal: null, code: "", nom: "", role: "", id: idSession, t: 0, autre: null, gens: [], cles: new Set(), dernier: {}, minuteur: null };
 const MAX_JOUEURS = 6;
 const chefSalon = () => S.role === "hote" || S.role === "ecran"; // celui qui a créé le salon décide du déroulé
@@ -1366,8 +1368,8 @@ function ouvrirSalon(code, role, nom, t) {
       if (S.canal !== canal) return;
       if (etat === "SUBSCRIBED") {
         canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); majGens();
-        if (S.reprise) { S.reprise = false; setTimeout(() => { if (S.canal === canal) envoyer({ t: "rattrapage?" }); }, 600); } // retour après un rechargement
-        if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
+        if (S.reprise) { setTimeout(() => { S.reprise = false; }, 16000); setTimeout(() => { if (S.canal === canal) envoyer({ t: "rattrapage?" }); }, 600); } // retour après un rechargement
+        if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, S.reprise ? 15000 : 4000); }
       } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
         if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
       }
@@ -1388,9 +1390,15 @@ addEventListener("pagehide", () => { sauverReprise(); if (S.canal) { try { S.can
 // Chacun garde (dans cet onglet) son rôle et la partie en cours, puis revient dans le même salon.
 const REPRISE = "cadran-reprise";
 function sauverReprise() {
-  if (!S.canal || !S.role) return;
+  if (S.part || !S.canal || !S.role) return;
   try { sessionStorage.setItem(REPRISE, JSON.stringify({ code: S.code, role: S.role, nom: S.nom, t: S.t, quand: Date.now(), dernier: S.dernier, P, persos })); } catch (e) {}
 }
+// Changer de jeu sans quitter le salon : même code, même rôle, même pseudo.
+function allerVers(jeu) {
+  try { sessionStorage.setItem("jeux-reprise", JSON.stringify({ jeu, code: S.code, role: S.role, nom: S.nom, t: S.t, quand: Date.now() })); sessionStorage.removeItem(REPRISE); } catch (e) {}
+  S.part = true; location.href = RACINE + (jeu === "salon" ? "" : jeu + "/");
+}
+$("changer-jeu").onclick = () => { sons.clic(); envoyer({ t: "aller", jeu: "salon" }); setTimeout(() => allerVers("salon"), 350); };
 function reprendreSalon() {
   let r = null; try { r = JSON.parse(sessionStorage.getItem(REPRISE) || "null"); } catch (e) {}
   if (!r || !r.P || Date.now() - r.quand > 30 * 60e3) return false;
@@ -1398,12 +1406,12 @@ function reprendreSalon() {
   if (h && h[1].toUpperCase() !== r.code) return false;
   try { sessionStorage.removeItem(REPRISE); history.replaceState(null, "", location.pathname); } catch (e) {}
   $("pseudo").value = r.role === "ecran" ? $("pseudo").value : r.nom; $("code-saisi").value = r.code;
-  ecran("ligne"); alerte("err-ligne", "Reconnexion au salon " + r.code + "…");
+  ecran("ligne"); alerte("err-ligne", "Connexion au salon " + r.code + "…");
   chargerTempsReel().then(() => {
     Object.assign(P, r.P); if (Array.isArray(r.persos)) { persos.length = 0; persos.push(...r.persos); }
     const phase = P.phase;
-    ouvrirSalon(r.code, r.role, r.nom, r.t);
-    S.dernier = r.dernier || {}; S.reprise = true;
+    S.reprise = true; ouvrirSalon(r.code, r.role, r.nom, r.t);
+    S.dernier = r.dernier || {};
     if (r.role === "ecran") { P.ecran = true; document.body.classList.add("tele"); $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
     if (P.gj && P.gj.length) majCouls();
     alerte("err-ligne");
@@ -1414,7 +1422,7 @@ function reprendreSalon() {
 function reprendrePhase(ph) {
   if (!ph || ph === "spectateur") {
     if (P.moi === 0) { $("code-hote").textContent = S.code; if (P.ecran) dessinerQR(); majSalonHote(); ouvrirReglages(); }
-    else { P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = "Reconnecté ! On attend la suite…"; ecran("invite"); }
+    else { P.phase = ""; alerte("err-ligne", "Connexion au salon " + S.code + "…"); }
     return;
   }
   if (ph === "fin") { finir(); return; }
@@ -1451,7 +1459,7 @@ function majPresence() {
   Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu, av: Avatar.valide(m.av) ? m.av : null })));
   const tri = l => l.sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
   const hotes = tri(gens.filter(g => g.role === "hote" || g.role === "ecran")), invites = tri(gens.filter(g => g.role === "invite"));
-  if (S.role === "invite" && hotes.length && hotes[0].jeu && hotes[0].jeu !== "cadran") { location.href = RACINE + hotes[0].jeu + "/#" + S.code; return; } // salon d'un autre jeu
+  if (S.role === "invite" && hotes.length && hotes[0].jeu && hotes[0].jeu !== "cadran" && hotes[0].jeu !== "salon" && !S.reprise) { location.href = RACINE + hotes[0].jeu + "/#" + S.code; return; } // salon d'un autre jeu
   const places = hotes.length && hotes[0].role === "ecran" ? MAX_JOUEURS : MAX_JOUEURS - 1;
   S.gens = (hotes.length ? [hotes[0]] : []).concat(invites.slice(0, places));
   const nouveaux = S.gens.filter(g => g.cle !== S.id && !S.cles.has(g.cle));
@@ -1574,6 +1582,9 @@ function recevoir(m) {
         sons.clic(); debutManche(m.carte);
         if (!jeDonne()) envoyer({ t: "g-indice?", pid: P.pid, n: P.n });
       }
+      break;
+    case "aller": // l'hôte change de jeu : tout le monde le suit
+      if (!chefSalon() && typeof m.jeu === "string") allerVers(m.jeu);
       break;
     case "rattrapage?": // quelqu'un revient après avoir rechargé sa page : on lui renvoie de quoi se mettre à jour
       if (chefSalon()) envoyerReglages();

@@ -1,10 +1,10 @@
 // Garde le site en mémoire pour qu'il s'ouvre vite (et sans internet pour les parties « sur cet appareil »).
-const CACHE = "boite-a-jeux-v6";
+const CACHE = "boite-a-jeux-v7";
 const FICHIERS = [
   "./", "index.html", "manifest.webmanifest",
-  "commun/commun.css?v=4", "commun/commun.js?v=4", "commun/avatars.js?v=3", "commun/ambiance.js?v=1",
+  "commun/commun.css?v=5", "commun/commun.js?v=5", "commun/avatars.js?v=3", "commun/ambiance.js?v=1",
   "fonts/bangers.woff2", "fonts/comic-neue-700.woff2", "qrcode.min.js", "realtime.min.js",
-  "cadran/", "imposteur/", "plus-ou-moins/",
+  "cadran/", "imposteur/", "plus-ou-moins/", "gribouillage/",
   "icones/icone-192.png", "icones/icone-512.png", "icones/icone-180.png"
 ];
 self.addEventListener("install", e => {
