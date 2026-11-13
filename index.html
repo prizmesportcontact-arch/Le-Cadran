@@ -76,6 +76,10 @@ input[type=range]{width:100%;accent-color:var(--rouge);height:34px}
 .liste em{font-style:normal;opacity:.75}
 details summary{cursor:pointer;min-height:28px}
 details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:16px}
+.gens{display:flex;gap:10px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.gens li{flex:1;min-width:120px;background:var(--blanc);border:3px solid var(--noir);padding:6px 10px;font-size:17px;overflow-wrap:anywhere}
+.gens li small{display:block;font-size:13px;text-transform:uppercase}
+.gens li.vide{border-style:dashed;background:rgba(255,255,255,.6)}
 .grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
 .code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
 #code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
@@ -128,6 +132,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
   <section class="screen" id="s-invite">
     <h2>Salon rejoint !</h2>
     <div class="case jaune"><div class="petit">Code du salon</div><div class="code" id="code-invite"></div></div>
+    <div><label>Dans le salon</label><ul class="gens" id="gens-invite"></ul></div>
     <div class="case"><p id="resume-invite">Connexion…</p></div>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">Proposer une carte perso</label>
@@ -148,6 +153,8 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div class="petit">Code du salon, à donner à l'autre joueur</div>
       <div class="code" id="code-hote"></div>
       <p class="petit" id="etat-salon" role="status" style="text-align:center"></p>
+      <div class="petit" style="margin:10px 0 6px">Dans le salon</div>
+      <ul class="gens" id="gens-hote"></ul>
     </div>
     <div class="rang" id="bloc-noms">
       <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
@@ -194,6 +201,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div class="case jaune"><small>Score commun</small><b id="score">0</b></div>
       <div class="case"><small>Manche</small><b id="num"></b></div>
     </div>
+    <ul class="gens" id="gens-jeu"></ul>
     <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
     <p class="bandeau" id="role" aria-live="polite"></p>
     <div class="case poste">
@@ -390,6 +398,7 @@ $("ajout").onclick = () => {
   alerte("err-reglages"); persos.push([g, d]); $("cg").value = ""; $("cd").value = ""; majPersos(); $("cg").focus();
 };
 function ouvrirReglages() {
+  majGens();
   const ligne = enLigne();
   $("bloc-salon").style.display = ligne ? "" : "none";
   $("bloc-noms").style.display = ligne ? "none" : "";
@@ -693,7 +702,7 @@ function ouvrirSalon(code, role, nom) {
     .subscribe(etat => {
       if (S.canal !== canal) return;
       if (etat === "SUBSCRIBED") {
-        canal.track({ nom: S.nom, role: S.role, t: S.t });
+        canal.track({ nom: S.nom, role: S.role, t: S.t }); majGens();
         if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
       } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
         if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
@@ -705,7 +714,7 @@ function quitterSalon(silencieux) {
   if (S.canal && S.client) { try { S.client.removeChannel(S.canal); } catch (e) {} }
   S.canal = null; S.autre = null; S.dernier = null;
   if (!silencieux) { P.mode = "local"; P.phase = ""; }
-  alerte("deco");
+  alerte("deco"); majGens();
 }
 function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
 function envoyer(message, important) {
@@ -742,9 +751,26 @@ function majPresence() {
     if (["manche", "passe"].includes(ecranActuel)) alerte("deco", "L'autre joueur est déconnecté. La partie attend son retour.");
     if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon.";
   }
-  if (S.role === "hote") majSalonHote();
+  if (S.role === "hote") majSalonHote(); else majGens();
+}
+// Qui est dans le salon : l'hôte d'abord, puis l'invité (ou une place vide).
+function majGens() {
+  const ligne = enLigne() && !!S.canal;
+  const moi = { nom: S.nom, hote: S.role === "hote", moi: true }, autre = S.autre ? { nom: S.autre.nom, hote: S.autre.role === "hote" } : null;
+  const places = S.role === "hote" ? [moi, autre] : [autre, moi];
+  ["gens-hote", "gens-invite", "gens-jeu"].forEach(id => {
+    const ul = $(id); ul.textContent = ""; ul.style.display = ligne ? "" : "none";
+    if (!ligne) return;
+    places.forEach((g, i) => {
+      const li = document.createElement("li"), sm = document.createElement("small");
+      if (g) { sm.textContent = (g.hote ? "Hôte" : "Invité") + (g.moi ? " · toi" : " · connecté"); li.append(sm, document.createTextNode(g.nom)); }
+      else { li.className = "vide"; sm.textContent = i === 0 ? "Hôte" : "Invité"; li.append(sm, document.createTextNode(id === "gens-jeu" ? "Déconnecté" : "En attente…")); }
+      ul.append(li);
+    });
+  });
 }
 function majSalonHote() {
+  majGens();
   $("etat-salon").textContent = S.autre ? S.autre.nom + " est dans le salon. Vous pouvez lancer !" : "En attente de l'autre joueur…";
 }
 function envoyerReglages() {
