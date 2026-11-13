@@ -195,7 +195,7 @@ body.tele .revelation{font-size:60px}
 
 <script src="../commun/avatars.js?v=3"></script>
 <script src="../commun/ambiance.js?v=1"></script>
-<script src="../commun/commun.js?v=3"></script>
+<script src="../commun/commun.js?v=4"></script>
 <script>
 "use strict";
 /* ---------- Paires de mots proches ---------- */
@@ -269,6 +269,25 @@ Lobby.monter({
   surLocal: () => { P.mode = "local"; $("place-local").append($("reglages-jeu")); if (!$("local-noms").children.length) { ajouterNom(pseudo.lire()); ajouterNom(""); ajouterNom(""); } alerte("err-local"); ecran("local"); },
   surLancer: () => { P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom, av: g.av })); prendreReglages(); P.total = manchesChoisies(); P.tours = toursChoisis(); nouvellePartie(); },
   surMessage: m => recevoir(m),
+  // Reprise après un rechargement de la page (pour celui qui a créé le salon)
+  etat: () => ({ P: JSON.parse(JSON.stringify(P)), paires }),
+  restaurer: e => { Object.assign(P, e.P); P.mode = "ligne"; if (Array.isArray(e.paires)) paires = e.paires; },
+  reprendre: e => {
+    const d = Salon.dernier, man = d["i-manche"], ph = e.P.phase;
+    if (ph === "fin" || !man) { if (ph === "fin") { COULS = Avatar.couleurs(P.joueurs); finir(); } else Lobby.ouvrirSalon(); return; }
+    const indices = e.P.indices || [], votes = Object.assign({}, e.P.votes || {});
+    P.journal = (e.P.journal || []).slice(0, man.n);
+    debutManche(man);
+    if (ph === "bilan" && d["i-bilan"]) { P.res = d["i-resultat"] || null; P.votes = (P.res && P.res.votes) || votes; afficherBilan(d["i-bilan"]); return; }
+    if ((ph === "resultat" || ph === "devinette") && d["i-resultat"]) { P.votes = d["i-resultat"].votes || votes; afficherResultat(d["i-resultat"]); return; }
+    P.indices = indices; phaseIndices();
+    if (P.phase === "vote") {
+      P.votes = votes;
+      if (votes[Salon.id]) { P.choix = votes[Salon.id]; P.phase = "a-vote"; role("Vote envoyé ! On attend les autres…"); montrer(["bloc-indices"]); }
+      majStatut(); verifierVotes();
+    }
+  },
+  surRattrapage: () => { if (P.phase === "indices" || P.phase === "vote" || P.phase === "a-vote") Salon.envoyer({ t: "i-etat", pid: P.pid, n: P.n, indices: P.indices }); },
   surGens: (n, p) => surGens(n, p),
   surArret: () => { Chrono.arreter(); P.phase = ""; P.mode = "local"; },
   surRetourSalon: () => { Chrono.arreter(); P.phase = ""; }

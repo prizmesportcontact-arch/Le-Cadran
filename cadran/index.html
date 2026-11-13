@@ -973,6 +973,7 @@ $("valider").onclick = () => {
   } else reveler(P.angle, P.cible, pointsPour(Math.abs(P.angle - P.cible)));
 };
 function reveler(angle, cible, pts) {
+  P.rev = { k: "d", a: angle, c: cible, pts };
   P.phase = "reveal"; P.cible = cible; dessinerCible(cible); poserAiguille(angle, true); svg.classList.remove("reglable");
   P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur(), ecart: Math.abs(angle - cible) });
   $("aiguille").style.display = ""; afficherIndice();
@@ -1033,6 +1034,7 @@ function dessinerAiguilles(aig) {
   }).join("");
 }
 function revelerG(m) {
+  P.rev = { k: "g", m };
   P.phase = "reveal"; P.cible = m.cible; dessinerCible(m.cible); svg.classList.remove("reglable");
   $("aiguille").style.display = "none"; dessinerAiguilles(m.aig || {});
   Object.keys(m.pts || {}).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
@@ -1351,10 +1353,10 @@ async function rejoindre() {
 $("rejoindre").onclick = rejoindre;
 $("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") rejoindre(); });
 
-function ouvrirSalon(code, role, nom) {
+function ouvrirSalon(code, role, nom, t) {
   quitterSalon(true);
   P.mode = "ligne";
-  S.code = code; S.role = role; S.nom = nom; S.av = Avatar.lire(); S.t = Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
+  S.code = code; S.role = role; S.nom = nom; S.av = Avatar.lire(); S.t = t || Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   S.client = S.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
   const canal = S.client.channel("jeux-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
   S.canal = canal;
@@ -1364,6 +1366,7 @@ function ouvrirSalon(code, role, nom) {
       if (S.canal !== canal) return;
       if (etat === "SUBSCRIBED") {
         canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); majGens();
+        if (S.reprise) { S.reprise = false; setTimeout(() => { if (S.canal === canal) envoyer({ t: "rattrapage?" }); }, 600); } // retour après un rechargement
         if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
       } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
         if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
@@ -1374,12 +1377,64 @@ function quitterSalon(silencieux) {
   clearTimeout(S.minuteur); clearTimeout(S.minuFermeture); S.minuFermeture = null; S.avaitChef = false;
   if (S.canal && S.client) { const c = S.canal, client = S.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!S.canal && client.getChannels().length === 0) client.disconnect(); }); }
   S.canal = null; S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
-  if (!silencieux) { P.mode = "local"; P.phase = ""; }
+  if (!silencieux) { P.mode = "local"; P.phase = ""; try { sessionStorage.removeItem(REPRISE); } catch (e) {} }
   alerte("deco"); majGens();
   if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; Musique.arreter(); $("musique").style.display = "none"; }
 }
 // Page fermée ou mise en arrière-plan sur iPhone : on prévient tout de suite le salon.
-addEventListener("pagehide", () => { if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
+addEventListener("pagehide", () => { sauverReprise(); if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
+
+/* ---------- Reprise après un rechargement de la page ---------- */
+// Chacun garde (dans cet onglet) son rôle et la partie en cours, puis revient dans le même salon.
+const REPRISE = "cadran-reprise";
+function sauverReprise() {
+  if (!S.canal || !S.role) return;
+  try { sessionStorage.setItem(REPRISE, JSON.stringify({ code: S.code, role: S.role, nom: S.nom, t: S.t, quand: Date.now(), dernier: S.dernier, P, persos })); } catch (e) {}
+}
+function reprendreSalon() {
+  let r = null; try { r = JSON.parse(sessionStorage.getItem(REPRISE) || "null"); } catch (e) {}
+  if (!r || !r.P || Date.now() - r.quand > 30 * 60e3) return false;
+  const h = /^#([A-Za-z]{4})$/.exec(location.hash);
+  if (h && h[1].toUpperCase() !== r.code) return false;
+  try { sessionStorage.removeItem(REPRISE); history.replaceState(null, "", location.pathname); } catch (e) {}
+  $("pseudo").value = r.role === "ecran" ? $("pseudo").value : r.nom; $("code-saisi").value = r.code;
+  ecran("ligne"); alerte("err-ligne", "Reconnexion au salon " + r.code + "…");
+  chargerTempsReel().then(() => {
+    Object.assign(P, r.P); if (Array.isArray(r.persos)) { persos.length = 0; persos.push(...r.persos); }
+    const phase = P.phase;
+    ouvrirSalon(r.code, r.role, r.nom, r.t);
+    S.dernier = r.dernier || {}; S.reprise = true;
+    if (r.role === "ecran") { P.ecran = true; document.body.classList.add("tele"); $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
+    if (P.gj && P.gj.length) majCouls();
+    alerte("err-ligne");
+    reprendrePhase(phase);
+  }).catch(() => alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."));
+  return true;
+}
+function reprendrePhase(ph) {
+  if (!ph || ph === "spectateur") {
+    if (P.moi === 0) { $("code-hote").textContent = S.code; if (P.ecran) dessinerQR(); majSalonHote(); ouvrirReglages(); }
+    else { P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = "Reconnecté ! On attend la suite…"; ecran("invite"); }
+    return;
+  }
+  if (ph === "fin") { finir(); return; }
+  if (ph === "reveal" && P.rev) { // on rejoue la révélation sans compter les points deux fois
+    P.histo.pop(); enTete(); ecran("manche");
+    if (P.rev.k === "g") { const m = P.rev.m; Object.keys(m.pts || {}).forEach(id => { P.scores[id] = (P.scores[id] || 0) - m.pts[id]; }); P.scores[m.donneur] = (P.scores[m.donneur] || 0) - m.dp; revelerG(m); }
+    else { P.score -= P.rev.pts; reveler(P.rev.a, P.rev.c, P.rev.pts); }
+    return;
+  }
+  const phases = { indice: phaseIndice, "attente-indice": phaseAttenteIndice, regarde: phaseRegarde, devine: phaseDevine, tele: phaseTele, "attente-valid": phaseAttenteValid };
+  if (phases[ph]) { phases[ph](); if (groupe()) majStatut(); return; }
+  if (ph === "attente-reveal") { // aiguille déjà envoyée : on attend la révélation
+    const a = groupe() && P.valides[S.id] !== undefined ? P.valides[S.id] : P.angle;
+    phaseDevine(); P.phase = "attente-reveal"; svg.classList.remove("reglable"); poserAiguille(a, true);
+    $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…"; role("Aiguille envoyée ! On attend les autres…");
+    if (groupe()) { majStatut(); rafraichirBoutons(); }
+    return;
+  }
+  ecran("manche");
+}
 addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); } catch (x) {} } });
 function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
 function envoyer(message, important) {
@@ -1520,6 +1575,10 @@ function recevoir(m) {
         if (!jeDonne()) envoyer({ t: "g-indice?", pid: P.pid, n: P.n });
       }
       break;
+    case "rattrapage?": // quelqu'un revient après avoir rechargé sa page : on lui renvoie de quoi se mettre à jour
+      if (chefSalon()) envoyerReglages();
+      ["salon", "manche", "g-manche", "indice", "valide", "g-valide", "reveal", "g-reveal", "fin"].forEach(t => { if (S.dernier[t]) envoyer(S.dernier[t]); });
+      break;
     case "g-indice?": // quelqu'un (re)arrive : le donneur renvoie son indice
       if (groupe() && memeManche && jeDonne() && P.indice && P.phase === "attente-valid") envoyer({ t: "indice", pid: P.pid, n: P.n, texte: P.indice });
       break;
@@ -1559,7 +1618,7 @@ function recevoir(m) {
   }
 }
 ecran("accueil");
-lienInvitation();
+if (!reprendreSalon()) lienInvitation();
 </script>
 </body>
 </html>

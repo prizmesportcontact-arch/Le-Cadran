@@ -257,19 +257,28 @@ const Salon = {
   lien() { return RACINE + this.jeu + "/#" + this.code; },
   async creer(jeu, nom, role, max) { await chargerTempsReel(); this.jeu = jeu; this.max = max; this.ouvrir(nouveauCode(), role, nom); },
   async rejoindre(jeu, nom, code, max) { await chargerTempsReel(); this.jeu = jeu; this.max = max; this.ouvrir(code, "invite", nom); },
-  ouvrir(code, role, nom) {
+  ouvrir(code, role, nom, t) {
     this.quitter(true);
-    this.code = code; this.role = role; this.nom = nom; this.t = Date.now(); this.gens = []; this.cles = new Set(); this.dernier = {};
+    this.code = code; this.role = role; this.nom = nom; this.t = t || Date.now(); this.gens = []; this.cles = new Set(); this.dernier = {};
     this.av = typeof Avatar !== "undefined" ? Avatar.lire() : null; this.avaitChef = false;
     this.client = this.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
     const canal = this.client.channel("jeux-" + code, { config: { broadcast: { self: false }, presence: { key: this.id } } });
     this.canal = canal;
-    canal.on("broadcast", { event: "m" }, ({ payload }) => { if (this.canal === canal && payload && typeof payload.t === "string") this.surMessage(payload); })
+    canal.on("broadcast", { event: "m" }, ({ payload }) => {
+      if (this.canal !== canal || !payload || typeof payload.t !== "string") return;
+      if (payload.t === "rattrapage?") { if (this.autorite()) this.rattraper(); return; } // quelqu'un revient après avoir rechargé sa page
+      this.surMessage(payload);
+    })
       .on("presence", { event: "sync" }, () => { if (this.canal === canal) this.majPresence(); })
       .subscribe(etat => {
         if (this.canal !== canal) return;
         if (etat === "SUBSCRIBED") {
           this.suivre();
+          if (this.reprise) { // retour après un rechargement de la page
+            this.reprise = false;
+            if (role === "invite") setTimeout(() => { if (this.canal === canal) this.envoyer({ t: "rattrapage?" }); }, 600);
+            else setTimeout(() => { if (this.canal === canal) this.rattraper(); }, 600);
+          }
           if (role === "invite") { clearTimeout(this.minuteur); this.minuteur = setTimeout(() => { if (this.canal === canal && !this.gens.some(g => g.role !== "invite")) this.erreur("Aucun salon ouvert avec le code " + code + "."); }, 4500); }
         } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
           if (!this.gens.length) this.erreur("Connexion impossible pour le moment. Réessaie dans un instant.");
@@ -277,12 +286,15 @@ const Salon = {
       });
     this.surCode(code);
   },
+  // Renvoie à tout le monde l'état utile de la partie (pour ceux qui arrivent ou reviennent).
+  rattraper() { this.ordre.forEach(t => { if (this.dernier[t]) this.envoyer(this.dernier[t]); }); this.surRattrapage(); },
+  surRattrapage: () => {},
   suivre() { try { this.canal.track({ nom: this.nom, role: this.role, t: this.t, jeu: this.jeu, av: this.av }); } catch (e) {} },
   quitter(silencieux) {
     clearTimeout(this.minuteur); clearTimeout(this.minuFermeture); this.minuFermeture = null;
     if (this.canal && this.client) { const c = this.canal, client = this.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!this.canal && client.getChannels().length === 0) client.disconnect(); }); }
     this.canal = null; this.gens = []; this.cles = new Set(); this.dernier = {};
-    if (!silencieux) this.role = "";
+    if (!silencieux) { this.role = ""; Reprise.effacer(); }
   },
   erreur(msg) { this.quitter(); this.surErreur(msg); },
   envoyer(m, important) {
@@ -319,7 +331,7 @@ const Salon = {
     }
     if (nouveaux.length) { // rattrapage : on renvoie l'état utile à ceux qui arrivent
       sons.arrivee();
-      this.ordre.forEach(t => { if (this.dernier[t]) this.envoyer(this.dernier[t]); });
+      this.rattraper();
     }
     this.surGens(nouveaux, partis);
   },
@@ -339,7 +351,20 @@ const Salon = {
     });
   }
 };
-addEventListener("pagehide", () => { if (Salon.canal) { try { Salon.canal.untrack(); } catch (e) {} } });
+// Reprise : si la page est rechargée en plein salon, on garde de quoi y revenir (dans cet onglet seulement).
+const Reprise = {
+  cle: "jeux-reprise",
+  sauver() {
+    if (!Salon.canal || !Salon.role) return;
+    const chef = Salon.autorite(), o = typeof Lobby !== "undefined" && Lobby.o;
+    const r = { jeu: Salon.jeu, code: Salon.code, role: Salon.role, nom: Salon.nom, t: Salon.t, quand: Date.now() };
+    if (chef && o) { r.dernier = Salon.dernier; try { r.etat = o.etat ? o.etat() : null; } catch (e) { r.etat = null; } r.enPartie = !!(o.enPartie && o.enPartie()); }
+    try { sessionStorage.setItem(this.cle, JSON.stringify(r)); } catch (e) {}
+  },
+  lire() { try { const r = JSON.parse(sessionStorage.getItem(this.cle) || "null"); return r && Date.now() - r.quand < 30 * 60e3 ? r : null; } catch (e) { return null; } },
+  effacer() { try { sessionStorage.removeItem(this.cle); } catch (e) {} }
+};
+addEventListener("pagehide", () => { Reprise.sauver(); if (Salon.canal) { try { Salon.canal.untrack(); } catch (e) {} } });
 addEventListener("pageshow", e => { if (e.persisted && Salon.canal) Salon.suivre(); });
 
 // Liste des participants (salle d'attente ou bandeau de jeu).
@@ -471,8 +496,9 @@ const Lobby = {
     Salon.surErreur = msg => { this.arret(); $("pseudo").value = $("pseudo").value || pseudo.lire(); ecran("ligne"); alerte("err-ligne", msg); };
     Salon.surMessage = m => this.recevoir(m);
     Salon.surGens = (nouveaux, partis) => this.majGens(nouveaux, partis);
+    Salon.surRattrapage = () => { o.surRattrapage && o.surRattrapage(); };
     ecran("modes");
-    this.lienInvitation();
+    if (!this.reprendre()) this.lienInvitation();
   },
   async creer(role) {
     let nom = "Écran";
@@ -533,6 +559,29 @@ const Lobby = {
     if (m.t === "reglages") { if (!Salon.autorite() && typeof m.texte === "string") { $("resume-invite").textContent = m.texte; if (ecranActuel === "ligne") this.ouvrirSalon(m.texte); } return; }
     if (m.t === "salon") { if (!Salon.autorite()) { this.o.surRetourSalon && this.o.surRetourSalon(); this.ouvrirSalon(); } return; }
     this.o.surMessage(m);
+  },
+  // Page rechargée en plein salon : on y retourne avec le même rôle et le même pseudo.
+  // Celui qui a créé le salon retrouve aussi la partie en cours (gardée juste avant le rechargement).
+  reprendre() {
+    const r = Reprise.lire(), h = /^#([A-Za-z]{4})$/.exec(location.hash);
+    if (!r || r.jeu !== this.o.jeu || (h && h[1].toUpperCase() !== r.code)) return false;
+    Reprise.effacer();
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    $("pseudo").value = r.role === "hote" || r.role === "invite" ? r.nom : $("pseudo").value; $("code-saisi").value = r.code;
+    ecran("ligne"); alerte("err-ligne", "Reconnexion au salon " + r.code + "…");
+    chargerTempsReel().then(() => {
+      Salon.jeu = this.o.jeu; Salon.max = this.o.max; Salon.reprise = true;
+      const chef = r.role !== "invite";
+      if (chef && r.etat && this.o.restaurer) this.o.restaurer(r.etat);
+      Salon.ouvrir(r.code, r.role, r.nom, r.t);
+      if (!chef) return; // l'invité retrouve la partie grâce au rattrapage envoyé par le créateur
+      Salon.dernier = r.dernier || {};
+      if (r.role === "ecran") { document.body.classList.add("tele"); $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
+      alerte("err-ligne");
+      if (r.enPartie && r.etat && this.o.reprendre) { try { this.o.reprendre(r.etat); return; } catch (e) { console.warn(e); } }
+      this.ouvrirSalon();
+    }).catch(() => alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."));
+    return true;
   },
   // Lien d'invitation (…/jeu/#ABCD) : on rejoint directement si le pseudo est connu.
   lienInvitation() {
