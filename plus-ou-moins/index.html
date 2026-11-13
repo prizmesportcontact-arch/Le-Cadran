@@ -9,7 +9,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='34' width='56' height='16' fill='%23fff' stroke='%23111' stroke-width='4'/%3E%3Cpath d='M22 32V10l16 6-16 6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../commun/commun.css?v=1">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icones/icone-180.png">
+<link rel="stylesheet" href="../commun/commun.css?v=2">
 <style>
 .question{font-family:var(--titre);font-size:30px;letter-spacing:1px;line-height:1.1;text-wrap:balance}
 body.tele .question{font-size:52px}
@@ -38,9 +40,10 @@ body.tele .vrai-txt{font-size:44px}
 <div id="app">
 
   <!-- Réglages : déplacés dans le salon ou dans l'écran local -->
-  <div id="reglages-jeu">
-    <label id="l-nbq">Nombre de questions</label>
-    <div class="jetons" role="radiogroup" aria-labelledby="l-nbq" id="nbq"></div>
+  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:14px">
+    <div><label id="l-nbq">Nombre de questions</label><div class="jetons" role="radiogroup" aria-labelledby="l-nbq" id="nbq"></div></div>
+    <div><label id="l-cats">Thèmes <span id="nb-q" class="petit"></span></label><div class="jetons" role="group" aria-labelledby="l-cats" id="cats"></div></div>
+    <div><label id="l-chrono">Chrono pour répondre</label><div class="jetons" role="radiogroup" aria-labelledby="l-chrono" id="chronos"></div></div>
   </div>
 
   <!-- LOCAL : les joueurs -->
@@ -79,6 +82,7 @@ body.tele .vrai-txt{font-size:44px}
           <p class="petit" id="qui-repond"></p>
           <p class="question" id="question"></p>
         </div>
+        <div id="chrono"></div>
         <!-- répondre -->
         <div id="bloc-reponse" style="display:flex;flex-direction:column;gap:14px">
           <div class="saisie">
@@ -121,6 +125,8 @@ body.tele .vrai-txt{font-size:44px}
     </div>
     <p class="bandeau centre" id="fin-gagnant"></p>
     <div class="case"><ul class="liste" id="classement"></ul></div>
+    <h2 id="titre-badges">Les moments forts</h2>
+    <div class="badges" id="badges"></div>
     <div class="bas">
       <button class="btn" id="rejouer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rejouer"/></svg>REJOUER</button>
       <button class="btn plat" id="changer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
@@ -128,15 +134,26 @@ body.tele .vrai-txt{font-size:44px}
   </section>
 </div>
 
-<script src="../commun/commun.js?v=1"></script>
+<script src="../commun/avatars.js?v=2"></script>
+<script src="../commun/ambiance.js?v=1"></script>
+<script src="../commun/commun.js?v=2"></script>
 <script>
 "use strict";
 /* ---------- Questions : [question, réponse, unité, "a" si c'est une année] ---------- */
-const QUESTIONS = [["En quelle année a eu lieu la prise de la Bastille ?", 1789, "", "a"], ["Combien d'os compte le squelette d'un adulte ?", 206, "os", ""], ["Quelle est la distance moyenne entre la Terre et la Lune ?", 384400, "km", ""], ["Quelle est la hauteur du mont Everest ?", 8849, "m", ""], ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", 1969, "", "a"], ["Combien de pays sont membres de l'ONU ?", 193, "pays", ""], ["Combien de touches compte un piano classique ?", 88, "touches", ""], ["Combien de cases compte un échiquier ?", 64, "cases", ""], ["Quelle est la vitesse de la lumière ?", 299792, "km/s", ""], ["Combien y a-t-il de départements en France (outre-mer compris) ?", 101, "départements", ""], ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", 1889, "", "a"], ["Combien de cartes compte un jeu de tarot ?", 78, "cartes", ""], ["Combien de dents a un adulte (dents de sagesse comprises) ?", 32, "dents", ""], ["En quelle année le mur de Berlin est-il tombé ?", 1989, "", "a"], ["Combien de minutes y a-t-il dans une semaine ?", 10080, "minutes", ""], ["Combien de secondes y a-t-il dans une journée ?", 86400, "secondes", ""], ["Quelle est la profondeur de la fosse des Mariannes, environ ?", 10994, "m", ""], ["En quelle année est né Napoléon Bonaparte ?", 1769, "", "a"], ["En quelle année est sorti le premier iPhone ?", 2007, "", "a"], ["Combien de cœurs a une pieuvre ?", 3, "cœurs", ""], ["Quelle vitesse peut atteindre un guépard en pointe, environ ?", 110, "km/h", ""], ["En quelle année a eu lieu la toute première Coupe du monde de football ?", 1930, "", "a"], ["Quel est le diamètre de la Terre, environ ?", 12742, "km", ""], ["Quelle est la distance moyenne entre la Terre et le Soleil ?", 150, "millions de km", ""], ["Combien de litres de sang contient le corps d'un adulte, environ ?", 5, "litres", ""], ["Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?", 1665, "marches", ""], ["Quelle est la hauteur de la tour Eiffel, antennes comprises ?", 330, "m", ""], ["En quelle année le tunnel sous la Manche a-t-il été inauguré ?", 1994, "", "a"], ["Quelle est la longueur officielle d'un marathon ?", 42.195, "km", ""], ["Combien y a-t-il d'États aux États-Unis ?", 50, "États", ""], ["Combien d'habitants compte Paris intra-muros, environ ?", 2.1, "millions", ""], ["En quelle année la peine de mort a-t-elle été abolie en France ?", 1981, "", "a"], ["En quelle année les Françaises ont-elles obtenu le droit de vote ?", 1944, "", "a"], ["Combien de pièces y a-t-il au total au début d'une partie d'échecs ?", 32, "pièces", ""], ["Combien de langues officielles a la Suisse ?", 4, "langues", ""], ["Quelle est la hauteur de la statue de la Liberté, sans son socle ?", 46, "m", ""], ["En quelle année a eu lieu la révolution russe ?", 1917, "", "a"], ["Combien de pays font partie de l'Union européenne ?", 27, "pays", ""], ["Combien d'étoiles y a-t-il sur le drapeau européen ?", 12, "étoiles", ""], ["Quelle est la longueur de la Seine, environ ?", 777, "km", ""], ["Combien de vertèbres compte la colonne vertébrale humaine, environ ?", 33, "vertèbres", ""], ["Quelle est la température à la surface du Soleil, environ ?", 5500, "°C", ""], ["Quel est l'âge de l'Univers, environ ?", 13.8, "milliards d'années", ""], ["En quelle année est sorti le premier livre Harry Potter ?", 1997, "", "a"], ["En quelle année est sorti le tout premier film Star Wars ?", 1977, "", "a"], ["En quelle année Google a-t-il été créé ?", 1998, "", "a"], ["En quelle année YouTube a-t-il été créé ?", 2005, "", "a"], ["En quelle année Facebook a-t-il été créé ?", 2004, "", "a"], ["En quelle année est sortie la version complète de Minecraft ?", 2011, "", "a"], ["En quelle année le mode Battle Royale de Fortnite est-il sorti ?", 2017, "", "a"], ["Combien de Pokémon compte la toute première génération ?", 151, "Pokémon", ""], ["Quelle est la vitesse du son dans l'air, environ ?", 343, "m/s", ""], ["Combien de ponts traversent la Seine à Paris, environ ?", 37, "ponts", ""], ["Combien de fois bat le cœur d'un adulte au repos, en moyenne, par minute ?", 70, "battements", ""], ["Combien de pays compte l'Afrique ?", 54, "pays", ""], ["Quelle est la hauteur du Burj Khalifa, la plus haute tour du monde ?", 828, "m", ""], ["Combien de neurones compte le cerveau humain, environ ?", 86, "milliards", ""], ["Combien d'œufs pond une poule pondeuse par an, environ ?", 300, "œufs", ""], ["Jusqu'à quel âge a vécu Jeanne Calment, la doyenne de l'humanité ?", 122, "ans", ""], ["Combien de pays le Danube traverse-t-il ?", 10, "pays", ""], ["Quelle part de la surface de la Terre est couverte d'eau ?", 71, "%", ""], ["Quelle part du corps humain est faite d'eau, environ ?", 60, "%", ""], ["Combien d'éléments compte le tableau périodique ?", 118, "éléments", ""], ["Quel est le numéro atomique de l'or ?", 79, "", ""], ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?", 1492, "", "a"], ["En quelle année a eu lieu la bataille de Marignan ?", 1515, "", "a"], ["En quelle année la Seconde Guerre mondiale s'est-elle terminée ?", 1945, "", "a"], ["En quelle année la Première Guerre mondiale a-t-elle commencé ?", 1914, "", "a"], ["Quelle est la hauteur d'un panier de basket ?", 305, "cm", ""], ["Quelle est la longueur d'une piscine olympique ?", 50, "m", ""], ["Combien de lettres compte l'alphabet français ?", 26, "lettres", ""], ["Combien de cases compte le plateau du Monopoly ?", 40, "cases", ""], ["Combien de dominos compte un jeu classique ?", 28, "dominos", ""], ["Combien de joueurs s'affrontent au début d'une partie de Fortnite Battle Royale ?", 100, "joueurs", ""], ["Combien de trous compte un parcours de golf classique ?", 18, "trous", ""], ["Quelle distance sépare Paris de Marseille par la route, environ ?", 775, "km", ""], ["Quelle distance sépare Paris de New York à vol d'oiseau, environ ?", 5840, "km", ""], ["Combien d'habitants compte la Chine, environ ?", 1.4, "milliard", ""], ["Quel est le record de vitesse d'un TGV, établi en 2007 ?", 575, "km/h", ""], ["À quelle température l'eau gèle-t-elle, en degrés Fahrenheit ?", 32, "°F", ""], ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", 7, "couleurs", ""], ["Combien de planètes compte le système solaire ?", 8, "planètes", ""], ["Combien de pattes a une araignée ?", 8, "pattes", ""], ["Combien de semaines y a-t-il dans une année ?", 52, "semaines", ""], ["Combien de cordes a une guitare classique ?", 6, "cordes", ""], ["Quelle est la hauteur du mont Blanc, environ ?", 4806, "m", ""], ["Combien d'habitants compte la France, environ ?", 68, "millions", ""], ["Combien d'humains vivent sur Terre, environ ?", 8, "milliards", ""], ["En quelle année Gutenberg a-t-il mis au point l'imprimerie, environ ?", 1450, "", "a"], ["Quelle est la profondeur moyenne des océans, environ ?", 3700, "m", ""], ["Combien de kilomètres sépare la Terre de Mars au plus près, environ ?", 55, "millions de km", ""], ["Quelle est la hauteur d'un filet de volley-ball masculin ?", 243, "cm", ""], ["Quelle est la longueur d'un court de tennis ?", 23.77, "m", ""], ["Combien de petits cubes visibles a un Rubik's Cube classique ?", 26, "cubes", ""], ["Combien d'étoiles y a-t-il sur le drapeau des États-Unis ?", 50, "étoiles", ""]];
+const QUESTIONS = [["En quelle année a eu lieu la prise de la Bastille ?", 1789, "", "a", "histoire"], ["Combien d'os compte le squelette d'un adulte ?", 206, "os", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et la Lune ?", 384400, "km", "", "sciences"], ["Quelle est la hauteur du mont Everest ?", 8849, "m", "", "geo"], ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", 1969, "", "a", "histoire"], ["Combien de pays sont membres de l'ONU ?", 193, "pays", "", "geo"], ["Combien de touches compte un piano classique ?", 88, "touches", "", "loisirs"], ["Combien de cases compte un échiquier ?", 64, "cases", "", "loisirs"], ["Quelle est la vitesse de la lumière ?", 299792, "km/s", "", "sciences"], ["Combien y a-t-il de départements en France (outre-mer compris) ?", 101, "départements", "", "geo"], ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", 1889, "", "a", "histoire"], ["Combien de cartes compte un jeu de tarot ?", 78, "cartes", "", "loisirs"], ["Combien de dents a un adulte (dents de sagesse comprises) ?", 32, "dents", "", "sciences"], ["En quelle année le mur de Berlin est-il tombé ?", 1989, "", "a", "histoire"], ["Combien de minutes y a-t-il dans une semaine ?", 10080, "minutes", "", "sciences"], ["Combien de secondes y a-t-il dans une journée ?", 86400, "secondes", "", "sciences"], ["Quelle est la profondeur de la fosse des Mariannes, environ ?", 10994, "m", "", "geo"], ["En quelle année est né Napoléon Bonaparte ?", 1769, "", "a", "histoire"], ["En quelle année est sorti le premier iPhone ?", 2007, "", "a", "loisirs"], ["Combien de cœurs a une pieuvre ?", 3, "cœurs", "", "sciences"], ["Quelle vitesse peut atteindre un guépard en pointe, environ ?", 110, "km/h", "", "sciences"], ["En quelle année a eu lieu la toute première Coupe du monde de football ?", 1930, "", "a", "loisirs"], ["Quel est le diamètre de la Terre, environ ?", 12742, "km", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et le Soleil ?", 150, "millions de km", "", "sciences"], ["Combien de litres de sang contient le corps d'un adulte, environ ?", 5, "litres", "", "sciences"], ["Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?", 1665, "marches", "", "geo"], ["Quelle est la hauteur de la tour Eiffel, antennes comprises ?", 330, "m", "", "geo"], ["En quelle année le tunnel sous la Manche a-t-il été inauguré ?", 1994, "", "a", "histoire"], ["Quelle est la longueur officielle d'un marathon ?", 42.195, "km", "", "loisirs"], ["Combien y a-t-il d'États aux États-Unis ?", 50, "États", "", "geo"], ["Combien d'habitants compte Paris intra-muros, environ ?", 2.1, "millions", "", "geo"], ["En quelle année la peine de mort a-t-elle été abolie en France ?", 1981, "", "a", "histoire"], ["En quelle année les Françaises ont-elles obtenu le droit de vote ?", 1944, "", "a", "histoire"], ["Combien de pièces y a-t-il au total au début d'une partie d'échecs ?", 32, "pièces", "", "loisirs"], ["Combien de langues officielles a la Suisse ?", 4, "langues", "", "geo"], ["Quelle est la hauteur de la statue de la Liberté, sans son socle ?", 46, "m", "", "geo"], ["En quelle année a eu lieu la révolution russe ?", 1917, "", "a", "histoire"], ["Combien de pays font partie de l'Union européenne ?", 27, "pays", "", "geo"], ["Combien d'étoiles y a-t-il sur le drapeau européen ?", 12, "étoiles", "", "loisirs"], ["Quelle est la longueur de la Seine, environ ?", 777, "km", "", "geo"], ["Combien de vertèbres compte la colonne vertébrale humaine, environ ?", 33, "vertèbres", "", "sciences"], ["Quelle est la température à la surface du Soleil, environ ?", 5500, "°C", "", "sciences"], ["Quel est l'âge de l'Univers, environ ?", 13.8, "milliards d'années", "", "sciences"], ["En quelle année est sorti le premier livre Harry Potter ?", 1997, "", "a", "loisirs"], ["En quelle année est sorti le tout premier film Star Wars ?", 1977, "", "a", "loisirs"], ["En quelle année Google a-t-il été créé ?", 1998, "", "a", "loisirs"], ["En quelle année YouTube a-t-il été créé ?", 2005, "", "a", "loisirs"], ["En quelle année Facebook a-t-il été créé ?", 2004, "", "a", "loisirs"], ["En quelle année est sortie la version complète de Minecraft ?", 2011, "", "a", "loisirs"], ["En quelle année le mode Battle Royale de Fortnite est-il sorti ?", 2017, "", "a", "loisirs"], ["Combien de Pokémon compte la toute première génération ?", 151, "Pokémon", "", "loisirs"], ["Quelle est la vitesse du son dans l'air, environ ?", 343, "m/s", "", "sciences"], ["Combien de ponts traversent la Seine à Paris, environ ?", 37, "ponts", "", "geo"], ["Combien de fois bat le cœur d'un adulte au repos, en moyenne, par minute ?", 70, "battements", "", "sciences"], ["Combien de pays compte l'Afrique ?", 54, "pays", "", "geo"], ["Quelle est la hauteur du Burj Khalifa, la plus haute tour du monde ?", 828, "m", "", "geo"], ["Combien de neurones compte le cerveau humain, environ ?", 86, "milliards", "", "sciences"], ["Combien d'œufs pond une poule pondeuse par an, environ ?", 300, "œufs", "", "sciences"], ["Jusqu'à quel âge a vécu Jeanne Calment, la doyenne de l'humanité ?", 122, "ans", "", "histoire"], ["Combien de pays le Danube traverse-t-il ?", 10, "pays", "", "geo"], ["Quelle part de la surface de la Terre est couverte d'eau ?", 71, "%", "", "sciences"], ["Quelle part du corps humain est faite d'eau, environ ?", 60, "%", "", "sciences"], ["Combien d'éléments compte le tableau périodique ?", 118, "éléments", "", "sciences"], ["Quel est le numéro atomique de l'or ?", 79, "", "", "sciences"], ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?", 1492, "", "a", "histoire"], ["En quelle année a eu lieu la bataille de Marignan ?", 1515, "", "a", "histoire"], ["En quelle année la Seconde Guerre mondiale s'est-elle terminée ?", 1945, "", "a", "histoire"], ["En quelle année la Première Guerre mondiale a-t-elle commencé ?", 1914, "", "a", "histoire"], ["Quelle est la hauteur d'un panier de basket ?", 305, "cm", "", "loisirs"], ["Quelle est la longueur d'une piscine olympique ?", 50, "m", "", "loisirs"], ["Combien de lettres compte l'alphabet français ?", 26, "lettres", "", "loisirs"], ["Combien de cases compte le plateau du Monopoly ?", 40, "cases", "", "loisirs"], ["Combien de dominos compte un jeu classique ?", 28, "dominos", "", "loisirs"], ["Combien de joueurs s'affrontent au début d'une partie de Fortnite Battle Royale ?", 100, "joueurs", "", "loisirs"], ["Combien de trous compte un parcours de golf classique ?", 18, "trous", "", "loisirs"], ["Quelle distance sépare Paris de Marseille par la route, environ ?", 775, "km", "", "geo"], ["Quelle distance sépare Paris de New York à vol d'oiseau, environ ?", 5840, "km", "", "geo"], ["Combien d'habitants compte la Chine, environ ?", 1.4, "milliard", "", "geo"], ["Quel est le record de vitesse d'un TGV, établi en 2007 ?", 575, "km/h", "", "loisirs"], ["À quelle température l'eau gèle-t-elle, en degrés Fahrenheit ?", 32, "°F", "", "sciences"], ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", 7, "couleurs", "", "sciences"], ["Combien de planètes compte le système solaire ?", 8, "planètes", "", "sciences"], ["Combien de pattes a une araignée ?", 8, "pattes", "", "sciences"], ["Combien de semaines y a-t-il dans une année ?", 52, "semaines", "", "sciences"], ["Combien de cordes a une guitare classique ?", 6, "cordes", "", "loisirs"], ["Quelle est la hauteur du mont Blanc, environ ?", 4807, "m", "", "geo"], ["Combien d'habitants compte la France, environ ?", 68, "millions", "", "geo"], ["Combien d'humains vivent sur Terre, environ ?", 8, "milliards", "", "geo"], ["En quelle année Gutenberg a-t-il mis au point l'imprimerie, environ ?", 1450, "", "a", "histoire"], ["Quelle est la profondeur moyenne des océans, environ ?", 3688, "m", "", "geo"], ["Combien de kilomètres sépare la Terre de Mars au plus près, environ ?", 55, "millions de km", "", "sciences"], ["Quelle est la hauteur d'un filet de volley-ball masculin ?", 243, "cm", "", "loisirs"], ["Quelle est la longueur d'un court de tennis ?", 23.77, "m", "", "loisirs"], ["Combien de petits cubes visibles a un Rubik's Cube classique ?", 26, "cubes", "", "loisirs"], ["Combien d'étoiles y a-t-il sur le drapeau des États-Unis ?", 50, "étoiles", "", "loisirs"]];
 const NB = [5, 10, 15];
 const nbChoisi = () => +document.querySelector("#nbq input:checked").value;
 $("nbq").innerHTML = NB.map(n => `<label class="jeton"><input type="radio" name="nbq" value="${n}" ${n === 10 ? "checked" : ""}><span>${n} questions</span></label>`).join("");
-$("nbq").onchange = () => Lobby.envoyerReglages();
+const CATS = { histoire: "Histoire", sciences: "Sciences et nature", geo: "Géographie", loisirs: "Sport, jeux et tech" };
+$("cats").innerHTML = Object.keys(CATS).map(k => `<label class="jeton"><input type="checkbox" value="${k}" checked><span>${CATS[k]}</span></label>`).join("");
+$("chronos").innerHTML = [0, 20, 40].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Sans chrono"}</span></label>`).join("");
+const catsChoisies = () => [...document.querySelectorAll("#cats input:checked")].map(i => i.value);
+const chronoChoisi = () => +document.querySelector("#chronos input:checked").value;
+const indicesDispo = () => { const c = catsChoisies(); return QUESTIONS.map((x, i) => i).filter(i => c.includes(QUESTIONS[i][4])); };
+function majNbQ() { const n = indicesDispo().length; $("nb-q").textContent = "· " + n + " question" + (n > 1 ? "s" : ""); }
+majNbQ();
+$("nbq").onchange = $("chronos").onchange = () => Lobby.envoyerReglages();
+$("cats").onchange = () => { majNbQ(); Lobby.envoyerReglages(); };
 
 const fmt = v => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 3 }).format(v);
 const court = v => new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 }).format(v);
@@ -147,7 +164,9 @@ const P = { mode: "local", joueurs: [], scores: {}, total: 10, n: 0, pid: 0, pio
 const enLigne = () => P.mode === "ligne";
 const chef = () => !enLigne() || Salon.autorite();
 const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
-const couleurDe = id => COULEURS[Math.max(0, P.joueurs.findIndex(j => j.id === id)) % COULEURS.length];
+let COULS = {};
+const couleurDe = id => COULS[id] || "#fff";
+const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
 const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
 
 /* ---------- Points ---------- */
@@ -189,15 +208,16 @@ Lobby.monter({
   ecransJeu: ["jeu", "passe", "fin"],
   ordre: ["p-question", "p-reponse", "p-reveal", "p-fin"],
   remise: ["p-question"],
-  resume: () => (Salon.role === "ecran" ? "L'écran du salon" : Salon.nom) + " prépare une partie de " + nbChoisi() + " questions.",
+  resume: () => (Salon.role === "ecran" ? "L'écran du salon" : Salon.nom) + " prépare une partie de " + nbChoisi() + " questions (" + catsChoisies().map(c => CATS[c].toLowerCase()).join(", ") + ")" + (chronoChoisi() ? ", " + chronoChoisi() + " s pour répondre" : "") + ".",
   enPartie: () => !!P.phase,
   surLocal: () => { P.mode = "local"; $("place-local").append($("reglages-jeu")); if (!$("local-noms").children.length) { ajouterNom(pseudo.lire()); ajouterNom(""); } alerte("err-local"); ecran("local"); },
-  surLancer: () => { P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom })); P.total = nbChoisi(); nouvellePartie(); },
+  surLancer: () => { if (!indicesDispo().length) { alerte("err-salon", "Coche au moins un thème."); return; } P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom, av: g.av })); P.total = nbChoisi(); P.chrono = chronoChoisi(); nouvellePartie(); },
   surMessage: m => recevoir(m),
   surGens: (nouveaux, partis) => surGens(nouveaux, partis),
-  surArret: () => { P.phase = ""; P.mode = "local"; },
-  surRetourSalon: () => { P.phase = ""; }
+  surArret: () => { Chrono.arreter(); P.phase = ""; P.mode = "local"; },
+  surRetourSalon: () => { Chrono.arreter(); P.phase = ""; }
 });
+Chrono.monter($("chrono"));
 const ouvrirSalonOrig = Lobby.ouvrirSalon.bind(Lobby);
 Lobby.ouvrirSalon = t => { $("place-reglages").append($("reglages-jeu")); P.mode = "ligne"; ouvrirSalonOrig(t); };
 
@@ -216,28 +236,40 @@ $("retour-local").onclick = () => { sons.clic(); ecran("modes"); };
 $("lancer-local").onclick = () => {
   const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
   if (new Set(noms.map(n => n.toLowerCase())).size !== noms.length) { alerte("err-local", "Deux joueurs ont le même pseudo."); return; }
-  alerte("err-local"); P.mode = "local"; P.joueurs = noms.map((nom, k) => ({ id: "j" + k, nom })); P.total = nbChoisi(); nouvellePartie();
+  if (!indicesDispo().length) { alerte("err-local", "Coche au moins un thème."); return; }
+  alerte("err-local"); P.mode = "local"; P.joueurs = noms.map((nom, k) => ({ id: "j" + k, nom, av: Avatar.auto(k) })); P.total = nbChoisi(); P.chrono = chronoChoisi(); nouvellePartie();
 };
 
 /* ---------- Déroulé (local, ou celui qui a créé le salon) ---------- */
 function nouvellePartie() {
-  P.pid++; P.n = 0; P.scores = {}; P.joueurs.forEach(j => { P.scores[j.id] = 0; });
-  P.pioche = melange(QUESTIONS.map((_, i) => i)); sons.clic(); poserQuestion();
+  P.pid++; P.n = 0; P.scores = {}; P.journal = []; P.joueurs.forEach(j => { P.scores[j.id] = 0; });
+  P.pioche = melange(indicesDispo()); sons.clic(); poserQuestion();
 }
 function poserQuestion() {
-  if (!P.pioche.length) P.pioche = melange(QUESTIONS.map((_, i) => i));
-  const m = { t: "p-question", pid: P.pid, n: P.n, total: P.total, qi: P.pioche.pop(), joueurs: P.joueurs, scores: P.scores };
+  if (!P.pioche.length) P.pioche = melange(indicesDispo());
+  const m = { t: "p-question", pid: P.pid, n: P.n, total: P.total, qi: P.pioche.pop(), joueurs: P.joueurs, scores: P.scores, chrono: P.chrono || 0 };
   if (enLigne()) Salon.envoyer(m, true);
   debutQuestion(m);
 }
 function debutQuestion(m) {
-  P.pid = m.pid; P.n = m.n; P.total = m.total; P.q = QUESTIONS[m.qi]; P.joueurs = m.joueurs; P.scores = Object.assign({}, m.scores); P.reps = {}; P.tour = 0;
+  if (m.n === 0 || m.pid !== P.pid) P.journal = [];
+  P.pid = m.pid; P.n = m.n; P.total = m.total; P.q = QUESTIONS[m.qi]; P.joueurs = m.joueurs; P.scores = Object.assign({}, m.scores); P.reps = {}; P.tour = 0; P.chrono = m.chrono || 0;
+  COULS = Avatar.couleurs(P.joueurs);
   enTete(); $("question").textContent = P.q[0]; $("unite").textContent = P.q[2];
   ["bloc-regle", "resultat", "bloc-resultats", "suivante", "arreter", "reveler-mnt"].forEach(i => { $(i).style.display = "none"; });
   alerte("deco");
   if (!enLigne()) { tourLocal(); return; }
   if (jeJoue()) phaseRepondre(); else phaseAttente();
   majStatut(); ecran("jeu");
+  lancerChrono();
+}
+// Chrono : à la fin, ceux qui n'ont pas répondu n'ont pas de point, et la réponse tombe.
+function lancerChrono(local) {
+  Chrono.lancer(P.chrono, () => {
+    if (!enLigne()) { if (P.phase === "repondre") { sons.rate(); P.tour++; if (P.tour < P.joueurs.length) tourLocal(); else reveler(); } return; }
+    if (P.phase === "repondre") { phaseAttente(); $("attente").textContent = "Temps écoulé !"; }
+    if (Salon.autorite()) { const pid = P.pid, n = P.n; setTimeout(() => { if (P.pid === pid && P.n === n && P.phase !== "revele") reveler(); }, 1500); }
+  });
 }
 function enTete() {
   const moi = enLigne() ? Salon.id : null;
@@ -247,7 +279,7 @@ function enTete() {
 }
 function tourLocal() { // chacun répond à son tour, sans voir les autres
   const j = P.joueurs[P.tour];
-  const suite = () => { phaseRepondre(); $("qui-repond").textContent = P.joueurs.length > 1 ? "À " + j.nom + " de répondre" : ""; ecran("jeu"); setTimeout(() => $("valeur").focus(), 60); };
+  const suite = () => { phaseRepondre(); $("qui-repond").textContent = P.joueurs.length > 1 ? "À " + j.nom + " de répondre" : ""; ecran("jeu"); setTimeout(() => $("valeur").focus(), 60); lancerChrono(true); };
   if (P.joueurs.length === 1) { suite(); return; }
   $("passe-titre").textContent = "À " + j.nom + " de répondre !";
   $("passe-texte").textContent = "Les autres ne regardent pas l'écran.";
@@ -291,6 +323,7 @@ function majStatut() {
   $("gens-jeu").style.display = "";
   const revele = P.phase === "revele";
   dessinerGens($("gens-jeu"), P.joueurs.map(j => ({ cle: j.id, nom: j.nom })), {
+    avatar: g => avDe(g.cle),
     couleur: g => couleurDe(g.cle),
     etiquette: g => !Salon.present(g.cle) ? "Déconnecté" : revele ? "Total" : (g.cle in P.reps ? "A répondu ✓" : "Réfléchit…") + (g.cle === Salon.id ? " · toi" : ""),
     classe: g => !revele && g.cle in P.reps ? "ok" : "",
@@ -318,7 +351,8 @@ function reveler() {
   afficherReveal(m);
 }
 function afficherReveal(m) {
-  P.phase = "revele"; P.reps = m.reps;
+  P.phase = "revele"; P.reps = m.reps; Chrono.arreter();
+  P.journal = (P.journal || []).concat([{ q: P.q, reps: m.reps, pts: m.pts, proches: m.proches || [] }]);
   const avant = enLigne() ? (P.scores[Salon.id] || 0) : 0;
   Object.keys(m.pts).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
   $("bloc-reponse").style.display = "none"; $("attente").style.display = "none"; $("reveler-mnt").style.display = "none";
@@ -359,8 +393,9 @@ function afficherResultats(m) {
   ids.forEach(id => {
     const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
     sw.className = "pastille"; sw.style.background = couleurDe(id);
+    t.insertAdjacentHTML("afterbegin", Avatar.svg(avDe(id), 22, ' style="vertical-align:-6px;margin-right:6px"'));
     const v = m.reps[id];
-    t.append(sw, document.createTextNode(nomDe(id) + " : " + (v === undefined ? "pas de réponse" : fmt(v))));
+    t.append(document.createTextNode(nomDe(id) + " : " + (v === undefined ? "pas de réponse" : fmt(v))));
     if ((m.proches || []).includes(id)) { const e = document.createElement("span"); e.className = "etoile"; e.textContent = " ★ le plus proche"; t.append(e); }
     b.textContent = "+" + (m.pts[id] || 0); li.append(t, b); ul.append(li);
   });
@@ -387,8 +422,8 @@ function dessinerRegle(m) {
   let s = `<rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#111" transform="translate(4 4)"/><rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#fff" stroke="#111" stroke-width="3"/>`;
   ticks.forEach(v => { const px = x(v); if (px < X0 - 4 || px > X1 + 4) return; s += `<path d="M${px.toFixed(1)} ${Y}v10" stroke="#111" stroke-width="2.5"/><text x="${px.toFixed(1)}" y="${Y + 19}" font-size="9" text-anchor="middle" font-family="Comic Neue,sans-serif" font-weight="700">${echapper(court(v))}</text>`; });
   tries.forEach((id, k) => {
-    const px = x(m.reps[id]).toFixed(1), py = Y - 16 - rang[id] * 28, c = couleurDe(id), ini = echapper(nomDe(id).trim().charAt(0).toUpperCase() || "?");
-    s += `<g class="marque" style="animation-delay:${(k * 0.12).toFixed(2)}s"><path d="M${px} ${Y}V${py}" stroke="#111" stroke-width="3"/><circle cx="${px}" cy="${py}" r="12" fill="${c}" stroke="#111" stroke-width="3"/><text x="${px}" y="${py + 5}" font-size="15" text-anchor="middle" font-family="Bangers,Impact,sans-serif" fill="#111">${ini}</text></g>`;
+    const px = x(m.reps[id]).toFixed(1), py = Y - 16 - rang[id] * 28;
+    s += `<g class="marque" style="animation-delay:${(k * 0.12).toFixed(2)}s"><path d="M${px} ${Y}V${py}" stroke="#111" stroke-width="3"/>${Avatar.groupe(avDe(id), +px, py, 26)}</g>`;
   });
   const vx = x(vrai).toFixed(1);
   s += `<g class="vraie" style="animation-delay:1.05s"><path d="M${vx} ${Y + 24}l-12 22h24z" fill="#FF2D2D" stroke="#111" stroke-width="3" stroke-linejoin="round"/><path d="M${vx} ${Y - 4}V${Y + 26}" stroke="#FF2D2D" stroke-width="4"/></g>`;
@@ -417,21 +452,44 @@ function finir() {
   const ul = $("classement"); ul.textContent = "";
   cl.forEach(c => {
     const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
-    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
-    t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (enLigne() && c.id === Salon.id ? " (toi)" : "")));
+    t.insertAdjacentHTML("beforeend", Avatar.svg(avDe(c.id), 24, ' style="vertical-align:-7px;margin-right:6px"'));
+    t.append(document.createTextNode(rangDe(c.s) + ". " + c.nom + (enLigne() && c.id === Salon.id ? " (toi)" : "")));
     b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
   });
+  momentsForts();
   $("rejouer").disabled = false; $("rejouer").innerHTML = ico("rejouer") + "REJOUER";
   $("changer").style.display = chef() ? "" : "none";
   sons.fin(); ecran("fin");
 }
 $("rejouer").onclick = () => {
   if (!chef()) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; Salon.envoyer({ t: "rejouer?" }); return; }
-  if (enLigne()) P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom }));
+  if (enLigne()) P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom, av: g.av }));
   if (!P.joueurs.length) return;
   nouvellePartie();
 };
 $("changer").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) Lobby.retourSalon(); else ecran("local"); };
+
+// Moments forts : la réponse la plus juste, la plus à côté, le plus souvent le plus proche.
+function momentsForts() {
+  const tout = [];
+  (P.journal || []).forEach(e => Object.keys(e.reps).forEach(id => {
+    const r = e.q[1], v = e.reps[id], an = e.q[3] === "a";
+    tout.push({ id, e, v, d: an ? Math.abs(v - r) / 40 : (r === 0 ? Math.abs(v) : Math.abs(v - r) / Math.abs(r)) / 0.5 });
+  }));
+  const court = t => t.length > 46 ? t.slice(0, 44) + "…" : t, unite = e => e.q[2] ? " " + e.q[2] : "";
+  const badges = [];
+  if (tout.length) {
+    const top = tout.reduce((a, b) => b.d < a.d ? b : a), flop = tout.reduce((a, b) => b.d > a.d ? b : a);
+    badges.push({ titre: "PILE-POIL !", qui: nomDe(top.id), av: avDe(top.id), detail: "« " + court(top.e.q[0]) + " » : " + fmt(top.v) + " au lieu de " + fmt(top.e.q[1]) + unite(top.e) });
+    if (flop !== top) badges.push({ titre: "À LA RAMASSE", qui: nomDe(flop.id), av: avDe(flop.id), detail: "« " + court(flop.e.q[0]) + " » : " + fmt(flop.v) + " au lieu de " + fmt(flop.e.q[1]) + unite(flop.e) });
+  }
+  if (P.joueurs.length > 1) {
+    const c = {}; (P.journal || []).forEach(e => e.proches.forEach(id => { c[id] = (c[id] || 0) + 1; }));
+    const ids = Object.keys(c);
+    if (ids.length) { const roi = ids.reduce((a, b) => c[b] > c[a] ? b : a); badges.push({ titre: "ROI DE L'ESTIMATION", qui: nomDe(roi), av: avDe(roi), detail: "Le plus proche " + c[roi] + " fois" }); }
+  }
+  dessinerBadges($("badges"), badges); $("titre-badges").style.display = badges.length ? "" : "none";
+}
 
 /* ---------- Messages reçus ---------- */
 function recevoir(m) {
@@ -458,7 +516,7 @@ function surGens(nouveaux, partis) {
   if (!enLigne() || !P.phase) return;
   majStatut(); verifierComplet();
   const chefLa = Salon.gens.some(g => g.role !== "invite");
-  alerte("deco", chefLa ? "" : "Celui qui a créé le salon est parti. La partie est en pause.");
+  alerte("deco", chefLa ? "" : "Celui qui a créé le salon a perdu la connexion. S'il ne revient pas dans quelques secondes, le salon se ferme.");
 }
 </script>
 </body>

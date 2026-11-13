@@ -40,7 +40,9 @@ const ICONES = {
   suite: '<path d="M4 12h15M13 5l7 7-7 7"/>',
   masque: '<path d="M3 8.5c3-2 6-2 9 0 3-2 6-2 9 0 0 5-2.5 8-5 8-1.6 0-2.6-1.3-4-1.3S9.6 16.5 8 16.5c-2.5 0-5-3-5-8z"/><path d="M6.5 10.5c1 .8 2 .8 3 0M14.5 10.5c1 .8 2 .8 3 0"/>',
   regle: '<rect x="2.5" y="8" width="19" height="8" rx="1"/><path d="M6 8v3M9.5 8v2M13 8v3M16.5 8v2"/>',
-  vote: '<path d="M4 13.5h16v7H4z"/><path d="M8 13.5 12 4l5 2-3.5 7.5"/>'
+  vote: '<path d="M4 13.5h16v7H4z"/><path d="M8 13.5 12 4l5 2-3.5 7.5"/>',
+  musique: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  chrono: '<circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5"/>'
 };
 document.body.insertAdjacentHTML("afterbegin", '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' +
   Object.entries(ICONES).map(([n, d]) => `<symbol id="i-${n}" viewBox="0 0 24 24">${d}</symbol>`).join("") + "</svg>");
@@ -82,6 +84,7 @@ function ecran(nom) {
   ecranActuel = nom;
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   ecouteursEcran.forEach(f => f(nom));
+  if (typeof Eveil !== "undefined") Eveil.regler(Entete.ecransQuitter.includes(nom));
   window.scrollTo(0, 0);
 }
 function alerte(id, texte) {
@@ -106,6 +109,40 @@ function compteur(el, de, a) {
   if (reduit || de >= a) { el.textContent = a; return; }
   let v = de;
   (function pas() { v++; el.textContent = v; rejouerAnim(el, "roule"); if (v < a) setTimeout(pas, 150); })();
+}
+
+/* ---------- Chrono : une mèche qui se consume ---------- */
+const Chrono = {
+  el: null, fin: 0, total: 0, minu: null, surFin: null, dernier: -1,
+  monter(el) { this.el = el; el.className = "chrono"; el.innerHTML = '<div class="chrono-meche"><div class="chrono-feu"></div></div><b class="chrono-n"></b>'; el.style.display = "none"; },
+  lancer(sec, surFin) {
+    this.arreter();
+    if (!sec || !this.el) return;
+    this.total = sec * 1000; this.fin = Date.now() + this.total; this.surFin = surFin; this.dernier = -1;
+    this.el.style.display = ""; this.el.classList.remove("urgent");
+    this.minu = setInterval(() => this.tic(), 100); this.tic();
+  },
+  tic() {
+    const reste = Math.max(0, this.fin - Date.now()), s = Math.ceil(reste / 1000);
+    this.el.querySelector(".chrono-feu").style.width = (reste / this.total * 100).toFixed(1) + "%";
+    this.el.querySelector(".chrono-n").textContent = s;
+    if (s !== this.dernier) { this.dernier = s; if (s <= 5 && s > 0) { this.el.classList.add("urgent"); sons.tic(s); } }
+    if (reste <= 0) { const f = this.surFin; this.arreter(true); f && f(); }
+  },
+  arreter(garder) { clearInterval(this.minu); this.minu = null; this.surFin = null; if (this.el && !garder) this.el.style.display = "none"; }
+};
+
+/* ---------- Moments forts de la fin de partie ---------- */
+// badges : [{ titre, qui, detail, av }]
+function dessinerBadges(el, badges) {
+  el.textContent = "";
+  badges.filter(Boolean).forEach((b, i) => {
+    const d = document.createElement("div"); d.className = "badge case" + (i % 2 ? "" : " jaune");
+    d.style.setProperty("--r", (i % 2 ? 1.2 : -1.2) + "deg");
+    d.innerHTML = `<span class="badge-titre">${echapper(b.titre)}</span><span class="badge-qui">${b.av ? Avatar.svg(b.av, 30) : ""}${echapper(b.qui || "")}</span><span class="badge-detail">${echapper(b.detail || "")}</span>`;
+    el.append(d);
+  });
+  el.style.display = el.children.length ? "" : "none";
 }
 
 /* ---------- Fenêtres (règles, confirmation) ---------- */
@@ -175,7 +212,7 @@ const NOMS_JEUX = { cadran: "Le Cadran", imposteur: "L'Imposteur", "plus-ou-moin
 const Salon = {
   client: null, canal: null, code: "", nom: "", role: "", jeu: "", max: 8, t: 0,
   id: (() => { try { let v = sessionStorage.getItem("jeux-id"); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("jeux-id", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })(),
-  gens: [], cles: new Set(), dernier: {}, minuteur: null,
+  gens: [], cles: new Set(), dernier: {}, minuteur: null, av: null, avaitChef: false, minuFermeture: null,
   ordre: [], // types de messages à renvoyer, dans l'ordre, à quelqu'un qui arrive
   remise: [], // types qui effacent les anciens messages gardés (nouvelle partie, retour au salon)
   surMessage: () => {}, surGens: () => {}, surErreur: () => {}, surCode: () => {},
@@ -189,6 +226,7 @@ const Salon = {
   ouvrir(code, role, nom) {
     this.quitter(true);
     this.code = code; this.role = role; this.nom = nom; this.t = Date.now(); this.gens = []; this.cles = new Set(); this.dernier = {};
+    this.av = typeof Avatar !== "undefined" ? Avatar.lire() : null; this.avaitChef = false;
     this.client = this.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
     const canal = this.client.channel("jeux-" + code, { config: { broadcast: { self: false }, presence: { key: this.id } } });
     this.canal = canal;
@@ -205,9 +243,9 @@ const Salon = {
       });
     this.surCode(code);
   },
-  suivre() { try { this.canal.track({ nom: this.nom, role: this.role, t: this.t, jeu: this.jeu }); } catch (e) {} },
+  suivre() { try { this.canal.track({ nom: this.nom, role: this.role, t: this.t, jeu: this.jeu, av: this.av }); } catch (e) {} },
   quitter(silencieux) {
-    clearTimeout(this.minuteur);
+    clearTimeout(this.minuteur); clearTimeout(this.minuFermeture); this.minuFermeture = null;
     if (this.canal && this.client) { const c = this.canal, client = this.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!this.canal && client.getChannels().length === 0) client.disconnect(); }); }
     this.canal = null; this.gens = []; this.cles = new Set(); this.dernier = {};
     if (!silencieux) this.role = "";
@@ -220,7 +258,7 @@ const Salon = {
   },
   majPresence() {
     const etat = this.canal.presenceState(), tous = [];
-    Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => tous.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu })));
+    Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => tous.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu, av: typeof Avatar !== "undefined" && Avatar.valide(m.av) ? m.av : null })));
     const tri = l => l.sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
     const chefs = tri(tous.filter(g => g.role === "hote" || g.role === "ecran")), invites = tri(tous.filter(g => g.role === "invite"));
     const chef = chefs[0] || null;
@@ -240,6 +278,11 @@ const Salon = {
     const partis = [...avant].filter(c => !this.gens.some(g => g.cle === c));
     this.cles = new Set(this.gens.map(g => g.cle));
     if (chef) clearTimeout(this.minuteur);
+    // celui qui a créé le salon est parti : on lui laisse quelques secondes pour revenir, puis le salon ferme pour tout le monde
+    if (this.role === "invite") {
+      if (chef) { this.avaitChef = true; clearTimeout(this.minuFermeture); this.minuFermeture = null; }
+      else if (this.avaitChef && !this.minuFermeture) this.minuFermeture = setTimeout(() => { this.minuFermeture = null; if (!this.gens.some(g => g.role !== "invite")) this.erreur("Le salon est fermé : celui qui l'a créé est parti."); }, 8000);
+    }
     if (nouveaux.length) { // rattrapage : on renvoie l'état utile à ceux qui arrivent
       sons.arrivee();
       this.ordre.forEach(t => { if (this.dernier[t]) this.envoyer(this.dernier[t]); });
@@ -274,7 +317,9 @@ function dessinerGens(ul, liste, options) {
     if (options.classe) { const c = options.classe(g); if (c) li.className = c; }
     sm.textContent = options.etiquette ? options.etiquette(g) : (g.role === "ecran" ? "Écran du salon" : g.role === "hote" ? "Hôte" : "Joueur") + (g.cle === Salon.id ? " · toi" : "");
     li.append(sm);
-    if (options.couleur) { const i = document.createElement("i"); i.style.background = options.couleur(g); li.append(i); }
+    const av = options.avatar ? options.avatar(g) : g.av;
+    if (av && typeof Avatar !== "undefined") li.insertAdjacentHTML("beforeend", Avatar.svg(av, 24, ' style="vertical-align:-6px;margin-right:6px"'));
+    else if (options.couleur) { const i = document.createElement("i"); i.style.background = options.couleur(g); li.append(i); }
     li.append(document.createTextNode(g.nom));
     if (options.score) { const em = document.createElement("em"); em.textContent = options.score(g); li.append(em); }
     ul.append(li);
@@ -300,6 +345,7 @@ const Lobby = {
   <nav class="nav" aria-label="Menu">
     <a class="btn icone" id="maison" href="${RACINE}" aria-label="Tous les jeux">${ico("maison")}</a>
     <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu">${ico("aide")}</button>
+    <button class="btn icone" id="musique" type="button" aria-pressed="false" aria-label="Musique d'ambiance" style="display:none">${ico("musique")}</button>
     <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé">${ico("son")}</button>
     <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none">${ico("quitter")}</button>
   </nav>
@@ -316,6 +362,7 @@ const Lobby = {
 <section class="screen" id="s-ligne">
   <h2>Jouer en ligne</h2>
   <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+  <div><label>Ton avatar</label><div class="avatar-choix" id="choix-avatar"></div></div>
   <button class="btn" id="creer" type="button">${ico("plus")}CRÉER UN SALON</button>
   <div class="case" style="display:flex;flex-direction:column;gap:10px">
     <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
@@ -365,6 +412,8 @@ const Lobby = {
     Entete.quitter = () => this.sortir();
     brancherEntete();
     $("voir-regles").onclick = () => ouvrir("m-regles");
+    if (typeof Avatar !== "undefined") Avatar.choisisseur($("choix-avatar"), av => { Salon.av = av; });
+    $("musique").onclick = () => { const on = Musique.basculer(); $("musique").setAttribute("aria-pressed", on); };
     $("go-local").onclick = () => { sons.clic(); o.surLocal(); };
     $("go-ligne").onclick = () => { sons.clic(); chargerTempsReel().catch(() => {}); $("pseudo").value = $("pseudo").value || pseudo.lire(); alerte("err-ligne"); ecran("ligne"); };
     $("go-salon").onclick = () => this.creer("ecran");
@@ -379,7 +428,7 @@ const Lobby = {
     Salon.ordre = ["salon", "reglages"].concat(o.ordre || []);
     Salon.remise = ["salon"].concat(o.remise || []);
     Salon.surCode = code => { $("code-salon").textContent = code; if (Salon.role === "ecran") { $("adresse").textContent = RACINE.replace(/^https?:\/\//, "") + " → code " + code; dessinerQR($("qr"), Salon.lien()); } };
-    Salon.surErreur = msg => { document.body.classList.remove("tele"); o.surArret && o.surArret(); ecran("ligne"); alerte("err-ligne", msg); };
+    Salon.surErreur = msg => { this.arret(); $("pseudo").value = $("pseudo").value || pseudo.lire(); ecran("ligne"); alerte("err-ligne", msg); };
     Salon.surMessage = m => this.recevoir(m);
     Salon.surGens = (nouveaux, partis) => this.majGens(nouveaux, partis);
     ecran("modes");
@@ -392,6 +441,8 @@ const Lobby = {
     try { await Salon.creer(this.o.jeu, nom, role, this.o.max); }
     catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
     document.body.classList.toggle("tele", role === "ecran");
+    $("musique").style.display = role === "ecran" ? "" : "none";
+    if (role === "ecran" && Musique.voulue()) { Musique.demarrer(); $("musique").setAttribute("aria-pressed", "true"); }
     this.ouvrirSalon();
   },
   async rejoindre() {
@@ -414,10 +465,11 @@ const Lobby = {
     if (!chef) $("resume-invite").textContent = texteInvite || $("resume-invite").textContent || "L'hôte règle la partie…";
     alerte("err-salon"); this.majListe(); this.envoyerReglages(); ecran("salon");
   },
-  sortir() { Salon.quitter(); document.body.classList.remove("tele"); this.o.surArret && this.o.surArret(); ecran("modes"); },
+  sortir() { Salon.quitter(); this.arret(); ecran("modes"); },
+  arret() { document.body.classList.remove("tele"); Musique.arreter(); $("musique").style.display = "none"; this.o.surArret && this.o.surArret(); },
   majListe() {
     const joueurs = Salon.joueurs().length, min = this.o.min;
-    dessinerGens($("gens-salon"), Salon.gens.length ? Salon.gens : [{ cle: Salon.id, nom: Salon.nom, role: Salon.role }]);
+    dessinerGens($("gens-salon"), Salon.gens.length ? Salon.gens : [{ cle: Salon.id, nom: Salon.nom, role: Salon.role, av: Salon.role === "ecran" ? null : Salon.av }], { avatar: g => g.role === "ecran" ? null : g.av });
     $("etat-salon").textContent = joueurs + " joueur" + (joueurs > 1 ? "s" : "") + " (de " + min + " à " + this.o.max + ")." + (joueurs < min ? " Il en manque " + (min - joueurs) + " pour lancer." : "");
   },
   majGens(nouveaux, partis) {

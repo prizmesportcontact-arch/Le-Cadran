@@ -183,3 +183,31 @@ body.tele .gens li small{font-size:15px}
 .boum div.petit-mot{font-size:22px}
 @media (prefers-reduced-motion:reduce){.tuile:hover{transform:none}}
 @media (max-width:440px){h1{font-size:25px;padding:4px 10px 6px;letter-spacing:1px}.nav{gap:7px}.btn.icone{width:44px;min-height:44px}.btn.icone .ico{width:22px;height:22px}}
+/* avatars */
+.avatar{display:inline-block;flex:none}
+.avatar-choix{display:flex;gap:14px;align-items:flex-start}
+.av-apercu{flex:none;background:#fff;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);padding:4px;line-height:0}
+.av-choix{display:flex;flex-direction:column;gap:8px;min-width:0}
+.av-couleurs,.av-tetes{display:flex;flex-wrap:wrap;gap:6px}
+.av-coul{width:30px;height:30px;border:3px solid var(--noir);cursor:pointer;padding:0}
+.av-coul[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--noir)}
+.av-tete{width:40px;height:40px;padding:2px;border:2px solid transparent;background:transparent;cursor:pointer;line-height:0}
+.av-tete[aria-checked="true"]{border:3px solid var(--noir);background:#fff;box-shadow:3px 3px 0 var(--noir)}
+/* chrono en forme de mèche */
+.chrono{display:flex;align-items:center;gap:10px}
+.chrono-meche{flex:1;height:18px;background:#fff;border:3px solid var(--noir);box-shadow:3px 3px 0 var(--noir);overflow:hidden}
+.chrono-feu{height:100%;width:100%;background:repeating-linear-gradient(-45deg,var(--jaune) 0 8px,var(--orange) 8px 16px);transition:width .1s linear}
+.chrono-n{font-family:var(--titre);font-weight:400;font-size:28px;min-width:40px;text-align:right}
+.chrono.urgent .chrono-feu{background:repeating-linear-gradient(-45deg,var(--rouge) 0 8px,var(--orange) 8px 16px)}
+.chrono.urgent .chrono-n{color:var(--rouge);animation:secoue .45s}
+body.tele .chrono-n{font-size:44px}
+body.tele .chrono-meche{height:26px}
+/* moments forts */
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.badge{display:flex;flex-direction:column;gap:4px;padding:10px 12px;transform:rotate(var(--r))}
+.badge-titre{font-family:var(--titre);font-size:20px;letter-spacing:1px;line-height:1}
+.badge-qui{display:flex;align-items:center;gap:6px;font-size:17px}
+.badge-detail{font-size:13px;line-height:1.25}
+body.tele .badge-titre{font-size:28px}
+body.tele .badge-qui{font-size:22px}
+body.tele .badge-detail{font-size:17px}

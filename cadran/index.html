@@ -7,6 +7,8 @@
 <meta name="description" content="Un jeu à deux : l'un donne un indice, l'autre place l'aiguille sur le cadran. En ligne ou sur un seul appareil.">
 <meta name="theme-color" content="#19B5F0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 50a28 28 0 0 1 56 0z' fill='%23FFE600' stroke='%23111' stroke-width='5'/%3E%3Cpath d='M32 50 44 22' stroke='%23111' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='50' r='6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icones/icone-180.png">
 <link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -178,6 +180,25 @@ body.tele #ph-devine{margin-top:0}
 .btn.salon{min-height:60px;font-size:16px;white-space:normal;text-align:left;justify-content:flex-start}
 @media (prefers-reduced-motion:reduce){.screen.on,.bulle.arrive,.carte span.claque,.secoue,#mini-aig,.modale>.case{animation:none}
 #volet,.btn{transition:none}.tic,.boum div.pop,.boum svg.boom,.boum svg.tremble,.roule{animation:none}}
+/* avatars, moments forts */
+.avatar{display:inline-block;flex:none;vertical-align:middle}
+.avatar-choix{display:flex;gap:14px;align-items:flex-start}
+.av-apercu{flex:none;background:#fff;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);padding:4px;line-height:0}
+.av-choix{display:flex;flex-direction:column;gap:8px;min-width:0}
+.av-couleurs,.av-tetes{display:flex;flex-wrap:wrap;gap:6px}
+.av-coul{width:30px;height:30px;border:3px solid var(--noir);cursor:pointer;padding:0}
+.av-coul[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--noir)}
+.av-tete{width:40px;height:40px;padding:2px;border:2px solid transparent;background:transparent;cursor:pointer;line-height:0}
+.av-tete[aria-checked="true"]{border:3px solid var(--noir);background:#fff;box-shadow:3px 3px 0 var(--noir)}
+.gens li .avatar{margin-right:6px;vertical-align:-6px}
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.badge{display:flex;flex-direction:column;gap:4px;padding:10px 12px;transform:rotate(var(--r))}
+.badge-titre{font-family:var(--titre);font-size:20px;letter-spacing:1px;line-height:1}
+.badge-qui{display:flex;align-items:center;gap:6px;font-size:17px}
+.badge-detail{font-size:13px;line-height:1.25}
+body.tele .badge-titre{font-size:28px}
+body.tele .badge-qui{font-size:22px}
+body.tele .badge-detail{font-size:17px}
 </style>
 </head>
 <body>
@@ -206,6 +227,7 @@ body.tele #ph-devine{margin-top:0}
     <nav class="nav" aria-label="Menu">
       <a class="btn icone" id="maison" href="../" aria-label="Tous les jeux"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg></a>
       <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg></button>
+      <button class="btn icone" id="musique" type="button" aria-pressed="false" aria-label="Musique d'ambiance" style="display:none"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></button>
       <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg></button>
       <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg></button>
     </nav>
@@ -239,6 +261,7 @@ body.tele #ph-devine{margin-top:0}
   <section class="screen" id="s-ligne">
     <h2>Jouer en ligne</h2>
     <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    <div><label>Ton avatar</label><div id="choix-avatar"></div></div>
     <button class="btn" id="creer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>CRÉER UN SALON</button>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
@@ -408,6 +431,8 @@ body.tele #ph-devine{margin-top:0}
       <div class="petit" id="fin-detail"></div>
     </div>
     <p class="bandeau" id="fin-record" style="text-align:center"></p>
+    <h2 id="titre-badges">Les moments forts</h2>
+    <div class="badges" id="badges"></div>
     <div class="case"><ul class="liste" id="recap"></ul></div>
     <div class="bas">
       <button class="btn" id="rejouer" type="button">REJOUER</button>
@@ -445,6 +470,8 @@ body.tele #ph-devine{margin-top:0}
   </div>
 </div>
 
+<script src="../commun/avatars.js?v=2"></script>
+<script src="../commun/ambiance.js?v=1"></script>
 <script>
 "use strict";
 /* ---------- Connexion temps réel (Supabase, clé publique faite pour être dans la page) ---------- */
@@ -506,6 +533,7 @@ function ecran(nom) {
   ecranActuel = nom;
   const enJeu = ["manche", "passe"].includes(nom);
   $("sortir").style.display = enJeu ? "" : "none"; $("maison").style.display = enJeu ? "none" : "";
+  if (window.Eveil) Eveil.regler(enJeu || nom === "fin" || nom === "reglages" || nom === "invite");
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   window.scrollTo(0, 0);
 }
@@ -524,7 +552,10 @@ const devineur = () => groupe() ? "tout le monde" : P.joueurs[(P.n + 1) % 2];
 const jeDonne = () => !enLigne() || (groupe() ? donneurG().id === S.id : P.n % 2 === P.moi);
 const jeDevine = () => !jeDonne();
 const COULEURS = ["#19B5F0", "#9B5CFF", "#00C46A", "#FF4FB0", "#FF8A00", "#FFFFFF"];
-const couleurDe = id => COULEURS[Math.max(0, P.gj.findIndex(j => j.id === id)) % COULEURS.length];
+let COULS = {};
+const couleurDe = id => COULS[id] || COULEURS[Math.max(0, P.gj.findIndex(j => j.id === id)) % COULEURS.length];
+const avDe = id => { const j = P.gj.find(x => x.id === id) || S.gens.find(g => g.cle === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
+const majCouls = () => { COULS = Avatar.couleurs(P.gj); };
 
 /* ---------- Réglages ---------- */
 let persos = [];
@@ -617,7 +648,7 @@ $("lancer").onclick = () => {
 };
 function nouvellePartie() {
   if (groupe()) { // l'ordre des donneurs suit l'ordre d'arrivée dans le salon
-    P.gj = S.gens.filter(g => g.role !== "ecran").slice(0, 6).map(g => ({ id: g.cle, nom: g.nom }));
+    P.gj = S.gens.filter(g => g.role !== "ecran").slice(0, 6).map(g => ({ id: g.cle, nom: g.nom, av: g.av })); majCouls();
     P.coop = P.gj.length === 2; // à deux avec un grand écran : on joue ensemble
     P.scores = {}; P.gj.forEach(j => { P.scores[j.id] = 0; });
     P.manches = P.tours * P.gj.length;
@@ -839,7 +870,7 @@ $("valider").onclick = () => {
 };
 function reveler(angle, cible, pts) {
   P.phase = "reveal"; P.cible = cible; dessinerCible(cible); poserAiguille(angle, true); svg.classList.remove("reglable");
-  P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur() });
+  P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur(), ecart: Math.abs(angle - cible) });
   $("aiguille").style.display = ""; afficherIndice();
   montrer(["ph-devine", "bulle"]); role("Révélation…");
   volet(true, false);
@@ -893,9 +924,8 @@ function revelerMaintenant() {
 function dessinerAiguilles(aig) {
   $("aig-autres").innerHTML = Object.keys(aig).map(id => {
     const a = aig[id], c = couleurDe(id), moi = id === S.id, [lx, ly] = pt(a, 170), j = P.gj.find(x => x.id === id);
-    const ini = (j ? j.nom : "?").trim().charAt(0).toUpperCase().replace(/[<>&"]/g, "");
     return `<g transform="rotate(${(a - 90).toFixed(1)} 170 175)"><polygon points="${moi ? "164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" : "166,175 174,175 172,60 177,60 170,40 163,60 168,60"}" fill="${c}" stroke="#111" stroke-width="${moi ? 4 : 3}" stroke-linejoin="round"/></g>` +
-      `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="10" fill="${c}" stroke="#111" stroke-width="3"/><text x="${lx.toFixed(1)}" y="${(ly + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="15" text-anchor="middle" fill="#111">${ini}</text>`;
+      Avatar.groupe(avDe(id), lx, ly, 26);
   }).join("");
 }
 function revelerG(m) {
@@ -913,7 +943,7 @@ function revelerG(m) {
     if (!P.coop) motTele = best === 0 ? "PERSONNE ! " : qui.join(", ").toUpperCase() + " ! ";
   }
   P.score = P.ecran ? (P.coop ? P.scores[P.gj[0].id] || 0 : Math.max(0, ...Object.values(P.scores))) : (P.scores[S.id] || 0);
-  P.histo.push({ carte: P.carte, indice: P.indice, pts: mes, qui: donneur() });
+  P.histo.push({ carte: P.carte, indice: P.indice, pts: mes, qui: donneur(), donneur: m.donneur, dp: m.dp, gpts: m.pts || {}, ecarts: Object.keys(m.aig || {}).reduce((o, id) => (o[id] = Math.abs(m.aig[id] - m.cible), o), {}) });
   afficherIndice(); montrer(["ph-devine", "bulle"]); role("Révélation…"); volet(true, false);
   const nAuMoment = P.n, pidAuMoment = P.pid;
   const garde = () => P.phase === "reveal" && P.n === nAuMoment && P.pid === pidAuMoment;
@@ -940,7 +970,7 @@ function majStatut() {
   const ul = $("gens-jeu"), ici = presents(), d = donneurG().id; ul.textContent = ""; ul.style.display = "";
   P.gj.forEach(j => {
     const li = document.createElement("li"), sm = document.createElement("small"), sw = document.createElement("i"), em = document.createElement("em");
-    sw.style.background = couleurDe(j.id);
+    sw.style.cssText = "width:auto;height:auto;border:0;background:none;line-height:0"; sw.innerHTML = Avatar.svg(avDe(j.id), 22);
     sm.textContent = !ici.has(j.id) ? "Déconnecté" : j.id === d ? "Donne l'indice" : P.phase === "reveal" ? "+" + ((P.derniers || {})[j.id] || 0) : (j.id in P.valides ? "A validé" : "Réfléchit…");
     if (j.id === d) li.className = "donne"; else if (j.id in P.valides && P.phase !== "reveal") li.className = "ok";
     em.textContent = P.scores[j.id] || 0;
@@ -1054,10 +1084,46 @@ function finirGroupe() {
   const ul = $("recap"); ul.textContent = "";
   classement.forEach((c, i) => {
     const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
-    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
+    sw.style.cssText = "display:inline-block;margin-right:8px;vertical-align:-6px;line-height:0"; sw.innerHTML = Avatar.svg(avDe(c.id), 24);
     t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (c.id === S.id ? " (toi)" : "")));
     b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
   });
+}
+// Moments forts de la partie : meilleur indice, plus gros raté, télépathe…
+function dessinerBadges(el, badges) {
+  el.textContent = "";
+  badges.forEach((b, i) => {
+    const d = document.createElement("div"); d.className = "badge case" + (i % 2 ? "" : " jaune");
+    d.style.setProperty("--r", (i % 2 ? 1.2 : -1.2) + "deg");
+    const t = document.createElement("span"), q = document.createElement("span"), x = document.createElement("span");
+    t.className = "badge-titre"; t.textContent = b.titre; q.className = "badge-qui"; if (b.av) q.innerHTML = Avatar.svg(b.av, 30); q.append(document.createTextNode(b.qui || ""));
+    x.className = "badge-detail"; x.textContent = b.detail || ""; d.append(t, q, x); el.append(d);
+  });
+  el.style.display = badges.length ? "" : "none"; $("titre-badges").style.display = badges.length ? "" : "none";
+}
+function momentsForts() {
+  const loin = e => e >= 120 ? "à l'autre bout du cadran !" : e >= 60 ? "à des kilomètres de la cible" : "juste à côté de la cible";
+  const H = P.histo, badges = [], carte = h => h.carte[0] + " ↔ " + h.carte[1], nomG = id => (P.gj.find(j => j.id === id) || { nom: "?" }).nom;
+  if (!H.length) { dessinerBadges($("badges"), []); return; }
+  if (!groupe() || P.coop) { // à deux : on joue ensemble
+    const best = H.reduce((a, h) => h.pts > a.pts ? h : a, H[0]);
+    if (best.pts >= 3) badges.push({ titre: "MEILLEUR INDICE", qui: best.qui, detail: "« " + best.indice + " » (" + carte(best) + ")" });
+    const avecEcart = H.filter(h => typeof h.ecart === "number" || h.ecarts);
+    const ec = h => typeof h.ecart === "number" ? h.ecart : Math.max(0, ...Object.values(h.ecarts || {}));
+    const pire = avecEcart.length ? avecEcart.reduce((a, h) => ec(h) > ec(a) ? h : a, avecEcart[0]) : null;
+    if (pire && pire.pts === 0) badges.push({ titre: "PLUS GROS RATÉ", qui: pire.qui, detail: "« " + pire.indice + " » : l'aiguille était " + loin(ec(pire)) });
+    const mille = H.filter(h => h.pts === 4).length;
+    badges.push({ titre: "DANS LE MILLE", qui: mille ? mille + " fois" : "Jamais…", detail: mille ? "Cible en plein centre " + mille + " fois sur " + H.length : "Pas une seule cible en plein centre. La prochaine fois !" });
+  } else {
+    const quatre = {}; H.forEach(h => Object.keys(h.gpts || {}).forEach(id => { if (h.gpts[id] === 4) quatre[id] = (quatre[id] || 0) + 1; }));
+    const t = Object.keys(quatre).sort((a, b) => quatre[b] - quatre[a])[0];
+    if (t) badges.push({ titre: "TÉLÉPATHE", qui: nomG(t), av: avDe(t), detail: quatre[t] + " fois dans le mille" });
+    const bi = H.filter(h => h.dp > 0).sort((a, b) => b.dp - a.dp)[0];
+    if (bi) badges.push({ titre: "MEILLEUR INDICE", qui: nomG(bi.donneur), av: avDe(bi.donneur), detail: "« " + bi.indice + " » (" + carte(bi) + ") : +" + bi.dp });
+    let pire = null; H.forEach(h => Object.keys(h.ecarts || {}).forEach(id => { if (!pire || h.ecarts[id] > pire.e) pire = { id, e: h.ecarts[id], h }; }));
+    if (pire && pire.e > 30) badges.push({ titre: "PLUS GROS RATÉ", qui: nomG(pire.id), av: avDe(pire.id), detail: "Sur « " + pire.h.indice + " », l'aiguille était " + loin(pire.e) });
+  }
+  dessinerBadges($("badges"), badges);
 }
 function finir() {
   P.phase = "fin";
@@ -1078,6 +1144,7 @@ function finir() {
     t.textContent = (i + 1) + ". « " + h.indice + " » "; em.textContent = "(" + h.carte[0] + " ↔ " + h.carte[1] + ", par " + h.qui + ")"; t.append(em);
     b.textContent = "+" + h.pts; li.append(t, b); ul.append(li);
   });
+  momentsForts();
   const invite = enLigne() && P.moi !== 0;
   $("rejouer").disabled = false; $("rejouer").textContent = "REJOUER";
   $("accueil").style.display = invite ? "none" : ""; $("quitter-fin").style.display = enLigne() ? "" : "none";
@@ -1130,9 +1197,12 @@ $("go-salon").onclick = async () => {
   sons.clic();
   try { await chargerTempsReel(); } catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   P.mode = "ligne"; P.moi = 0; P.phase = ""; P.ecran = true; document.body.classList.add("tele");
+  $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); $("musique").setAttribute("aria-pressed", "true"); }
   ouvrirSalon(nouveauCode(), "ecran", "Écran");
   $("code-hote").textContent = S.code; dessinerQR(); majSalonHote(); ouvrirReglages();
 };
+$("musique").onclick = () => { const on = Musique.basculer(); $("musique").setAttribute("aria-pressed", on); };
+Avatar.choisisseur($("choix-avatar"), av => { if (S.canal) { S.av = av; try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); } catch (e) {} } });
 $("retour-ligne").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
 function pseudoValide() {
   const nom = $("pseudo").value.trim();
@@ -1164,7 +1234,7 @@ $("quitter-invite").onclick = () => { sons.clic(); quitterSalon(); ecran("accuei
 function ouvrirSalon(code, role, nom) {
   quitterSalon(true);
   P.mode = "ligne";
-  S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
+  S.code = code; S.role = role; S.nom = nom; S.av = Avatar.lire(); S.t = Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   S.client = S.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
   const canal = S.client.channel("jeux-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
   S.canal = canal;
@@ -1173,7 +1243,7 @@ function ouvrirSalon(code, role, nom) {
     .subscribe(etat => {
       if (S.canal !== canal) return;
       if (etat === "SUBSCRIBED") {
-        canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" }); majGens();
+        canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); majGens();
         if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
       } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
         if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
@@ -1181,16 +1251,16 @@ function ouvrirSalon(code, role, nom) {
     });
 }
 function quitterSalon(silencieux) {
-  clearTimeout(S.minuteur);
+  clearTimeout(S.minuteur); clearTimeout(S.minuFermeture); S.minuFermeture = null; S.avaitChef = false;
   if (S.canal && S.client) { const c = S.canal, client = S.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!S.canal && client.getChannels().length === 0) client.disconnect(); }); }
   S.canal = null; S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   if (!silencieux) { P.mode = "local"; P.phase = ""; }
   alerte("deco"); majGens();
-  if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; }
+  if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; Musique.arreter(); $("musique").style.display = "none"; }
 }
 // Page fermée ou mise en arrière-plan sur iPhone : on prévient tout de suite le salon.
 addEventListener("pagehide", () => { if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
-addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" }); } catch (x) {} } });
+addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); } catch (x) {} } });
 function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
 function envoyer(message, important) {
   if (!S.canal) return;
@@ -1203,7 +1273,7 @@ function envoyer(message, important) {
 
 function majPresence() {
   const etat = S.canal.presenceState(), gens = [];
-  Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu })));
+  Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu, av: Avatar.valide(m.av) ? m.av : null })));
   const tri = l => l.sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
   const hotes = tri(gens.filter(g => g.role === "hote" || g.role === "ecran")), invites = tri(gens.filter(g => g.role === "invite"));
   if (S.role === "invite" && hotes.length && hotes[0].jeu && hotes[0].jeu !== "cadran") { location.href = RACINE + hotes[0].jeu + "/#" + S.code; return; } // salon d'un autre jeu
@@ -1223,12 +1293,16 @@ function majPresence() {
     autre = hotes[0] || null;
   }
   const arrive = autre && !S.autre, parti = !autre && S.autre;
+  if (S.role === "invite") {
+    if (hotes.length) { S.avaitChef = true; clearTimeout(S.minuFermeture); S.minuFermeture = null; }
+    else if (S.avaitChef && !S.minuFermeture) { const c = S.canal; S.minuFermeture = setTimeout(() => { S.minuFermeture = null; if (S.canal === c && !S.gens.some(g => g.role !== "invite")) { P.phase = ""; echecConnexion("Le salon est fermé : celui qui l'a créé est parti."); } }, 8000); }
+  }
   // même pseudo qu'un joueur arrivé avant : seul le dernier arrivé ajoute un numéro (sinon ils se renommeraient en boucle)
   const avantMoi = g => g.t < S.t || (g.t === S.t && g.cle < S.id);
   if (S.role === "invite" && gens.some(g => g.cle !== S.id && g.nom.toLowerCase() === S.nom.toLowerCase() && avantMoi(g))) {
     const pris = new Set(gens.filter(g => g.cle !== S.id).map(g => g.nom.toLowerCase())), base = S.nom.replace(/ \d+$/, "").slice(0, 11);
     let k = 2; while (pris.has((base + " " + k).toLowerCase())) k++;
-    S.nom = base + " " + k; S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" });
+    S.nom = base + " " + k; S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av });
   }
   S.autre = autre;
   if (arrive) {
@@ -1252,14 +1326,14 @@ function majPresence() {
   }
   if (parti && !groupe()) {
     if (["manche", "passe"].includes(ecranActuel)) alerte("deco", "L'autre joueur est déconnecté. La partie attend son retour.");
-    if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon.";
+    if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon. Le salon se ferme s'il ne revient pas.";
   }
   if (chefSalon()) majSalonHote(); else majGens();
 }
 // Qui est dans le salon : l'hôte d'abord, puis les invités dans l'ordre d'arrivée.
 function majGens() {
   const ligne = enLigne() && !!S.canal;
-  const liste = S.gens.length ? S.gens.map(g => ({ nom: g.cle === S.id ? S.nom : g.nom, hote: g.role === "hote", ecran: g.role === "ecran", moi: g.cle === S.id })) : [{ nom: S.nom, hote: S.role === "hote", ecran: S.role === "ecran", moi: true }];
+  const liste = S.gens.length ? S.gens.map(g => ({ nom: g.cle === S.id ? S.nom : g.nom, av: g.cle === S.id ? S.av : g.av, hote: g.role === "hote", ecran: g.role === "ecran", moi: g.cle === S.id })) : [{ nom: S.nom, hote: S.role === "hote", ecran: S.role === "ecran", moi: true }];
   const places = liste.length >= 2 ? liste : (chefSalon() ? [liste[0], null] : [null, liste[0]]);
   ["gens-hote", "gens-invite", "gens-jeu"].forEach(id => {
     if (id === "gens-jeu" && groupe() && P.phase) { majStatut(); return; }
@@ -1267,7 +1341,7 @@ function majGens() {
     if (!ligne) return;
     places.forEach((g, i) => {
       const li = document.createElement("li"), sm = document.createElement("small");
-      if (g) { sm.textContent = (g.ecran ? "Écran du salon" : g.hote ? "Hôte" : "Invité") + (g.moi ? " · toi" : " · connecté"); li.append(sm, document.createTextNode(g.nom)); }
+      if (g) { sm.textContent = (g.ecran ? "Écran du salon" : g.hote ? "Hôte" : "Invité") + (g.moi ? " · toi" : " · connecté"); li.append(sm); if (!g.ecran && Avatar.valide(g.av)) li.insertAdjacentHTML("beforeend", Avatar.svg(g.av, 24)); li.append(document.createTextNode(g.nom)); }
       else { li.className = "vide"; sm.textContent = i === 0 ? "Hôte" : "Invité"; li.append(sm, document.createTextNode(id === "gens-jeu" ? "Déconnecté" : "En attente…")); }
       ul.append(li);
     });
@@ -1320,7 +1394,7 @@ function recevoir(m) {
       if (!m.gj.some(j => j.id === S.id)) { spectateur(); break; }
       if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin"))) {
         if (m.pid !== P.pid || m.n === 0) P.histo = [];
-        P.format = "groupe"; P.gj = m.gj; P.coop = !!m.coop; P.scores = m.scores || {}; P.pid = m.pid; P.n = m.n; P.manches = m.manches;
+        P.format = "groupe"; P.gj = m.gj; majCouls(); P.coop = !!m.coop; P.scores = m.scores || {}; P.pid = m.pid; P.n = m.n; P.manches = m.manches;
         sons.clic(); debutManche(m.carte);
         if (!jeDonne()) envoyer({ t: "g-indice?", pid: P.pid, n: P.n });
       }

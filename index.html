@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La Boîte à jeux</title>
 <meta name="description" content="Des petits jeux entre potes et en famille : sur un seul téléphone, en ligne, ou en salon sur un grand écran.">
-<meta name="theme-color" content="#19B5F0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='14' width='52' height='40' fill='%23FFE600' stroke='%23111' stroke-width='5'/%3E%3Cpath d='M6 24h52M24 14v40' stroke='%23111' stroke-width='5'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="commun/commun.css?v=1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="theme-color" content="#19B5F0">
+<link rel="stylesheet" href="commun/commun.css?v=2">
 <style>
 :root{--violet:#9B5CFF}
 #app{max-width:560px}
@@ -51,6 +53,7 @@
     <div class="case jaune une">
       <p class="accroche">Des jeux pour les potes et la famille. Un téléphone suffit !</p>
       <div><label for="pseudo">Ton pseudo (pour tous les jeux)</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+      <div><label>Ton avatar (pour tous les jeux)</label><div id="choix-avatar"></div></div>
     </div>
 
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
@@ -124,12 +127,15 @@
   </section>
 </div>
 
-<script src="commun/commun.js?v=1"></script>
+<script src="commun/avatars.js?v=2"></script>
+<script src="commun/ambiance.js?v=1"></script>
+<script src="commun/commun.js?v=2"></script>
 <script>
 "use strict";
 brancherEntete();
 ecran("accueil");
 $("pseudo").value = pseudo.lire();
+Avatar.choisisseur($("choix-avatar"), () => sons.clic());
 $("pseudo").addEventListener("change", () => { const n = $("pseudo").value.trim(); if (n) pseudo.ecrire(n); });
 // Rejoindre depuis l'accueil : on cherche à quel jeu appartient le salon, puis on y va.
 async function rejoindre() {
