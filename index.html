@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Cadran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@500;700&display=swap">
+<style>
+:root{
+  /* Un cadran-objet posé sur une table en bois : tout est en relief, rien n'est plat. */
+  --bois:#5A3520; --bois-clair:#7A4A2B; --bois-fonce:#2B1A10;
+  --creme:#FFF4E0; --papier:#FFFDF4; --sable:#FFE9C2;
+  --rouge:#C92A16; --rouge-clair:#F0583C; --rouge-fonce:#7A1206;
+  --bleu:#2F6FD0; --orange:#E8752A; --jaune:#F2C230; --or:#FFD66B;
+  --titre:'DM Serif Display',Georgia,serif; --texte:'DM Sans',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:#4A2A18;
+  color:var(--creme);font-family:var(--texte);font-size:16px;line-height:1.4;
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:#6B4126;
+  background-image:radial-gradient(ellipse at 50% 30%,rgba(255,200,140,.22),rgba(0,0,0,0) 55%,rgba(0,0,0,.5) 100%),
+   repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 168px,rgba(0,0,0,.55) 169px,rgba(255,220,170,.12) 171px,rgba(0,0,0,0) 172px),
+   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.28' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.08 0 0 0 0 0.03 1.5 0 0 0 -0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E")}
+#app{max-width:440px;min-height:100%;margin:0 auto;padding:20px 20px 28px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-family:var(--titre);font-weight:400;font-size:28px;margin:0;text-shadow:0 2px 0 rgba(0,0,0,.5)}
+h2{font-family:var(--titre);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
+p{margin:0}
+.screen{display:none;flex-direction:column;gap:16px;flex:1}
+.screen.on{display:flex}
+.creux{background:var(--bois-fonce);border-radius:10px;padding:14px 16px;box-shadow:inset 0 3px 8px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.12)}
+.petit{font-size:14px;color:var(--sable)}
+.btn{
+  font-family:var(--texte);font-weight:700;font-size:18px;color:#fff;min-height:56px;padding:10px 18px;border:none;border-radius:12px;cursor:pointer;
+  background:linear-gradient(180deg,var(--rouge-clair),var(--rouge));
+  box-shadow:0 7px 0 var(--rouge-fonce),0 14px 18px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4);
+  transition:transform .08s,box-shadow .08s;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+.btn:active,.btn.enfonce{transform:translateY(5px);box-shadow:0 2px 0 var(--rouge-fonce),0 5px 8px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
+.btn:disabled{filter:grayscale(.7) brightness(.75);cursor:not-allowed}
+.btn.bleu{background:linear-gradient(180deg,#4B8AE8,#1D4C99);box-shadow:0 7px 0 #123466,0 14px 18px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
+.btn.bleu:active,.btn.bleu.enfonce{box-shadow:0 2px 0 #123466,0 5px 8px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
+.btn.plat{min-height:44px;font-size:14px;padding:8px 14px;background:var(--bois-fonce);color:var(--sable);box-shadow:inset 0 2px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.15)}
+.btn.plat:active{transform:none}
+:focus-visible{outline:3px solid var(--or);outline-offset:3px}
+.bas{margin-top:auto;display:flex;flex-direction:column;gap:18px;padding-bottom:8px}
+label{font-size:14px;font-weight:700;color:var(--sable);display:block;margin-bottom:6px}
+input[type=text]{width:100%;min-height:48px;padding:10px 14px;border-radius:8px;border:none;background:var(--papier);color:var(--bois-fonce);font-family:var(--texte);font-size:17px;font-weight:500;box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
+.rang{display:flex;gap:12px;flex-wrap:wrap}
+.rang>*{flex:1;min-width:0}
+/* choix à cocher sous forme de jetons */
+.jetons{display:flex;flex-wrap:wrap;gap:8px}
+.jeton{position:relative}
+.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.jeton span{display:block;padding:10px 14px;min-height:44px;border-radius:9px;font-size:14px;font-weight:700;background:var(--bois-fonce);color:var(--sable);box-shadow:inset 0 2px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.15)}
+.jeton input:checked+span{background:linear-gradient(180deg,#FFFDF4,#EADFC4);color:#2B1A10;box-shadow:0 3px 0 #B9A77F,0 6px 8px rgba(0,0,0,.4)}
+.jeton input:checked+span::before{content:"✓ ";color:#1F6E67}
+.jeton input:focus-visible+span{outline:3px solid var(--or);outline-offset:3px}
+/* plaquettes de score */
+.plaques{display:flex;gap:12px}
+.plaque{flex:1;padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#2F6FD0,#1D4C99);box-shadow:0 5px 0 #123466,0 10px 14px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.35)}
+.plaque.jaune{background:linear-gradient(180deg,#F2C230,#D99A12);box-shadow:0 5px 0 #8F6208,0 10px 14px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.5);color:#2B1A10}
+.plaque small{display:block;font-size:13px;font-weight:700}
+.plaque b{font-family:var(--titre);font-weight:400;font-size:34px;line-height:1.05;font-variant-numeric:tabular-nums}
+/* le cadran */
+.poste{display:flex;flex-direction:column;align-items:center}
+#cadran{width:100%;max-width:380px;height:auto;display:block;filter:drop-shadow(0 16px 14px rgba(0,0,0,.6));touch-action:none;user-select:none;-webkit-user-select:none}
+#cadran.reglable{cursor:grab}
+#volet{transform-origin:170px 175px;transition:transform .7s cubic-bezier(.5,0,.2,1)}
+#volet.vite{transition-duration:.28s}
+#aiguille{transform-origin:170px 175px}
+.carte{width:92%;margin-top:-4px;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;background:var(--papier);color:var(--bois-fonce);font-family:var(--titre);font-size:18px;line-height:1.2;box-shadow:0 3px 0 #CDBE9C,0 10px 14px rgba(0,0,0,.5);transform:rotate(-1.2deg)}
+.carte span{flex:1;text-wrap:balance}
+.carte span:last-child{text-align:right}
+.carte i{font-style:normal;font-family:var(--texte);font-size:20px;color:#9A8A66}
+.indice{font-family:var(--titre);font-size:25px;color:#fff;overflow-wrap:anywhere}
+.resultat{text-align:center;font-family:var(--titre);font-size:26px;color:var(--or);min-height:34px}
+input[type=range]{width:100%;accent-color:var(--rouge-clair);height:32px}
+.liste{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0}
+.liste li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.liste li b{font-variant-numeric:tabular-nums;color:var(--or);white-space:nowrap}
+.liste em{font-style:normal;color:var(--sable)}
+details summary{cursor:pointer;font-weight:700;min-height:28px}
+details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.grand{font-family:var(--titre);font-size:64px;line-height:1;text-align:center;color:#fff;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){#volet,.btn{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Le Cadran</h1>
+    <button class="btn plat" id="son" type="button" aria-pressed="true">Son : oui</button>
+  </header>
+
+  <!-- ACCUEIL -->
+  <section class="screen on" id="s-accueil">
+    <p>Un jeu à deux. L'un voit une cible cachée sur le cadran et donne un seul indice. L'autre place l'aiguille. Plus c'est près, plus vous marquez, ensemble.</p>
+    <div class="creux">
+      <details>
+        <summary>Les règles en 30 secondes</summary>
+        <ol>
+          <li>Une carte sort avec deux opposés, par exemple « Froid ↔ Chaud ».</li>
+          <li>Celui qui donne l'indice regarde où est la cible, puis tape un indice qui correspond à cet endroit.</li>
+          <li>L'autre déplace l'aiguille là où il pense que la cible se trouve, puis valide.</li>
+          <li>La cible se révèle : 4 points au centre, 3 juste à côté, 2 au bord, 0 en dehors.</li>
+          <li>On échange les rôles à chaque manche.</li>
+        </ol>
+      </details>
+    </div>
+    <div class="bas">
+      <button class="btn" id="go-local" type="button">Jouer sur cet appareil</button>
+      <button class="btn bleu" type="button" disabled>Jouer en ligne (bientôt)</button>
+    </div>
+  </section>
+
+  <!-- RÉGLAGES -->
+  <section class="screen" id="s-reglages">
+    <h2>Réglages de la partie</h2>
+    <div class="rang">
+      <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+      <div><label for="p2">Joueur 2</label><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    </div>
+    <div>
+      <label id="l-manches">Nombre de manches</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
+    </div>
+    <div>
+      <label id="l-packs">Packs de cartes <span id="nb-cartes"></span></label>
+      <div class="rang" style="margin-bottom:10px">
+        <button class="btn plat" id="tout" type="button">Tout cocher</button>
+        <button class="btn plat" id="rien" type="button">Tout décocher</button>
+      </div>
+      <div class="jetons" role="group" aria-labelledby="l-packs" id="packs"></div>
+    </div>
+    <div class="creux" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Cartes perso (pour cette partie seulement)</label>
+      <div class="rang">
+        <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+        <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+      </div>
+      <button class="btn plat" id="ajout" type="button">Ajouter cette carte</button>
+      <ul class="liste" id="perso"></ul>
+    </div>
+    <p class="petit" id="err-reglages" role="alert"></p>
+    <div class="bas">
+      <button class="btn" id="lancer" type="button">Lancer la partie</button>
+    </div>
+  </section>
+
+  <!-- PASSAGE DE L'APPAREIL -->
+  <section class="screen" id="s-passe">
+    <h2 id="passe-titre"></h2>
+    <p id="passe-texte"></p>
+    <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
+  </section>
+
+  <!-- MANCHE -->
+  <section class="screen" id="s-manche">
+    <div class="plaques">
+      <div class="plaque"><small>Score commun</small><b id="score">0</b></div>
+      <div class="plaque jaune"><small>Manche</small><b id="num"></b></div>
+    </div>
+    <p class="petit" id="role" aria-live="polite"></p>
+    <div class="poste">
+      <svg id="cadran" viewBox="-12 -6 364 224" role="img" aria-label="Cadran">
+        <defs>
+          <linearGradient id="g-bord" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D4656"/><stop offset=".5" stop-color="#1B212C"/><stop offset="1" stop-color="#0C1017"/></linearGradient>
+          <radialGradient id="g-face" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#FFFDF4"/><stop offset=".7" stop-color="#F1E6CC"/><stop offset="1" stop-color="#D9C9A3"/></radialGradient>
+          <radialGradient id="g-volet" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#3F9C93"/><stop offset=".75" stop-color="#1F6E67"/><stop offset="1" stop-color="#124A45"/></radialGradient>
+          <linearGradient id="g-laiton" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6DC8C"/><stop offset=".5" stop-color="#B98A2C"/><stop offset="1" stop-color="#6E4D10"/></linearGradient>
+          <radialGradient id="g-bouton" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF8D75"/><stop offset=".6" stop-color="#C92A16"/><stop offset="1" stop-color="#7A1206"/></radialGradient>
+          <clipPath id="c-face"><path d="M20,175 A150,150 0 0 1 320,175 Z"/></clipPath>
+        </defs>
+        <path d="M-6,175 A176,176 0 0 1 346,175 L346,205 Q346,212 339,212 L1,212 Q-6,212 -6,205 Z" fill="url(#g-bord)"/>
+        <path d="M-6,175 A176,176 0 0 1 346,175" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+        <g id="grad" stroke="#C9D1DE" stroke-linecap="round"></g>
+        <path d="M17,175 A153,153 0 0 1 323,175" fill="none" stroke="url(#g-laiton)" stroke-width="3"/>
+        <path d="M20,175 A150,150 0 0 1 320,175 Z" fill="url(#g-face)" stroke="#0C1017" stroke-width="4"/>
+        <g clip-path="url(#c-face)">
+          <g id="cible"></g>
+          <g id="volet">
+            <path d="M20,175 A150,150 0 0 1 320,175 Z" fill="url(#g-volet)"/>
+            <path d="M50,175 A120,120 0 0 1 290,175 M85,175 A85,85 0 0 1 255,175 M120,175 A50,50 0 0 1 220,175" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+            <rect x="160" y="34" width="20" height="8" rx="4" fill="rgba(0,0,0,.3)"/>
+          </g>
+        </g>
+        <path d="M20,175 A150,150 0 0 1 320,175" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="10"/>
+        <g id="aiguille">
+          <polygon points="170,179 178,179 175.5,46 172.5,44" fill="rgba(0,0,0,.28)"/>
+          <polygon points="165.5,175 174.5,175 171.6,40 168.4,40" fill="#C92A16"/>
+          <polygon points="165.5,175 170,175 170,40 168.4,40" fill="#FF6A4D"/>
+          <circle cx="170" cy="40" r="1.7" fill="#E0452C"/>
+        </g>
+        <circle cx="172" cy="179" r="26" fill="rgba(0,0,0,.35)"/>
+        <circle cx="170" cy="175" r="25" fill="url(#g-laiton)" stroke="#4A3408" stroke-width="1"/>
+        <circle cx="170" cy="175" r="20" fill="url(#g-bouton)" stroke="#5C0D04" stroke-width="1.5"/>
+        <ellipse cx="163" cy="167" rx="7" ry="4.5" fill="#fff" opacity=".45" transform="rotate(-30 163 167)"/>
+        <g stroke="#4A3408"><circle cx="12" cy="197" r="5" fill="url(#g-laiton)"/><path d="M8.5,195.5 L15.5,198.5"/><circle cx="328" cy="197" r="5" fill="url(#g-laiton)"/><path d="M324.5,198.5 L331.5,195.5"/></g>
+        <path d="M34,150 A140,140 0 0 1 190,37 A170,170 0 0 0 34,150 Z" fill="#fff" opacity=".1" pointer-events="none"/>
+      </svg>
+      <div class="carte"><span id="gauche"></span><i aria-hidden="true">↔</i><span id="droite"></span></div>
+    </div>
+
+    <!-- phase : donner l'indice -->
+    <div id="ph-indice" class="bas">
+      <button class="btn bleu" id="voir" type="button">Maintiens pour voir la cible</button>
+      <div><label for="indice">Ton indice</label><input type="text" id="indice" maxlength="60" autocomplete="off" placeholder="Un mot, une chose, une idée…"></div>
+      <button class="btn" id="envoyer" type="button">Envoyer l'indice</button>
+      <p class="petit" id="err-indice" role="alert"></p>
+    </div>
+
+    <!-- phase : deviner + révélation -->
+    <div id="ph-devine" class="bas">
+      <div class="creux"><div class="petit">Indice de <span id="de"></span></div><div class="indice" id="indice-affiche"></div></div>
+      <div id="zone-reglage"><label for="fin">Fais glisser l'aiguille, ou règle ici</label><input type="range" id="fin" min="3" max="177" step="1" value="90"></div>
+      <div class="resultat" id="resultat" aria-live="polite"></div>
+      <button class="btn" id="valider" type="button">Valider l'aiguille</button>
+      <button class="btn" id="suivante" type="button">Manche suivante</button>
+      <button class="btn plat" id="arreter" type="button">Terminer la partie ici</button>
+    </div>
+  </section>
+
+  <!-- FIN -->
+  <section class="screen" id="s-fin">
+    <h2>Partie terminée</h2>
+    <div class="creux" style="text-align:center">
+      <div class="petit">Score commun</div>
+      <div class="grand" id="fin-score"></div>
+      <div class="petit" id="fin-detail"></div>
+    </div>
+    <p id="fin-record" style="text-align:center;color:var(--or);font-weight:700"></p>
+    <div class="creux"><ul class="liste" id="recap"></ul></div>
+    <div class="bas">
+      <button class="btn" id="rejouer" type="button">Rejouer</button>
+      <button class="btn plat" id="accueil" type="button">Changer les réglages</button>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ---------- Cartes : 20 packs de 15 ---------- */
+const PACKS = [
+["Classiques","Froid|Chaud;Petit|Grand;Lent|Rapide;Silencieux|Bruyant;Léger|Lourd;Mou|Dur;Ancien|Moderne;Banal|Rare;Facile|Difficile;Moche|Beau;Triste|Joyeux;Dangereux|Sans danger;Sec|Mouillé;Court|Long;Inutile|Indispensable"],
+["Bouffe","Goûter d'enfant|Repas de grand restaurant;Fade|Trop épicé;Se mange froid|Se mange brûlant;Petit creux|Repas de fête;Dégoûtant|Délicieux;Sain|Gras;Facile à cuisiner|Impossible à réussir;Se mange avec les doigts|Se mange avec des couverts;Petite portion|Portion énorme;Plat de cantine|Plat de mamie;Sent bon|Sent fort;Meilleur le matin|Meilleur le soir;Pas cher|Hors de prix;Croustillant|Fondant;On en laisse dans l'assiette|On en redemande"],
+["Jeux vidéo","Jeu pour se détendre|Jeu qui rend fou;Meilleur en solo|Meilleur entre potes;Fini en une soirée|Jamais terminé;Jeu oublié|Jeu légendaire;Jeu facile|Réservé aux acharnés;Personnage attachant|Personnage insupportable;Graphismes moches|Graphismes magnifiques;Jeu de chance|Jeu de talent;Boss facile|Boss cauchemar;Arme inutile|Arme trop forte;Jeu pour enfants|Jeu pour adultes;Histoire nulle|Histoire inoubliable;Carte minuscule|Monde gigantesque;Musique agaçante|Musique qu'on écoute hors du jeu;Jeu vite lassant|Jeu dont on ne se lasse pas"],
+["Films et séries","À voir une fois|À revoir tous les ans;Fait rire|Fait pleurer;Film pour enfants|Film pour adultes;Fin décevante|Fin parfaite;Méchant ridicule|Méchant terrifiant;On s'endort devant|On ne peut pas décrocher;Meilleur au cinéma|Meilleur sur le canapé;Série trop courte|Série trop longue;Héros détestable|Héros adoré;Réaliste|Complètement délirant;À voir seul|À voir en famille;Le livre est mieux|Le film est mieux;Fait peur|Rassure;Navet|Chef-d'œuvre;Vite oublié|On en parle encore"],
+["Musique","Musique pour dormir|Musique pour faire la fête;Chanson triste|Chanson joyeuse;Instrument facile|Instrument très dur;À écouter seul|À chanter en groupe;Chanson oubliée|Chanson éternelle;Agaçant|Envoûtant;Musique de vieux|Musique de jeunes;Reste en tête une minute|Reste en tête une semaine;Meilleur au casque|Meilleur en concert;Musique pour travailler|Musique pour faire du sport;Voix douce|Voix puissante;Chanson de douche|Chanson de voiture;Paroles bêtes|Paroles profondes;Rythme lent|Rythme effréné;On zappe|On monte le son"],
+["Sport","Sport tranquille|Sport épuisant;Sport sans danger|Sport risqué;Ennuyeux à regarder|Passionnant à regarder;On transpire à peine|On finit trempé;Sport de vieux|Sport de jeunes;Facile à apprendre|Des années d'entraînement;Se pratique partout|Demande un lieu spécial;Demande de la force|Demande de la précision;Pas besoin de matériel|Matériel hors de prix;Sport de récré|Sport olympique;Règles simples|Règles incompréhensibles;Peu connu|Mondialement connu;Se joue en 5 minutes|Dure des heures;Sport élégant|Sport brutal;Loisir|Vrai sport"],
+["Lycée et école","Matière inutile|Matière indispensable;Cours qui passe vite|Cours interminable;Excuse crédible|Excuse ridicule;Devoir vite fait|Devoir qui prend le week-end;Meilleur moment de la journée|Pire moment de la journée;Prof cool|Prof sévère;Fourniture inutile|Fourniture vitale;Facile d'avoir 20|Impossible d'avoir la moyenne;Sortie scolaire nulle|Sortie scolaire géniale;Meilleure place en classe|Pire place en classe;Révisé la veille|Révisé depuis un mois;Petite bêtise|Convocation chez le proviseur;Plat de cantine raté|Plat de cantine réussi;Lundi matin|Vendredi soir;Devoir sympa|Devoir cauchemar"],
+["Vie quotidienne","Corvée supportable|Corvée insupportable;Réveil facile|Réveil impossible;Petit plaisir|Grand bonheur;Objet qu'on perd tout le temps|Objet qu'on ne perd jamais;Bruit agréable|Bruit insupportable;Bonne odeur|Mauvaise odeur;Petite flemme|Flemme absolue;Se fait en 2 minutes|Prend toute la journée;Habitude saine|Mauvaise habitude;Petit retard|Retard impardonnable;Pièce préférée de la maison|Pièce où on ne va jamais;Dépense utile|Dépense regrettée;Activité du dimanche|Activité du samedi soir;Normal de le faire seul|Bizarre de le faire seul;Se range tout de suite|Traîne pendant des semaines"],
+["Débats de potes","Sous-coté|Sur-coté;Pas grave|Impardonnable;Normal|Bizarre;Ringard|Stylé;Mauvaise idée|Idée de génie;Personne n'aime|Tout le monde aime;Avis partagé|Avis qui fâche;Petit mensonge|Gros mensonge;Bon cadeau|Cadeau raté;Démodé|À la mode;Courageux|Inconscient;Drôle une fois|Toujours drôle;Poli|Malpoli;Bon signe|Signal d'alerte;Luxe inutile|Vrai besoin"],
+["Internet et réseaux","Vite oublié|Devenu culte;Info fiable|Grosse intox;Appli inutile|Appli indispensable;Vidéo de 10 secondes|Vidéo de 3 heures;Message à envoyer|Message à ne jamais envoyer;Photo de profil sérieuse|Photo de profil ridicule;Mot de passe nul|Mot de passe incassable;Notification agréable|Notification stressante;Emoji sympa|Emoji louche;Perte de temps|Temps bien utilisé;Commentaire gentil|Commentaire qui lance une dispute;Tendance passagère|Là pour durer;Réponse immédiate|Réponse trois jours après;Connexion parfaite|Connexion qui rend fou;À poster|À garder pour soi"],
+["Animaux","Animal mignon|Animal flippant;Bon animal de compagnie|Très mauvaise idée;Animal bête|Animal malin;Animal paresseux|Animal hyperactif;Animal discret|Animal bruyant;Inoffensif|Redoutable;Animal banal|Animal incroyable;Vit très peu|Vit très longtemps;Animal propre|Animal sale;Animal maladroit|Animal agile;Facile à dessiner|Impossible à dessiner;Petit mangeur|Gros mangeur;Doux au toucher|Pas envie de le toucher;Animal froussard|Animal courageux;On le voit partout|On ne le voit jamais"],
+["Voyages et lieux","Pour une journée|Pour y vivre;Près de chez soi|Bout du monde;Destination reposante|Destination d'aventure;Trop de monde|Personne;Voyage pas cher|Voyage de luxe;Lieu banal|Lieu magique;Trop froid|Trop chaud;Vacances ratées|Vacances de rêve;Trajet agréable|Trajet interminable;Souvenir inutile|Souvenir précieux;Valise légère|Valise énorme;Voyage tout organisé|Voyage à l'improviste;Piège à touristes|Trésor caché;Lieu calme|Lieu qui ne dort jamais;À visiter une fois|À visiter chaque année"],
+["Métiers","Métier reposant|Métier stressant;Mal payé|Très bien payé;Métier calme|Métier bruyant;Peu d'études|Études interminables;Métier ennuyeux|Métier passionnant;Métier discret|Métier célèbre;Métier sans risque|Métier dangereux;Métier répétitif|Métier plein de surprises;Métier d'hier|Métier de demain;Horaires tranquilles|Horaires impossibles;Métier facile à apprendre|Métier très dur à apprendre;Personne n'en rêve|Rêve d'enfant;Peu de responsabilités|Énormes responsabilités;Facile à expliquer|Personne ne comprend ce que c'est;On pourrait s'en passer|Métier vital"],
+["Super-pouvoirs et fiction","Pouvoir inutile|Pouvoir trop fort;Personnage qu'on oublie|Personnage qu'on adore;Créature gentille|Créature terrifiante;Monde où on aimerait vivre|Monde à fuir;Arme ridicule|Arme légendaire;Plan foireux|Plan parfait;Pouvoir pratique au quotidien|Pouvoir pour sauver le monde;Acolyte inutile|Acolyte indispensable;Faiblesse gênante|Faiblesse fatale;Costume discret|Costume ridicule;Possible un jour|Jamais possible;Pouvoir discret|Pouvoir spectaculaire;Quête facile|Quête impossible;Base secrète nulle|Base secrète de rêve;Fin tragique|Fin heureuse"],
+["Objets et inventions","Gadget|Invention qui a changé le monde;Objet fragile|Objet indestructible;Bon marché|Luxueux;Dans toutes les maisons|Presque personne n'en a;Simple à utiliser|Il faut lire la notice;Tient dans la poche|Prend toute la place;Objet silencieux|Objet bruyant;Casse en un mois|Dure toute la vie;Objet moche|Bel objet;Dépassé|En avance sur son temps;Une fois par an|Tous les jours;Bonne idée mal faite|Mauvaise idée bien faite;Objet rassurant|Objet inquiétant;À offrir|À ne jamais offrir;Se prête facilement|Ne se prête jamais"],
+["Émotions et situations","Légèrement gênant|Envie de disparaître;Petite peur|Terreur;Petite joie|Meilleur jour de l'année;Un peu agaçant|Insupportable;Petit stress|Panique totale;Mauvaise surprise|Bonne surprise;Compliment banal|Compliment qui marque;Pas besoin de s'excuser|Excuses obligatoires;Se raconte à tout le monde|Ne se raconte à personne;Petite fierté|Immense fierté;Ennui léger|Ennui mortel;Vite pardonné|Jamais oublié;Fou rire discret|Fou rire incontrôlable;Ça passe|Ça ne passe pas du tout;Détail|Catastrophe"],
+["Fêtes et saisons","Meilleur en été|Meilleur en hiver;Petite fête|Fête de l'année;Cadeau de dernière minute|Cadeau préparé depuis des mois;Tradition sympa|Tradition pénible;Activité de jour de pluie|Activité de grand soleil;Vêtement d'été|Vêtement d'hiver;Déguisement raté|Déguisement réussi;Jour férié inutile|Jour férié sacré;Repas de fête léger|Repas de fête interminable;Décoration discrète|Décoration exagérée;Fête pour les enfants|Fête pour les adultes;Vacances trop courtes|Vacances trop longues;Soirée tranquille|Soirée mémorable;Mieux à la maison|Mieux dehors;Fête calme|Fête déchaînée"],
+["Argent et achats","Arnaque|Bonne affaire;Achat réfléchi|Achat coup de tête;Ça vaut 1 €|Ça vaut 1 000 €;À acheter neuf|À acheter d'occasion;Dépense de radin|Dépense de flambeur;Marque inutile|Marque qui vaut le coup;Prix normal|Prix scandaleux;À louer|À posséder;Achat discret|Achat pour frimer;Économie ridicule|Vraie économie;Ne vaut plus rien|Se revend bien;Plaisir immédiat|Investissement;Petit prix|Grosse somme;Petit pourboire|Gros pourboire;Achat inutile|Achat utile"],
+["Famille","Truc de jeunes|Truc de vieux;Repas de famille court|Repas de famille sans fin;Sujet tranquille|Sujet à éviter à table;Règle souple|Règle stricte;Corvée des enfants|Corvée des parents;Blague de papa|Vraie bonne blague;Souvenir flou|Souvenir très net;Activité qui plaît à tous|Activité qui divise;Petit secret|Secret de famille;Conseil qu'on n'écoute jamais|Conseil utile;Trajet en voiture calme|Trajet en voiture explosif;Surnom mignon|Surnom gênant;Photo à cacher|Photo à encadrer;Se décide vite|Débat interminable;Dimanche raté|Dimanche parfait"],
+["N'importe quoi","Rond|Pointu;Sent le propre|Sent le vieux;Ça gratte|C'est doux;Mot moche|Joli mot;Mot sérieux|Mot rigolo;Ressemble à un nuage|Ressemble à un caillou;Se mange|Ne se mange surtout pas;Ambiance de lundi matin|Ambiance de samedi soir;Couleur triste|Couleur joyeuse;Tient dans une main|Ne rentre pas dans la pièce;Bruit de pluie|Bruit de travaux;Minuscule|Gigantesque;Chiffre sympa|Chiffre louche;Objet qui a l'air gentil|Objet qui a l'air méchant;Ça roule|Ça rebondit"]
+].map(([nom, c]) => ({ nom, cartes: c.split(";").map(x => x.split("|")) }));
+
+const MANCHES = [4, 10, 14, 20, 0]; // 0 = sans fin
+const $ = id => document.getElementById(id);
+const memo = {
+  lire(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+
+/* ---------- Sons légers ---------- */
+let audio = null, sonActif = memo.lire("cadran-son", "1") === "1";
+function note(freq, duree, type, volume, quand) {
+  if (!sonActif) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const t = audio.currentTime + (quand || 0), o = audio.createOscillator(), g = audio.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(volume || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+    o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + duree + 0.02);
+  } catch (e) {}
+}
+const sons = {
+  cran() { note(1500, 0.025, "square", 0.018); },
+  clic() { note(520, 0.06, "triangle", 0.05); },
+  volet() { note(220, 0.35, "sawtooth", 0.02); note(330, 0.3, "sawtooth", 0.015, 0.12); },
+  points(p) {
+    if (p === 4) { note(659, 0.14, "triangle", 0.07); note(784, 0.14, "triangle", 0.07, 0.12); note(1047, 0.32, "triangle", 0.07, 0.24); }
+    else if (p === 3) { note(659, 0.14, "triangle", 0.07); note(880, 0.28, "triangle", 0.07, 0.13); }
+    else if (p === 2) { note(587, 0.25, "triangle", 0.06); }
+    else { note(196, 0.3, "sine", 0.07); note(165, 0.4, "sine", 0.07, 0.18); }
+  },
+  fin() { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.3, "triangle", 0.06, i * 0.13)); }
+};
+function majSon() { $("son").textContent = "Son : " + (sonActif ? "oui" : "non"); $("son").setAttribute("aria-pressed", sonActif); }
+$("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonActif ? "1" : "0"); majSon(); sons.clic(); };
+majSon();
+
+/* ---------- Écrans ---------- */
+function ecran(nom) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Réglages ---------- */
+let persos = [];
+$("manches").innerHTML = MANCHES.map(n =>
+  `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "Sans fin"}</span></label>`).join("");
+$("packs").innerHTML = PACKS.map((p, i) =>
+  `<label class="jeton"><input type="checkbox" value="${i}" checked><span>${p.nom}</span></label>`).join("");
+const casesPacks = () => [...document.querySelectorAll("#packs input")];
+function compteCartes() {
+  const n = casesPacks().filter(c => c.checked).reduce((s, c) => s + PACKS[c.value].cartes.length, 0) + persos.length;
+  $("nb-cartes").textContent = "· " + n + " carte" + (n > 1 ? "s" : "");
+  return n;
+}
+$("packs").onchange = compteCartes;
+$("tout").onclick = () => { casesPacks().forEach(c => c.checked = true); compteCartes(); };
+$("rien").onclick = () => { casesPacks().forEach(c => c.checked = false); compteCartes(); };
+function majPersos() {
+  const ul = $("perso"); ul.textContent = "";
+  persos.forEach((c, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("button");
+    t.textContent = c[0] + " ↔ " + c[1];
+    b.className = "btn plat"; b.type = "button"; b.textContent = "Retirer"; b.setAttribute("aria-label", "Retirer la carte " + c[0] + " / " + c[1]);
+    b.onclick = () => { persos.splice(i, 1); majPersos(); };
+    li.append(t, b); ul.append(li);
+  });
+  compteCartes();
+}
+$("ajout").onclick = () => {
+  const g = $("cg").value.trim(), d = $("cd").value.trim();
+  if (!g || !d) { $("err-reglages").textContent = "Une carte perso a besoin des deux côtés."; return; }
+  $("err-reglages").textContent = ""; persos.push([g, d]); $("cg").value = ""; $("cd").value = ""; majPersos(); $("cg").focus();
+};
+$("go-local").onclick = () => { sons.clic(); $("p1").value = $("p1").value || memo.lire("cadran-p1", ""); $("p2").value = $("p2").value || memo.lire("cadran-p2", ""); compteCartes(); ecran("reglages"); };
+
+/* ---------- Partie ---------- */
+const P = { joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: 90, angle: 90, indice: "", phase: "" };
+const melange = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const donneur = () => P.joueurs[P.n % 2], devineur = () => P.joueurs[(P.n + 1) % 2];
+
+$("lancer").onclick = () => {
+  const a = $("p1").value.trim() || "Joueur 1", b = $("p2").value.trim() || "Joueur 2";
+  const cartes = casesPacks().filter(c => c.checked).flatMap(c => PACKS[c.value].cartes).concat(persos);
+  if (!cartes.length) { $("err-reglages").textContent = "Coche au moins un pack ou ajoute une carte perso."; return; }
+  if (a.toLowerCase() === b.toLowerCase()) { $("err-reglages").textContent = "Choisissez deux pseudos différents."; return; }
+  $("err-reglages").textContent = "";
+  memo.ecrire("cadran-p1", a); memo.ecrire("cadran-p2", b);
+  P.joueurs = [a, b]; P.manches = +document.querySelector("#manches input:checked").value; P.toutes = cartes;
+  nouvellePartie();
+};
+function nouvellePartie() { P.pioche = melange(P.toutes.slice()); P.n = 0; P.score = 0; P.histo = []; sons.clic(); preparerManche(); }
+
+function passe(titre, texte, bouton, suite) {
+  $("passe-titre").textContent = titre; $("passe-texte").textContent = texte; $("passe-ok").textContent = bouton;
+  $("passe-ok").onclick = () => { sons.clic(); suite(); };
+  ecran("passe");
+}
+function preparerManche() {
+  if (!P.pioche.length) P.pioche = melange(P.toutes.slice()); // toutes les cartes sont sorties : on remélange
+  P.carte = P.pioche.pop();
+  P.cible = 22 + Math.random() * 136; // la cible reste toujours entière sur le cadran P.angle = 90; P.indice = "";
+  passe(donneur() + ", à toi de faire deviner", devineur() + " ne doit pas regarder l'écran pendant que tu découvres la cible.", "Je suis " + donneur() + ", personne ne regarde", phaseIndice);
+}
+
+/* ---------- Cadran ---------- */
+const pt = (a, r) => [170 - r * Math.cos(a * Math.PI / 180), 175 - r * Math.sin(a * Math.PI / 180)];
+function dessinerCible(t) {
+  const zones = [[-20, -12, "#F2C230", 2, "#2B1A10"], [-12, -4, "#E8752A", 3, "#2B1A10"], [-4, 4, "#2F6FD0", 4, "#FFFFFF"], [4, 12, "#E8752A", 3, "#2B1A10"], [12, 20, "#F2C230", 2, "#2B1A10"]];
+  $("cible").innerHTML = zones.map(([d1, d2, coul, pts, enc]) => {
+    const [x1, y1] = pt(t + d1, 150), [x2, y2] = pt(t + d2, 150), [tx, ty] = pt(t + (d1 + d2) / 2, 127);
+    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}"/>` +
+      `<text x="${tx.toFixed(1)}" y="${(ty + 4).toFixed(1)}" font-family="DM Sans,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="${enc}">${pts}</text>`;
+  }).join("");
+}
+function volet(ouvert, vite) {
+  const v = $("volet"); v.classList.toggle("vite", !!vite);
+  const voulu = ouvert ? "rotate(180deg)" : "rotate(0deg)";
+  if (v.style.transform !== voulu) { v.style.transform = voulu; sons.volet(); }
+}
+let dernierCran = 90;
+function poserAiguille(a, silencieux) {
+  P.angle = Math.max(3, Math.min(177, a));
+  $("aiguille").style.transform = "rotate(" + (P.angle - 90) + "deg)";
+  $("fin").value = Math.round(P.angle);
+  if (!silencieux && Math.abs(P.angle - dernierCran) >= 4) { dernierCran = P.angle; sons.cran(); }
+}
+$("grad").innerHTML = Array.from({ length: 35 }, (_, i) => { const a = 5 + i * 5, g = a % 15 === 0, [x1, y1] = pt(a, 158), [x2, y2] = pt(a, g ? 169 : 164); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${g ? 2 : 1}" opacity="${g ? .9 : .55}"/>`; }).join("");
+const svg = $("cadran");
+function angleDepuis(e) {
+  const r = svg.getBoundingClientRect();
+  const x = -12 + (e.clientX - r.left) / r.width * 364, y = -6 + (e.clientY - r.top) / r.height * 224;
+  const dx = 170 - x, dy = 175 - y;
+  return dy <= 0 ? (dx > 0 ? 3 : 177) : Math.atan2(dy, dx) * 180 / Math.PI;
+}
+let glisse = false;
+svg.addEventListener("pointerdown", e => { if (P.phase !== "devine") return; glisse = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} poserAiguille(angleDepuis(e)); e.preventDefault(); });
+svg.addEventListener("pointermove", e => { if (glisse && P.phase === "devine") poserAiguille(angleDepuis(e)); });
+["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { glisse = false; }));
+$("fin").addEventListener("input", e => { if (P.phase === "devine") poserAiguille(+e.target.value); });
+
+/* ---------- Phases d'une manche ---------- */
+function enTete() {
+  $("score").textContent = P.score;
+  $("num").textContent = (P.n + 1) + (P.manches ? " / " + P.manches : "");
+  $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
+}
+function montrer(ids) { ["ph-indice", "ph-devine", "zone-reglage", "resultat", "valider", "suivante", "arreter"].forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
+
+function phaseIndice() {
+  P.phase = "indice"; enTete();
+  $("cible").innerHTML = ""; volet(false, true); dessinerCible(P.cible);
+  $("aiguille").style.display = "none"; svg.classList.remove("reglable");
+  $("role").textContent = donneur() + " : regarde la cible, puis donne un indice qui correspond à cet endroit.";
+  $("indice").value = ""; $("err-indice").textContent = "";
+  montrer(["ph-indice"]); ecran("manche");
+}
+const voir = $("voir");
+function regarder(oui) { if (P.phase !== "indice") return; voir.classList.toggle("enfonce", oui); volet(oui, true); }
+voir.addEventListener("pointerdown", e => { e.preventDefault(); regarder(true); });
+["pointerup", "pointercancel", "pointerleave"].forEach(t => voir.addEventListener(t, () => regarder(false)));
+voir.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); regarder(true); } });
+voir.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") regarder(false); });
+voir.addEventListener("contextmenu", e => e.preventDefault());
+
+function envoyerIndice() {
+  const t = $("indice").value.trim();
+  if (!t) { $("err-indice").textContent = "Écris un indice avant d'envoyer."; return; }
+  P.indice = t; P.phase = "attente"; volet(false, true);
+  passe("Passe l'appareil à " + devineur(), "L'indice est enregistré et la cible est cachée. Elle ne peut plus être montrée avant la révélation.", "Je suis " + devineur(), phaseDevine);
+}
+$("envoyer").onclick = envoyerIndice;
+$("indice").addEventListener("keydown", e => { if (e.key === "Enter") envoyerIndice(); });
+
+function phaseDevine() {
+  P.phase = "devine"; enTete(); volet(false, true);
+  $("aiguille").style.display = ""; dernierCran = 90; poserAiguille(90, true); svg.classList.add("reglable");
+  $("role").textContent = devineur() + " : place l'aiguille là où tu penses que la cible se trouve.";
+  $("de").textContent = donneur(); $("indice-affiche").textContent = "« " + P.indice + " »";
+  montrer(["ph-devine", "zone-reglage", "valider"]); ecran("manche");
+}
+const pointsPour = ecart => ecart <= 4 ? 4 : ecart <= 12 ? 3 : ecart <= 20 ? 2 : 0;
+$("valider").onclick = () => {
+  if (P.phase !== "devine") return;
+  P.phase = "reveal"; svg.classList.remove("reglable"); sons.clic();
+  const pts = pointsPour(Math.abs(P.angle - P.cible));
+  P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur() });
+  montrer(["ph-devine", "resultat"]); $("resultat").textContent = "";
+  $("role").textContent = "Révélation…";
+  volet(true, false);
+  setTimeout(() => {
+    $("score").textContent = P.score;
+    $("resultat").textContent = (pts === 4 ? "En plein dans le mille ! " : pts === 3 ? "Presque ! " : pts === 2 ? "Pas loin. " : "Raté. ") + "+" + pts + " point" + (pts > 1 ? "s" : "");
+    $("role").textContent = "Les deux joueurs peuvent regarder.";
+    sons.points(pts);
+    const derniere = P.manches && P.n + 1 >= P.manches;
+    $("suivante").textContent = derniere ? "Voir le résultat" : "Manche suivante";
+    montrer(["ph-devine", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+  }, 800);
+};
+$("suivante").onclick = () => { P.n++; if (P.manches && P.n >= P.manches) finir(); else { sons.clic(); preparerManche(); } };
+$("arreter").onclick = () => { P.n++; finir(); };
+
+/* ---------- Fin ---------- */
+function finir() {
+  const jouees = P.histo.length, max = jouees * 4;
+  $("fin-score").textContent = P.score;
+  $("fin-detail").textContent = "sur " + max + " possibles, en " + jouees + " manche" + (jouees > 1 ? "s" : "");
+  let msg = "";
+  if (P.manches && jouees === P.manches) {
+    const cle = "cadran-record-" + P.manches, ancien = +memo.lire(cle, "-1");
+    if (P.score > ancien) { memo.ecrire(cle, String(P.score)); msg = ancien < 0 ? "Premier record en " + P.manches + " manches : " + P.score : "Nouveau record ! L'ancien était de " + ancien; }
+    else msg = "Record à battre en " + P.manches + " manches : " + ancien;
+  } else if (jouees) msg = "Moyenne : " + (P.score / jouees).toFixed(1).replace(".", ",") + " point par manche";
+  $("fin-record").textContent = msg;
+  const ul = $("recap"); ul.textContent = "";
+  P.histo.forEach((h, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), em = document.createElement("em"), b = document.createElement("b");
+    t.textContent = (i + 1) + ". « " + h.indice + " » "; em.textContent = "(" + h.carte[0] + " ↔ " + h.carte[1] + ", par " + h.qui + ")"; t.append(em);
+    b.textContent = "+" + h.pts; li.append(t, b); ul.append(li);
+  });
+  sons.fin(); ecran("fin");
+}
+$("rejouer").onclick = nouvellePartie;
+$("accueil").onclick = () => { sons.clic(); ecran("reglages"); };
+</script>
+</body>
+</html>
