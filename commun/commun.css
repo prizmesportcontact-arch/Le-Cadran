@@ -55,13 +55,23 @@ label{font-size:15px;display:block;margin-bottom:6px}
 input[type=text]{width:100%;min-height:50px;padding:8px 12px;border:3px solid var(--noir);border-radius:0;background:var(--blanc);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:18px}
 .rang{display:flex;gap:14px;flex-wrap:wrap}
 .rang>*{flex:1;min-width:0}
-.jetons{display:flex;flex-wrap:wrap;gap:10px}
-.jeton{position:relative}
-.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.jeton span{display:block;padding:8px 12px;min-height:44px;font-size:15px;background:var(--blanc);border:3px solid var(--noir);opacity:.72}
-.jeton input:checked+span{background:var(--jaune);opacity:1;box-shadow:3px 3px 0 var(--noir)}
-.jeton input:checked+span::before{content:"✓ "}
-.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:3px}
+/* Réglages : boutons segmentés d'une seule pièce (un seul choix possible) */
+.jetons{display:flex;background:var(--blanc);border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir)}
+.jeton{position:relative;flex:1 1 0;min-width:0}
+.jeton+.jeton{border-left:3px solid var(--noir)}
+.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.jeton span{display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 4px;min-height:48px;font-family:var(--titre);font-weight:400;font-size:21px;letter-spacing:1px;line-height:1.05;color:#8A8A8A;transition:background .12s}
+.jeton input:checked+span{background:var(--jaune);color:var(--noir);font-family:var(--titre);font-size:21px;letter-spacing:1px;font-weight:400}
+.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:-6px}
+/* Plusieurs choix possibles (thèmes) : des cases séparées, en grille */
+.jetons.multi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0;box-shadow:none}
+.jetons.multi .jeton{border:3px solid var(--noir);background:var(--blanc);box-shadow:3px 3px 0 var(--noir)}
+.jetons.multi .jeton+.jeton{border-left:3px solid var(--noir)}
+.jetons.multi .jeton span{justify-content:flex-start;gap:8px;padding:6px 10px;font-family:var(--texte);font-weight:700;letter-spacing:0;font-size:15px;color:#555}
+.jetons.multi .jeton span::before{content:"";flex:none;width:18px;height:18px;border:3px solid var(--noir);background:var(--blanc)}
+.jetons.multi .jeton input:checked+span{font-family:var(--texte);font-size:15px;letter-spacing:0;font-weight:700}
+.jetons.multi .jeton input:checked+span::before{background:var(--noir);box-shadow:inset 0 0 0 3px var(--jaune)}
+.aide-reglage{font-size:13px;margin-top:6px}
 .plaques{display:flex;gap:14px}
 .plaques .case{flex:1;padding:6px 14px 8px}
 .plaques small{display:block;font-size:14px;text-transform:uppercase}
@@ -174,11 +184,71 @@ body.tele .gens li small{font-size:15px}
 .choix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .choix .btn{font-family:var(--texte);font-size:18px;letter-spacing:0;min-height:56px;white-space:normal;text-align:center;line-height:1.15}
 .choix .btn[aria-pressed="true"]{background:var(--jaune)}
-/* écran de mode (3 façons de jouer) */
-.modes{display:flex;flex-direction:column;gap:16px}
-.modes .btn{justify-content:flex-start;text-align:left;white-space:normal}
-.modes .btn small{display:block;font-family:var(--texte);font-size:14px;letter-spacing:0;line-height:1.2;margin-top:2px}
-.modes .btn span{display:block}
+/* ====== Organisation des menus ====== */
+/* En-tête : retour à gauche, titre, menu à droite */
+header.entete{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+header.entete h1{justify-self:start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* Menu ☰ : une feuille qui monte du bas */
+.modale.feuille{align-items:flex-end;padding:0 12px calc(12px + env(safe-area-inset-bottom))}
+.case.menu{width:100%;max-width:420px;display:flex;flex-direction:column;gap:0;padding:6px 14px 14px;animation:monte .28s cubic-bezier(.2,1.2,.4,1)}
+@keyframes monte{from{transform:translateY(100%)}to{transform:none}}
+.menu .item{display:flex;align-items:center;gap:14px;width:100%;min-height:56px;padding:6px 4px;background:none;border:0;border-bottom:3px dashed rgba(17,17,17,.25);font:inherit;font-size:18px;color:var(--noir);text-align:left;text-decoration:none;cursor:pointer}
+.menu .item .ico{width:26px;height:26px}
+.menu .item:active{background:rgba(255,230,0,.5)}
+.menu .item.rouge{color:var(--rouge)}
+.menu .btn.plat{margin-top:12px}
+/* Intertitres de section */
+.intertitre{font-family:var(--titre);font-weight:400;font-size:22px;letter-spacing:1px;margin:4px 0 0;color:var(--blanc);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill;display:flex;align-items:baseline;gap:10px}
+.intertitre .compte{font-family:var(--texte);font-size:14px;letter-spacing:0;-webkit-text-stroke:0;color:var(--noir);background:var(--blanc);border:2px solid var(--noir);padding:1px 8px}
+.intertitre .compte:empty{display:none}
+/* Écran d'un jeu : 3 cartes de mode identiques */
+.lien-regles{display:inline-flex;align-items:center;gap:8px;margin-top:4px;background:none;border:0;padding:6px 4px;font:inherit;font-size:16px;color:var(--noir);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px;cursor:pointer}
+.lien-regles .ico{width:22px;height:22px}
+.modes{display:flex;flex-direction:column;gap:14px}
+.mode{display:flex;align-items:center;gap:14px;width:100%;padding:10px 12px;background:var(--grain),var(--blanc);border:4px solid var(--noir);box-shadow:5px 5px 0 var(--noir);font:inherit;color:var(--noir);text-align:left;cursor:pointer;transition:transform .08s,box-shadow .08s;touch-action:manipulation}
+.mode:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--noir)}
+@media (hover:hover){.mode:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--noir)}}
+.mode-ico{flex:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:3px solid var(--noir)}
+.mode-ico.jaune{background:var(--jaune)}.mode-ico.rouge{background:var(--rouge);color:var(--blanc)}.mode-ico.noir{background:var(--noir);color:var(--jaune)}
+.mode-ico .ico{width:28px;height:28px}
+.mode-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mode-txt b{font-family:var(--titre);font-weight:400;font-size:24px;letter-spacing:1px;line-height:1}
+.mode-txt small{font-size:14px;line-height:1.2}
+.mode>.ico{width:22px;height:22px}
+.code-rapide{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.code-rapide label{margin:0}
+.rangee{display:flex;gap:12px;align-items:stretch}
+.rangee input{flex:1;min-width:0}
+.rangee .btn{flex:none;font-size:22px;min-height:56px}
+.code-rapide .btn{width:64px;padding:0}
+/* Chacun son téléphone */
+.identite{display:flex;flex-direction:column;gap:14px}
+.ou{display:flex;align-items:center;gap:12px;font-family:var(--titre);font-size:22px;color:var(--blanc);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill}
+.ou::before,.ou::after{content:"";flex:1;height:4px;background:var(--noir)}
+/* Salon : code + inviter sur une ligne, joueurs en grille */
+.bloc-code{display:flex;align-items:center;gap:14px}
+.code-zone{flex:1;min-width:0}
+.bloc-code .code{text-align:left;font-size:52px}
+.bloc-code #inviter{flex:none;flex-direction:column;gap:2px;min-height:64px;padding:6px 12px;font-size:14px}
+.bloc-code #inviter .ico{width:24px;height:24px}
+.gens.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+.gens.grille li{min-width:0}
+/* Barre du bas : le bouton principal reste toujours visible */
+.barre-bas{position:sticky;bottom:0;z-index:5;margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:14px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(rgba(25,181,240,0),var(--bleu) 26%)}
+.barre-bas .btn.plat{min-height:44px}
+/* Options repliées */
+details.options{background:var(--blanc);border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir)}
+details.options>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;min-height:50px;font-size:17px;list-style:none}
+details.options>summary::-webkit-details-marker{display:none}
+details.options>summary::after{content:"";width:12px;height:12px;border-right:4px solid var(--noir);border-bottom:4px solid var(--noir);transform:rotate(45deg) translate(-3px,-3px);transition:transform .15s}
+details.options[open]>summary::after{transform:rotate(-135deg) translate(-3px,-3px)}
+details.options>summary small{font-size:13px;color:#555;margin-left:auto}
+.options-corps{display:flex;flex-direction:column;gap:14px;padding:4px 14px 16px;border-top:3px dashed rgba(17,17,17,.25)}
+.options-corps .jetons{box-shadow:3px 3px 0 var(--noir)}
+/* Liste des joueurs sur un appareil */
+.noms-local{display:flex;flex-direction:column;gap:8px}
+body.tele .bloc-code .code{font-size:84px}
+body.tele .bloc-code{gap:28px}
 .attente-tour{font-size:15px}
 .boum div.petit-mot{font-size:22px}
 @media (prefers-reduced-motion:reduce){.tuile:hover{transform:none}}
@@ -188,7 +258,7 @@ body.tele .gens li small{font-size:15px}
 .avatar-choix{display:flex;gap:14px;align-items:flex-start}
 .av-apercu{flex:none;background:#fff;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);padding:4px;line-height:0}
 .av-choix{display:flex;flex-direction:column;gap:8px;min-width:0}
-.av-couleurs,.av-tetes{display:flex;flex-wrap:wrap;gap:6px}
+.av-couleurs,.av-tetes{display:grid;grid-template-columns:repeat(4,max-content);gap:6px}
 .av-coul{width:30px;height:30px;border:3px solid var(--noir);cursor:pointer;padding:0}
 .av-coul[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--noir)}
 .av-tete{width:40px;height:40px;padding:2px;border:2px solid transparent;background:transparent;cursor:pointer;line-height:0}
@@ -211,3 +281,6 @@ body.tele .chrono-meche{height:26px}
 body.tele .badge-titre{font-size:28px}
 body.tele .badge-qui{font-size:22px}
 body.tele .badge-detail{font-size:17px}
+
+#reglages-jeu>div>label,.options-corps label{font-size:16px}
+body.tele #reglages-jeu,body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #s-reglages>#bloc-manches,body.tele #s-reglages>details{max-width:620px;width:100%}

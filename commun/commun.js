@@ -42,6 +42,9 @@ const ICONES = {
   regle: '<rect x="2.5" y="8" width="19" height="8" rx="1"/><path d="M6 8v3M9.5 8v2M13 8v3M16.5 8v2"/>',
   vote: '<path d="M4 13.5h16v7H4z"/><path d="M8 13.5 12 4l5 2-3.5 7.5"/>',
   musique: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  menu: '<path d="M4 6.5h16M4 12h16M4 17.5h16"/>',
+  partager: '<path d="M12 3.5v12M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5v6.5a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-6.5"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
   chrono: '<circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5"/>'
 };
 document.body.insertAdjacentHTML("afterbegin", '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' +
@@ -75,6 +78,7 @@ function majSon() {
   const b = $("son"); if (!b) return;
   b.setAttribute("aria-pressed", sonActif); b.setAttribute("aria-label", sonActif ? "Son activé" : "Son coupé");
   b.querySelector("use").setAttribute("href", sonActif ? "#i-son" : "#i-muet");
+  const t = b.querySelector(".lib"); if (t) t.textContent = sonActif ? "Son : activé" : "Son : coupé";
 }
 
 /* ---------- Écrans, alertes, animations ---------- */
@@ -154,27 +158,57 @@ function copier(texte, bouton, ok) {
   const fini = () => { lab.textContent = ok; setTimeout(() => { lab.textContent = avant; }, 1600); sons.clic(); };
   try { navigator.clipboard.writeText(texte).then(fini, fini); } catch (e) { fini(); }
 }
-// Branche l'en-tête standard (règles, son, quitter) si la page en a un.
-const Entete = { quitter: null, texteQuitter: () => "La partie en cours sera perdue.", ecransQuitter: [] };
+// Inviter : la feuille de partage du téléphone (SMS, WhatsApp…), sinon le lien est copié.
+function inviter(titre, lien, code, bouton) {
+  sons.clic();
+  if (navigator.share && matchMedia("(pointer:coarse)").matches) { navigator.share({ title: titre, text: "Rejoins mon salon " + code + " :", url: lien }).catch(() => {}); return; }
+  copier(lien, bouton, "Lien copié !");
+}
+// En-tête : à gauche un bouton « retour » qui s'adapte à l'écran (maison, flèche ou croix),
+// à droite le menu ☰ (règles, son, musique, tous les jeux, quitter).
+// retours : { écran: fonction } pour une flèche ; un écran de ecransQuitter donne la croix ; sinon la maison.
+const Entete = { quitter: null, texteQuitter: () => "La partie en cours sera perdue.", ecransQuitter: [], retours: {} };
+function demanderQuitter() { $("quitter-texte").textContent = Entete.texteQuitter(); ouvrir("m-quitter"); }
+function majRetour(nom) {
+  const b = $("retour"); if (!b) return;
+  const quitte = Entete.ecransQuitter.includes(nom), f = Entete.retours[nom];
+  const icone = quitte ? "quitter" : f ? "retour" : "maison";
+  b.querySelector("use").setAttribute("href", "#i-" + icone);
+  b.setAttribute("aria-label", quitte ? "Quitter" : f ? "Retour" : "Tous les jeux");
+  b.onclick = () => { sons.clic(); if (quitte) demanderQuitter(); else if (f) f(); else location.href = RACINE; };
+  if ($("sortir")) $("sortir").style.display = quitte ? "" : "none";
+}
 function brancherEntete() {
   if ($("son")) { majSon(); $("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonActif ? "1" : "0"); majSon(); sons.clic(); }; }
-  if ($("aide")) $("aide").onclick = () => ouvrir("m-regles");
+  const dansMenu = f => () => { if ($("m-menu") && !$("m-menu").hidden) $("m-menu").hidden = true; f(); };
+  if ($("aide")) $("aide").onclick = dansMenu(() => ouvrir("m-regles"));
   if ($("fermer-regles")) $("fermer-regles").onclick = () => { sons.clic(); fermer("m-regles"); };
+  if ($("ouvrir-menu")) $("ouvrir-menu").onclick = () => ouvrir("m-menu");
+  if ($("fermer-menu")) $("fermer-menu").onclick = () => { sons.clic(); fermer("m-menu"); };
   if ($("sortir")) {
-    $("sortir").onclick = () => { $("quitter-texte").textContent = Entete.texteQuitter(); ouvrir("m-quitter"); };
+    $("sortir").onclick = dansMenu(demanderQuitter);
     $("quitter-non").onclick = () => { sons.clic(); fermer("m-quitter"); };
     $("quitter-oui").onclick = () => { sons.clic(); $("m-quitter").hidden = true; Entete.quitter && Entete.quitter(); };
-    ecouteursEcran.push(nom => {
-      const jeu = Entete.ecransQuitter.includes(nom);
-      $("sortir").style.display = jeu ? "" : "none";
-      if ($("maison")) $("maison").style.display = jeu ? "none" : ""; // en partie, la croix remplace la maison
-    });
   }
+  ecouteursEcran.push(majRetour);
   document.querySelectorAll(".modale").forEach(m => m.addEventListener("click", e => { if (e.target === m) fermer(m.id); }));
   addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".modale:not([hidden])").forEach(m => fermer(m.id)); });
   const logo = document.querySelector("h1");
   if (logo) logo.addEventListener("click", () => { logo.style.transform = "rotate(-3deg) scale(1.08)"; setTimeout(() => { logo.style.transform = ""; }, 150); });
 }
+// Le menu ☰ (même contenu dans tous les jeux)
+const MENU_HTML = () => `
+<div class="modale feuille" id="m-menu" hidden role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="case menu">
+    <button class="item" id="aide" type="button">${ico("aide")}<span class="lib">Règles du jeu</span></button>
+    <button class="item" id="son" type="button" aria-pressed="true">${ico("son")}<span class="lib">Son : activé</span></button>
+    <button class="item" id="musique" type="button" aria-pressed="false" style="display:none">${ico("musique")}<span class="lib">Musique : coupée</span></button>
+    <a class="item" id="maison" href="${RACINE}">${ico("maison")}<span class="lib">Tous les jeux</span></a>
+    <button class="item rouge" id="sortir" type="button" style="display:none">${ico("quitter")}<span class="lib">Quitter la partie</span></button>
+    <button class="btn plat" id="fermer-menu" type="button">Fermer</button>
+  </div>
+</div>`;
+function majMusique(on) { const b = $("musique"); if (!b) return; b.setAttribute("aria-pressed", on); const t = b.querySelector(".lib"); if (t) t.textContent = on ? "Musique : activée" : "Musique : coupée"; }
 
 /* ---------- Chargements à la demande ---------- */
 const charges = {};
@@ -340,90 +374,96 @@ const Lobby = {
     this.o = o;
     const app = $("app");
     app.insertAdjacentHTML("afterbegin", `
-<header>
+<header class="entete">
+  <button class="btn icone" id="retour" type="button" aria-label="Tous les jeux">${ico("maison")}</button>
   <h1>${o.titre}</h1>
-  <nav class="nav" aria-label="Menu">
-    <a class="btn icone" id="maison" href="${RACINE}" aria-label="Tous les jeux">${ico("maison")}</a>
-    <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu">${ico("aide")}</button>
-    <button class="btn icone" id="musique" type="button" aria-pressed="false" aria-label="Musique d'ambiance" style="display:none">${ico("musique")}</button>
-    <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé">${ico("son")}</button>
-    <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none">${ico("quitter")}</button>
-  </nav>
+  <button class="btn icone" id="ouvrir-menu" type="button" aria-label="Menu">${ico("menu")}</button>
 </header>
 <section class="screen" id="s-modes">
-  <div class="case jaune couverture">${o.couverture}</div>
-  <button class="btn plat" id="voir-regles" type="button">${ico("aide")}Les règles en 30 secondes</button>
-  <div class="modes bas">
-    <button class="btn jaune" id="go-local" type="button">${ico("tel")}<span>SUR CET APPAREIL<small>${o.texteLocal}</small></span></button>
-    <button class="btn" id="go-ligne" type="button">${ico("gens")}<span>EN LIGNE<small>Chacun sur son téléphone, avec un code de salon.</small></span></button>
-    <button class="btn plat" id="go-salon" type="button" style="min-height:64px;font-size:16px">${ico("tele")}<span>SALON GRAND ÉCRAN<small>Cet écran (télé, ordi) affiche le jeu. Tout le monde joue sur son téléphone.</small></span></button>
+  <div class="case jaune couverture">${o.couverture}
+    <button class="lien-regles" id="voir-regles" type="button">${ico("aide")}Lire les règles</button>
+  </div>
+  <h3 class="intertitre">Comment vous jouez ?</h3>
+  <div class="modes">
+    <button class="mode" id="go-local" type="button"><span class="mode-ico jaune">${ico("tel")}</span><span class="mode-txt"><b>Un seul téléphone</b><small>${o.texteLocal}</small></span>${ico("chevron")}</button>
+    <button class="mode" id="go-ligne" type="button"><span class="mode-ico rouge">${ico("gens")}</span><span class="mode-txt"><b>Chacun son téléphone</b><small>On se retrouve avec un code.</small></span>${ico("chevron")}</button>
+    <button class="mode" id="go-salon" type="button"><span class="mode-ico noir">${ico("tele")}</span><span class="mode-txt"><b>Télé + téléphones</b><small>La télé affiche le jeu, les téléphones jouent.</small></span>${ico("chevron")}</button>
+  </div>
+  <div class="case code-rapide">
+    <label for="code-rapide">On t'a donné un code ?</label>
+    <div class="rangee"><input type="text" id="code-rapide" class="champ-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD"><button class="btn jaune" id="go-code" type="button" aria-label="Rejoindre">${ico("suite")}</button></div>
   </div>
 </section>
 <section class="screen" id="s-ligne">
-  <h2>Jouer en ligne</h2>
-  <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
-  <div><label>Ton avatar</label><div class="avatar-choix" id="choix-avatar"></div></div>
-  <button class="btn" id="creer" type="button">${ico("plus")}CRÉER UN SALON</button>
-  <div class="case" style="display:flex;flex-direction:column;gap:10px">
-    <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
-    <input type="text" id="code-saisi" class="champ-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
-    <button class="btn jaune" id="rejoindre" type="button">${ico("suite")}REJOINDRE</button>
+  <h2>Chacun son téléphone</h2>
+  <div class="case identite">
+    <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    <div><label>Ton avatar</label><div id="choix-avatar"></div></div>
   </div>
   <p class="bandeau alerte" id="err-ligne" role="alert" style="display:none"></p>
-  <div class="bas"><button class="btn plat" id="retour-ligne" type="button">${ico("retour")}Retour</button></div>
+  <button class="btn" id="creer" type="button">${ico("plus")}CRÉER UN SALON</button>
+  <div class="ou"><span>ou</span></div>
+  <div class="rangee">
+    <input type="text" id="code-saisi" class="champ-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD" aria-label="Code du salon">
+    <button class="btn jaune" id="rejoindre" type="button">REJOINDRE</button>
+  </div>
 </section>
 <section class="screen" id="s-salon">
-  <h2 id="titre-salon">Le salon</h2>
-  <div class="case jaune" id="bloc-code">
-    <div class="salon-tele">
-      <div class="qr" id="qr" style="display:none"></div>
-      <div>
-        <div class="petit">Code du salon</div>
-        <div class="code" id="code-salon"></div>
-        <p class="adresse" id="adresse" style="display:none"></p>
-      </div>
+  <div class="case jaune bloc-code" id="bloc-code">
+    <div class="qr" id="qr" style="display:none"></div>
+    <div class="code-zone">
+      <div class="petit" id="titre-salon">Code du salon</div>
+      <div class="code" id="code-salon"></div>
+      <p class="adresse" id="adresse" style="display:none"></p>
     </div>
-    <div class="rang-btn" id="boutons-copier" style="margin-top:12px">
-      <button class="btn plat" id="copier-code" type="button">${ico("copier")}Copier le code</button>
-      <button class="btn plat" id="copier-lien" type="button">${ico("lien")}Copier le lien</button>
-    </div>
+    <button class="btn plat" id="inviter" type="button">${ico("partager")}<span>Inviter</span></button>
   </div>
-  <div><label>Dans le salon</label><ul class="gens" id="gens-salon"></ul><p class="petit" id="etat-salon" role="status" style="margin-top:8px"></p></div>
+  <div>
+    <h3 class="intertitre">Dans le salon <span class="compte" id="etat-salon" role="status"></span></h3>
+    <ul class="gens grille" id="gens-salon"></ul>
+  </div>
   <div id="place-reglages"></div>
   <div class="case" id="resume-invite" style="display:none"></div>
-  <p class="bandeau alerte" id="err-salon" role="alert" style="display:none"></p>
-  <div class="bas">
+  <div class="barre-bas">
+    <p class="bandeau alerte" id="err-salon" role="alert" style="display:none"></p>
     <button class="btn" id="lancer" type="button">${ico("suite")}LANCER LA PARTIE</button>
-    <button class="btn plat" id="quitter-salon" type="button">${ico("quitter")}Quitter le salon</button>
+    <p class="bandeau centre" id="attente-hote" style="display:none"></p>
   </div>
 </section>`);
-    document.body.insertAdjacentHTML("beforeend", `
+    document.body.insertAdjacentHTML("beforeend", MENU_HTML() + `
 <div class="modale" id="m-regles" hidden role="dialog" aria-modal="true" aria-labelledby="t-regles">
   <div class="case"><h3 id="t-regles">Les règles</h3>${o.regles}<button class="btn" id="fermer-regles" type="button">C'EST PARTI !</button></div>
 </div>
 <div class="modale" id="m-quitter" hidden role="dialog" aria-modal="true" aria-labelledby="t-quitter">
-  <div class="case jaune"><h3 id="t-quitter">Quitter la partie ?</h3><p id="quitter-texte"></p>
+  <div class="case jaune"><h3 id="t-quitter">Quitter ?</h3><p id="quitter-texte"></p>
     <div class="rang-btn"><button class="btn" id="quitter-oui" type="button">OUI</button><button class="btn plat" id="quitter-non" type="button">Non, je reste</button></div>
   </div>
 </div>`);
     if ($("reglages-jeu")) $("place-reglages").append($("reglages-jeu"));
     Entete.ecransQuitter = ["salon"].concat(o.ecransJeu || []);
+    const versModes = () => ecran("modes");
+    Entete.retours = Object.assign({ ligne: versModes, local: versModes }, o.retours || {});
     Entete.texteQuitter = () => Salon.actif() ? "Tu vas quitter le salon " + Salon.code + "." + (Salon.autorite() ? " Comme c'est toi qui l'as créé, la partie s'arrêtera pour tout le monde." : "") : "La partie en cours sera perdue.";
     Entete.quitter = () => this.sortir();
     brancherEntete();
     $("voir-regles").onclick = () => ouvrir("m-regles");
     if (typeof Avatar !== "undefined") Avatar.choisisseur($("choix-avatar"), av => { Salon.av = av; });
-    $("musique").onclick = () => { const on = Musique.basculer(); $("musique").setAttribute("aria-pressed", on); };
+    $("musique").onclick = () => { majMusique(Musique.basculer()); };
     $("go-local").onclick = () => { sons.clic(); o.surLocal(); };
     $("go-ligne").onclick = () => { sons.clic(); chargerTempsReel().catch(() => {}); $("pseudo").value = $("pseudo").value || pseudo.lire(); alerte("err-ligne"); ecran("ligne"); };
     $("go-salon").onclick = () => this.creer("ecran");
+    const codeRapide = () => {
+      const code = $("code-rapide").value.trim().toUpperCase();
+      if (!/^[A-Z]{4}$/.test(code)) { $("code-rapide").focus(); rejouerAnim($("code-rapide"), "secoue"); return; }
+      sons.clic(); $("code-saisi").value = code; $("pseudo").value = $("pseudo").value || pseudo.lire(); alerte("err-ligne"); ecran("ligne");
+      if ($("pseudo").value) this.rejoindre(); else { alerte("err-ligne", "Choisis un pseudo, puis appuie sur REJOINDRE."); $("pseudo").focus(); }
+    };
+    $("go-code").onclick = codeRapide;
+    $("code-rapide").addEventListener("keydown", e => { if (e.key === "Enter") codeRapide(); });
     $("creer").onclick = () => this.creer("hote");
     $("rejoindre").onclick = () => this.rejoindre();
     $("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") this.rejoindre(); });
-    $("retour-ligne").onclick = () => { sons.clic(); ecran("modes"); };
-    $("quitter-salon").onclick = () => { sons.clic(); this.sortir(); };
-    $("copier-code").onclick = e => copier(Salon.code, e.currentTarget, "Copié !");
-    $("copier-lien").onclick = e => copier(Salon.lien(), e.currentTarget, "Lien copié !");
+    $("inviter").onclick = e => inviter(this.o.titreJeu || document.title, Salon.lien(), Salon.code, e.currentTarget);
     $("lancer").onclick = () => this.lancer();
     Salon.ordre = ["salon", "reglages"].concat(o.ordre || []);
     Salon.remise = ["salon"].concat(o.remise || []);
@@ -442,7 +482,7 @@ const Lobby = {
     catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
     document.body.classList.toggle("tele", role === "ecran");
     $("musique").style.display = role === "ecran" ? "" : "none";
-    if (role === "ecran" && Musique.voulue()) { Musique.demarrer(); $("musique").setAttribute("aria-pressed", "true"); }
+    if (role === "ecran" && Musique.voulue()) { Musique.demarrer(); majMusique(true); }
     this.ouvrirSalon();
   },
   async rejoindre() {
@@ -456,21 +496,23 @@ const Lobby = {
   },
   ouvrirSalon(texteInvite) {
     const chef = Salon.autorite(), tele = Salon.role === "ecran";
-    $("titre-salon").textContent = tele ? "Salon grand écran" : chef ? "Ton salon" : "Salon rejoint !";
+    $("titre-salon").textContent = tele ? "Scannez ou tapez le code" : "Code du salon";
     $("qr").style.display = tele ? "" : "none"; $("adresse").style.display = tele ? "" : "none";
-    $("boutons-copier").style.display = chef ? "" : "none";
+    $("inviter").style.display = tele ? "none" : "";
     $("place-reglages").style.display = chef ? "" : "none";
     $("lancer").style.display = chef ? "" : "none";
+    $("attente-hote").style.display = chef ? "none" : "";
     $("resume-invite").style.display = chef ? "none" : "";
     if (!chef) $("resume-invite").textContent = texteInvite || $("resume-invite").textContent || "L'hôte règle la partie…";
     alerte("err-salon"); this.majListe(); this.envoyerReglages(); ecran("salon");
   },
   sortir() { Salon.quitter(); this.arret(); ecran("modes"); },
-  arret() { document.body.classList.remove("tele"); Musique.arreter(); $("musique").style.display = "none"; this.o.surArret && this.o.surArret(); },
+  arret() { document.body.classList.remove("tele"); Musique.arreter(); majMusique(false); $("musique").style.display = "none"; this.o.surArret && this.o.surArret(); },
   majListe() {
-    const joueurs = Salon.joueurs().length, min = this.o.min;
+    const joueurs = Salon.joueurs().length, min = this.o.min, chefG = Salon.gens.find(g => g.role !== "invite");
+    $("attente-hote").textContent = chefG && chefG.role === "hote" ? "En attente de " + chefG.nom + "…" : "La partie se lance depuis la télé…";
     dessinerGens($("gens-salon"), Salon.gens.length ? Salon.gens : [{ cle: Salon.id, nom: Salon.nom, role: Salon.role, av: Salon.role === "ecran" ? null : Salon.av }], { avatar: g => g.role === "ecran" ? null : g.av });
-    $("etat-salon").textContent = joueurs + " joueur" + (joueurs > 1 ? "s" : "") + " (de " + min + " à " + this.o.max + ")." + (joueurs < min ? " Il en manque " + (min - joueurs) + " pour lancer." : "");
+    $("etat-salon").textContent = joueurs + " / " + this.o.max + (joueurs < min ? " · encore " + (min - joueurs) + " pour lancer" : "");
   },
   majGens(nouveaux, partis) {
     if (Salon.role === "invite" && ecranActuel === "ligne" && Salon.gens.some(g => g.role !== "invite")) { alerte("err-ligne"); this.ouvrirSalon(); }

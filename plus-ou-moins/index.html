@@ -11,7 +11,7 @@
 <link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icones/icone-180.png">
-<link rel="stylesheet" href="../commun/commun.css?v=2">
+<link rel="stylesheet" href="../commun/commun.css?v=3">
 <style>
 .question{font-family:var(--titre);font-size:30px;letter-spacing:1px;line-height:1.1;text-wrap:balance}
 body.tele .question{font-size:52px}
@@ -40,15 +40,19 @@ body.tele .vrai-txt{font-size:44px}
 <div id="app">
 
   <!-- Réglages : déplacés dans le salon ou dans l'écran local -->
-  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:14px">
-    <div><label id="l-nbq">Nombre de questions</label><div class="jetons" role="radiogroup" aria-labelledby="l-nbq" id="nbq"></div></div>
-    <div><label id="l-cats">Thèmes <span id="nb-q" class="petit"></span></label><div class="jetons" role="group" aria-labelledby="l-cats" id="cats"></div></div>
+  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:16px">
+    <h3 class="intertitre">Réglages</h3>
+    <div><label id="l-nbq">Questions</label><div class="jetons" role="radiogroup" aria-labelledby="l-nbq" id="nbq"></div></div>
     <div><label id="l-chrono">Chrono pour répondre</label><div class="jetons" role="radiogroup" aria-labelledby="l-chrono" id="chronos"></div></div>
+    <details class="options">
+      <summary>Thèmes <small id="nb-q"></small></summary>
+      <div class="options-corps"><div class="jetons multi" role="group" aria-label="Thèmes" id="cats"></div></div>
+    </details>
   </div>
 
   <!-- LOCAL : les joueurs -->
   <section class="screen" id="s-local">
-    <h2>Sur cet appareil</h2>
+    <h2>Un seul téléphone</h2>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">Les joueurs (seul, ou jusqu'à 8)</label>
       <div id="local-noms"></div>
@@ -56,9 +60,8 @@ body.tele .vrai-txt{font-size:44px}
     </div>
     <div id="place-local"></div>
     <p class="bandeau alerte" id="err-local" role="alert" style="display:none"></p>
-    <div class="bas">
+    <div class="barre-bas">
       <button class="btn" id="lancer-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
-      <button class="btn plat" id="retour-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
     </div>
   </section>
 
@@ -136,21 +139,21 @@ body.tele .vrai-txt{font-size:44px}
 
 <script src="../commun/avatars.js?v=2"></script>
 <script src="../commun/ambiance.js?v=1"></script>
-<script src="../commun/commun.js?v=2"></script>
+<script src="../commun/commun.js?v=3"></script>
 <script>
 "use strict";
 /* ---------- Questions : [question, réponse, unité, "a" si c'est une année] ---------- */
 const QUESTIONS = [["En quelle année a eu lieu la prise de la Bastille ?", 1789, "", "a", "histoire"], ["Combien d'os compte le squelette d'un adulte ?", 206, "os", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et la Lune ?", 384400, "km", "", "sciences"], ["Quelle est la hauteur du mont Everest ?", 8849, "m", "", "geo"], ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", 1969, "", "a", "histoire"], ["Combien de pays sont membres de l'ONU ?", 193, "pays", "", "geo"], ["Combien de touches compte un piano classique ?", 88, "touches", "", "loisirs"], ["Combien de cases compte un échiquier ?", 64, "cases", "", "loisirs"], ["Quelle est la vitesse de la lumière ?", 299792, "km/s", "", "sciences"], ["Combien y a-t-il de départements en France (outre-mer compris) ?", 101, "départements", "", "geo"], ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", 1889, "", "a", "histoire"], ["Combien de cartes compte un jeu de tarot ?", 78, "cartes", "", "loisirs"], ["Combien de dents a un adulte (dents de sagesse comprises) ?", 32, "dents", "", "sciences"], ["En quelle année le mur de Berlin est-il tombé ?", 1989, "", "a", "histoire"], ["Combien de minutes y a-t-il dans une semaine ?", 10080, "minutes", "", "sciences"], ["Combien de secondes y a-t-il dans une journée ?", 86400, "secondes", "", "sciences"], ["Quelle est la profondeur de la fosse des Mariannes, environ ?", 10994, "m", "", "geo"], ["En quelle année est né Napoléon Bonaparte ?", 1769, "", "a", "histoire"], ["En quelle année est sorti le premier iPhone ?", 2007, "", "a", "loisirs"], ["Combien de cœurs a une pieuvre ?", 3, "cœurs", "", "sciences"], ["Quelle vitesse peut atteindre un guépard en pointe, environ ?", 110, "km/h", "", "sciences"], ["En quelle année a eu lieu la toute première Coupe du monde de football ?", 1930, "", "a", "loisirs"], ["Quel est le diamètre de la Terre, environ ?", 12742, "km", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et le Soleil ?", 150, "millions de km", "", "sciences"], ["Combien de litres de sang contient le corps d'un adulte, environ ?", 5, "litres", "", "sciences"], ["Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?", 1665, "marches", "", "geo"], ["Quelle est la hauteur de la tour Eiffel, antennes comprises ?", 330, "m", "", "geo"], ["En quelle année le tunnel sous la Manche a-t-il été inauguré ?", 1994, "", "a", "histoire"], ["Quelle est la longueur officielle d'un marathon ?", 42.195, "km", "", "loisirs"], ["Combien y a-t-il d'États aux États-Unis ?", 50, "États", "", "geo"], ["Combien d'habitants compte Paris intra-muros, environ ?", 2.1, "millions", "", "geo"], ["En quelle année la peine de mort a-t-elle été abolie en France ?", 1981, "", "a", "histoire"], ["En quelle année les Françaises ont-elles obtenu le droit de vote ?", 1944, "", "a", "histoire"], ["Combien de pièces y a-t-il au total au début d'une partie d'échecs ?", 32, "pièces", "", "loisirs"], ["Combien de langues officielles a la Suisse ?", 4, "langues", "", "geo"], ["Quelle est la hauteur de la statue de la Liberté, sans son socle ?", 46, "m", "", "geo"], ["En quelle année a eu lieu la révolution russe ?", 1917, "", "a", "histoire"], ["Combien de pays font partie de l'Union européenne ?", 27, "pays", "", "geo"], ["Combien d'étoiles y a-t-il sur le drapeau européen ?", 12, "étoiles", "", "loisirs"], ["Quelle est la longueur de la Seine, environ ?", 777, "km", "", "geo"], ["Combien de vertèbres compte la colonne vertébrale humaine, environ ?", 33, "vertèbres", "", "sciences"], ["Quelle est la température à la surface du Soleil, environ ?", 5500, "°C", "", "sciences"], ["Quel est l'âge de l'Univers, environ ?", 13.8, "milliards d'années", "", "sciences"], ["En quelle année est sorti le premier livre Harry Potter ?", 1997, "", "a", "loisirs"], ["En quelle année est sorti le tout premier film Star Wars ?", 1977, "", "a", "loisirs"], ["En quelle année Google a-t-il été créé ?", 1998, "", "a", "loisirs"], ["En quelle année YouTube a-t-il été créé ?", 2005, "", "a", "loisirs"], ["En quelle année Facebook a-t-il été créé ?", 2004, "", "a", "loisirs"], ["En quelle année est sortie la version complète de Minecraft ?", 2011, "", "a", "loisirs"], ["En quelle année le mode Battle Royale de Fortnite est-il sorti ?", 2017, "", "a", "loisirs"], ["Combien de Pokémon compte la toute première génération ?", 151, "Pokémon", "", "loisirs"], ["Quelle est la vitesse du son dans l'air, environ ?", 343, "m/s", "", "sciences"], ["Combien de ponts traversent la Seine à Paris, environ ?", 37, "ponts", "", "geo"], ["Combien de fois bat le cœur d'un adulte au repos, en moyenne, par minute ?", 70, "battements", "", "sciences"], ["Combien de pays compte l'Afrique ?", 54, "pays", "", "geo"], ["Quelle est la hauteur du Burj Khalifa, la plus haute tour du monde ?", 828, "m", "", "geo"], ["Combien de neurones compte le cerveau humain, environ ?", 86, "milliards", "", "sciences"], ["Combien d'œufs pond une poule pondeuse par an, environ ?", 300, "œufs", "", "sciences"], ["Jusqu'à quel âge a vécu Jeanne Calment, la doyenne de l'humanité ?", 122, "ans", "", "histoire"], ["Combien de pays le Danube traverse-t-il ?", 10, "pays", "", "geo"], ["Quelle part de la surface de la Terre est couverte d'eau ?", 71, "%", "", "sciences"], ["Quelle part du corps humain est faite d'eau, environ ?", 60, "%", "", "sciences"], ["Combien d'éléments compte le tableau périodique ?", 118, "éléments", "", "sciences"], ["Quel est le numéro atomique de l'or ?", 79, "", "", "sciences"], ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?", 1492, "", "a", "histoire"], ["En quelle année a eu lieu la bataille de Marignan ?", 1515, "", "a", "histoire"], ["En quelle année la Seconde Guerre mondiale s'est-elle terminée ?", 1945, "", "a", "histoire"], ["En quelle année la Première Guerre mondiale a-t-elle commencé ?", 1914, "", "a", "histoire"], ["Quelle est la hauteur d'un panier de basket ?", 305, "cm", "", "loisirs"], ["Quelle est la longueur d'une piscine olympique ?", 50, "m", "", "loisirs"], ["Combien de lettres compte l'alphabet français ?", 26, "lettres", "", "loisirs"], ["Combien de cases compte le plateau du Monopoly ?", 40, "cases", "", "loisirs"], ["Combien de dominos compte un jeu classique ?", 28, "dominos", "", "loisirs"], ["Combien de joueurs s'affrontent au début d'une partie de Fortnite Battle Royale ?", 100, "joueurs", "", "loisirs"], ["Combien de trous compte un parcours de golf classique ?", 18, "trous", "", "loisirs"], ["Quelle distance sépare Paris de Marseille par la route, environ ?", 775, "km", "", "geo"], ["Quelle distance sépare Paris de New York à vol d'oiseau, environ ?", 5840, "km", "", "geo"], ["Combien d'habitants compte la Chine, environ ?", 1.4, "milliard", "", "geo"], ["Quel est le record de vitesse d'un TGV, établi en 2007 ?", 575, "km/h", "", "loisirs"], ["À quelle température l'eau gèle-t-elle, en degrés Fahrenheit ?", 32, "°F", "", "sciences"], ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", 7, "couleurs", "", "sciences"], ["Combien de planètes compte le système solaire ?", 8, "planètes", "", "sciences"], ["Combien de pattes a une araignée ?", 8, "pattes", "", "sciences"], ["Combien de semaines y a-t-il dans une année ?", 52, "semaines", "", "sciences"], ["Combien de cordes a une guitare classique ?", 6, "cordes", "", "loisirs"], ["Quelle est la hauteur du mont Blanc, environ ?", 4807, "m", "", "geo"], ["Combien d'habitants compte la France, environ ?", 68, "millions", "", "geo"], ["Combien d'humains vivent sur Terre, environ ?", 8, "milliards", "", "geo"], ["En quelle année Gutenberg a-t-il mis au point l'imprimerie, environ ?", 1450, "", "a", "histoire"], ["Quelle est la profondeur moyenne des océans, environ ?", 3688, "m", "", "geo"], ["Combien de kilomètres sépare la Terre de Mars au plus près, environ ?", 55, "millions de km", "", "sciences"], ["Quelle est la hauteur d'un filet de volley-ball masculin ?", 243, "cm", "", "loisirs"], ["Quelle est la longueur d'un court de tennis ?", 23.77, "m", "", "loisirs"], ["Combien de petits cubes visibles a un Rubik's Cube classique ?", 26, "cubes", "", "loisirs"], ["Combien d'étoiles y a-t-il sur le drapeau des États-Unis ?", 50, "étoiles", "", "loisirs"]];
 const NB = [5, 10, 15];
 const nbChoisi = () => +document.querySelector("#nbq input:checked").value;
-$("nbq").innerHTML = NB.map(n => `<label class="jeton"><input type="radio" name="nbq" value="${n}" ${n === 10 ? "checked" : ""}><span>${n} questions</span></label>`).join("");
-const CATS = { histoire: "Histoire", sciences: "Sciences et nature", geo: "Géographie", loisirs: "Sport, jeux et tech" };
+$("nbq").innerHTML = NB.map(n => `<label class="jeton"><input type="radio" name="nbq" value="${n}" ${n === 10 ? "checked" : ""}><span>${n}</span></label>`).join("");
+const CATS = { histoire: "Histoire", sciences: "Sciences", geo: "Géographie", loisirs: "Sport, jeux, tech" };
 $("cats").innerHTML = Object.keys(CATS).map(k => `<label class="jeton"><input type="checkbox" value="${k}" checked><span>${CATS[k]}</span></label>`).join("");
-$("chronos").innerHTML = [0, 20, 40].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Sans chrono"}</span></label>`).join("");
+$("chronos").innerHTML = [0, 20, 40].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Aucun"}</span></label>`).join("");
 const catsChoisies = () => [...document.querySelectorAll("#cats input:checked")].map(i => i.value);
 const chronoChoisi = () => +document.querySelector("#chronos input:checked").value;
 const indicesDispo = () => { const c = catsChoisies(); return QUESTIONS.map((x, i) => i).filter(i => c.includes(QUESTIONS[i][4])); };
-function majNbQ() { const n = indicesDispo().length; $("nb-q").textContent = "· " + n + " question" + (n > 1 ? "s" : ""); }
+function majNbQ() { const n = indicesDispo().length, c = catsChoisies().length; $("nb-q").textContent = (c === 4 ? "tous" : c + " sur 4") + " · " + n + " question" + (n > 1 ? "s" : ""); }
 majNbQ();
 $("nbq").onchange = $("chronos").onchange = () => Lobby.envoyerReglages();
 $("cats").onchange = () => { majNbQ(); Lobby.envoyerReglages(); };
@@ -232,7 +235,6 @@ function ajouterNom(nom) {
   d.append(i, b); $("local-noms").append(d);
 }
 $("ajout-joueur").onclick = () => { ajouterNom(""); const l = $("local-noms").lastChild; l && l.firstChild.focus(); };
-$("retour-local").onclick = () => { sons.clic(); ecran("modes"); };
 $("lancer-local").onclick = () => {
   const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
   if (new Set(noms.map(n => n.toLowerCase())).size !== noms.length) { alerte("err-local", "Deux joueurs ont le même pseudo."); return; }

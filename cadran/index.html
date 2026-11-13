@@ -68,13 +68,24 @@ label{font-size:15px;display:block;margin-bottom:6px}
 input[type=text]{width:100%;min-height:50px;padding:8px 12px;border:3px solid var(--noir);border-radius:0;background:var(--blanc);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:18px}
 .rang{display:flex;gap:14px;flex-wrap:wrap}
 .rang>*{flex:1;min-width:0}
-.jetons{display:flex;flex-wrap:wrap;gap:10px}
-.jeton{position:relative}
-.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.jeton span{display:block;padding:8px 12px;min-height:44px;font-size:15px;background:var(--blanc);border:3px solid var(--noir);opacity:.72}
-.jeton input:checked+span{background:var(--jaune);opacity:1;box-shadow:3px 3px 0 var(--noir)}
-.jeton input:checked+span::before{content:"✓ "}
-.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:3px}
+/* Réglages : boutons segmentés d'une seule pièce (un seul choix possible) */
+.jetons{display:flex;background:var(--blanc);border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir)}
+.jeton{position:relative;flex:1 1 0;min-width:0}
+.jeton+.jeton{border-left:3px solid var(--noir)}
+.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.jeton span{display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 4px;min-height:48px;font-family:var(--titre);font-weight:400;font-size:21px;letter-spacing:1px;line-height:1.05;color:#8A8A8A;transition:background .12s}
+.jeton input:checked+span{background:var(--jaune);color:var(--noir);font-family:var(--titre);font-size:21px;letter-spacing:1px;font-weight:400}
+.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:-6px}
+/* Plusieurs choix possibles (thèmes) : des cases séparées, en grille */
+.jetons.multi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0;box-shadow:none}
+.jetons.multi .jeton{border:3px solid var(--noir);background:var(--blanc);box-shadow:3px 3px 0 var(--noir)}
+.jetons.multi .jeton+.jeton{border-left:3px solid var(--noir)}
+.jetons.multi .jeton span{justify-content:flex-start;gap:8px;padding:6px 10px;font-family:var(--texte);font-weight:700;letter-spacing:0;font-size:15px;color:#555}
+.jetons.multi .jeton span::before{content:"";flex:none;width:18px;height:18px;border:3px solid var(--noir);background:var(--blanc)}
+.jetons.multi .jeton input:checked+span{font-family:var(--texte);font-size:15px;letter-spacing:0;font-weight:700}
+.jetons.multi .jeton input:checked+span::before{background:var(--noir);box-shadow:inset 0 0 0 3px var(--jaune)}
+.aide-reglage{font-size:13px;margin-top:6px}
+.jeton span.long{font-size:17px}
 .plaques{display:flex;gap:14px}
 .plaques .case{flex:1;padding:6px 14px 8px}
 .plaques small{display:block;font-size:14px;text-transform:uppercase}
@@ -115,7 +126,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 #gens-jeu li.ok small::after{content:" ✓"}
 .grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
 .code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
-#code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
+.champ-code,#code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
 /* animations de la révélation : rouleau de points, explosion, compteur de score */
 .plaques b{display:inline-block}
 #resultat-texte{display:flex;flex-direction:column;align-items:center;max-width:220px}
@@ -185,7 +196,7 @@ body.tele #ph-devine{margin-top:0}
 .avatar-choix{display:flex;gap:14px;align-items:flex-start}
 .av-apercu{flex:none;background:#fff;border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir);padding:4px;line-height:0}
 .av-choix{display:flex;flex-direction:column;gap:8px;min-width:0}
-.av-couleurs,.av-tetes{display:flex;flex-wrap:wrap;gap:6px}
+.av-couleurs,.av-tetes{display:grid;grid-template-columns:repeat(4,max-content);gap:6px}
 .av-coul{width:30px;height:30px;border:3px solid var(--noir);cursor:pointer;padding:0}
 .av-coul[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--noir)}
 .av-tete{width:40px;height:40px;padding:2px;border:2px solid transparent;background:transparent;cursor:pointer;line-height:0}
@@ -199,6 +210,73 @@ body.tele #ph-devine{margin-top:0}
 body.tele .badge-titre{font-size:28px}
 body.tele .badge-qui{font-size:22px}
 body.tele .badge-detail{font-size:17px}
+/* ====== Organisation des menus ====== */
+/* En-tête : retour à gauche, titre, menu à droite */
+header.entete{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+header.entete h1{justify-self:start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* Menu ☰ : une feuille qui monte du bas */
+.modale.feuille{align-items:flex-end;padding:0 12px calc(12px + env(safe-area-inset-bottom))}
+.case.menu{width:100%;max-width:420px;display:flex;flex-direction:column;gap:0;padding:6px 14px 14px;animation:monte .28s cubic-bezier(.2,1.2,.4,1)}
+@keyframes monte{from{transform:translateY(100%)}to{transform:none}}
+.menu .item{display:flex;align-items:center;gap:14px;width:100%;min-height:56px;padding:6px 4px;background:none;border:0;border-bottom:3px dashed rgba(17,17,17,.25);font:inherit;font-size:18px;color:var(--noir);text-align:left;text-decoration:none;cursor:pointer}
+.menu .item .ico{width:26px;height:26px}
+.menu .item:active{background:rgba(255,230,0,.5)}
+.menu .item.rouge{color:var(--rouge)}
+.menu .btn.plat{margin-top:12px}
+/* Intertitres de section */
+.intertitre{font-family:var(--titre);font-weight:400;font-size:22px;letter-spacing:1px;margin:4px 0 0;color:var(--blanc);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill;display:flex;align-items:baseline;gap:10px}
+.intertitre .compte{font-family:var(--texte);font-size:14px;letter-spacing:0;-webkit-text-stroke:0;color:var(--noir);background:var(--blanc);border:2px solid var(--noir);padding:1px 8px}
+.intertitre .compte:empty{display:none}
+/* Écran d'un jeu : 3 cartes de mode identiques */
+.lien-regles{display:inline-flex;align-items:center;gap:8px;margin-top:4px;background:none;border:0;padding:6px 4px;font:inherit;font-size:16px;color:var(--noir);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px;cursor:pointer}
+.lien-regles .ico{width:22px;height:22px}
+.modes{display:flex;flex-direction:column;gap:14px}
+.mode{display:flex;align-items:center;gap:14px;width:100%;padding:10px 12px;background:var(--grain),var(--blanc);border:4px solid var(--noir);box-shadow:5px 5px 0 var(--noir);font:inherit;color:var(--noir);text-align:left;cursor:pointer;transition:transform .08s,box-shadow .08s;touch-action:manipulation}
+.mode:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--noir)}
+@media (hover:hover){.mode:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--noir)}}
+.mode-ico{flex:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:3px solid var(--noir)}
+.mode-ico.jaune{background:var(--jaune)}.mode-ico.rouge{background:var(--rouge);color:var(--blanc)}.mode-ico.noir{background:var(--noir);color:var(--jaune)}
+.mode-ico .ico{width:28px;height:28px}
+.mode-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mode-txt b{font-family:var(--titre);font-weight:400;font-size:24px;letter-spacing:1px;line-height:1}
+.mode-txt small{font-size:14px;line-height:1.2}
+.mode>.ico{width:22px;height:22px}
+.code-rapide{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.code-rapide label{margin:0}
+.rangee{display:flex;gap:12px;align-items:stretch}
+.rangee input{flex:1;min-width:0}
+.rangee .btn{flex:none;font-size:22px;min-height:56px}
+.code-rapide .btn{width:64px;padding:0}
+/* Chacun son téléphone */
+.identite{display:flex;flex-direction:column;gap:14px}
+.ou{display:flex;align-items:center;gap:12px;font-family:var(--titre);font-size:22px;color:var(--blanc);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill}
+.ou::before,.ou::after{content:"";flex:1;height:4px;background:var(--noir)}
+/* Salon : code + inviter sur une ligne, joueurs en grille */
+.bloc-code{display:flex;align-items:center;gap:14px}
+.code-zone{flex:1;min-width:0}
+.bloc-code .code{text-align:left;font-size:52px}
+.bloc-code #inviter{flex:none;flex-direction:column;gap:2px;min-height:64px;padding:6px 12px;font-size:14px}
+.bloc-code #inviter .ico{width:24px;height:24px}
+.gens.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+.gens.grille li{min-width:0}
+/* Barre du bas : le bouton principal reste toujours visible */
+.barre-bas{position:sticky;bottom:0;z-index:5;margin-top:auto;display:flex;flex-direction:column;gap:12px;padding:14px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(rgba(25,181,240,0),var(--bleu) 26%)}
+.barre-bas .btn.plat{min-height:44px}
+/* Options repliées */
+details.options{background:var(--blanc);border:3px solid var(--noir);box-shadow:4px 4px 0 var(--noir)}
+details.options>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;min-height:50px;font-size:17px;list-style:none}
+details.options>summary::-webkit-details-marker{display:none}
+details.options>summary::after{content:"";width:12px;height:12px;border-right:4px solid var(--noir);border-bottom:4px solid var(--noir);transform:rotate(45deg) translate(-3px,-3px);transition:transform .15s}
+details.options[open]>summary::after{transform:rotate(-135deg) translate(-3px,-3px)}
+details.options>summary small{font-size:13px;color:#555;margin-left:auto}
+.options-corps{display:flex;flex-direction:column;gap:14px;padding:4px 14px 16px;border-top:3px dashed rgba(17,17,17,.25)}
+.options-corps .jetons{box-shadow:3px 3px 0 var(--noir)}
+/* Liste des joueurs sur un appareil */
+.noms-local{display:flex;flex-direction:column;gap:8px}
+body.tele .bloc-code .code{font-size:84px}
+body.tele .bloc-code{gap:28px}
+#s-reglages label,.options-corps label{font-size:16px}
+body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #s-reglages>#bloc-manches,body.tele #s-reglages>details{max-width:620px;width:100%}
 </style>
 </head>
 <body>
@@ -219,18 +297,16 @@ body.tele .badge-detail{font-size:17px}
   <symbol id="i-reglages" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></symbol>
   <symbol id="i-maison" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></symbol>
   <symbol id="i-tele" viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="12.5" rx="1.5"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+  <symbol id="i-partager" viewBox="0 0 24 24"><path d="M12 3.5v12M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5v6.5a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-6.5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
   <symbol id="i-suite" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7"/></symbol>
 </svg>
 <div id="app">
-  <header>
+  <header class="entete">
+    <button class="btn icone" id="retour" type="button" aria-label="Tous les jeux"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg></button>
     <h1 id="logo">LE CADRAN !</h1>
-    <nav class="nav" aria-label="Menu">
-      <a class="btn icone" id="maison" href="../" aria-label="Tous les jeux"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg></a>
-      <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg></button>
-      <button class="btn icone" id="musique" type="button" aria-pressed="false" aria-label="Musique d'ambiance" style="display:none"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></button>
-      <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg></button>
-      <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg></button>
-    </nav>
+    <button class="btn icone" id="ouvrir-menu" type="button" aria-label="Menu"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
   </header>
 
   <!-- ACCUEIL -->
@@ -247,103 +323,112 @@ body.tele .badge-detail{font-size:17px}
         <circle cx="100" cy="100" r="13" fill="#111"/><circle cx="100" cy="100" r="6.5" fill="#FF2D2D"/>
       </svg>
       <p class="accroche">Un indice. Une aiguille. Êtes-vous sur la même longueur ?</p>
-      <p class="petit">À deux ensemble, ou de 3 à 6 en ligne, chacun pour soi. Avec ou sans grand écran.</p>
+      <p class="petit">À deux ensemble, ou de 3 à 6 chacun pour soi.</p>
+      <button class="lien-regles" id="voir-regles" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg>Lire les règles</button>
     </div>
-    <button class="btn plat" id="voir-regles" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg>Les règles en 30 secondes</button>
-    <div class="bas">
-      <button class="btn" id="go-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>JOUER EN LIGNE</button>
-      <button class="btn jaune" id="go-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-tel"/></svg>JOUER SUR CET APPAREIL</button>
-      <button class="btn plat salon" id="go-salon" type="button"><svg class="ico" aria-hidden="true"><use href="#i-tele"/></svg><span>SALON GRAND ÉCRAN : cet écran affiche le jeu, tout le monde joue sur son téléphone</span></button>
+    <h3 class="intertitre">Comment vous jouez ?</h3>
+    <div class="modes">
+      <button class="mode" id="go-local" type="button"><span class="mode-ico jaune"><svg class="ico" aria-hidden="true"><use href="#i-tel"/></svg></span><span class="mode-txt"><b>Un seul téléphone</b><small>À deux, en se passant le téléphone.</small></span><svg class="ico" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <button class="mode" id="go-ligne" type="button"><span class="mode-ico rouge"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg></span><span class="mode-txt"><b>Chacun son téléphone</b><small>De 2 à 6, avec un code.</small></span><svg class="ico" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <button class="mode" id="go-salon" type="button"><span class="mode-ico noir"><svg class="ico" aria-hidden="true"><use href="#i-tele"/></svg></span><span class="mode-txt"><b>Télé + téléphones</b><small>La télé affiche le jeu, les téléphones jouent.</small></span><svg class="ico" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+    </div>
+    <div class="case code-rapide">
+      <label for="code-rapide">On t'a donné un code ?</label>
+      <div class="rangee"><input type="text" id="code-rapide" class="champ-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD"><button class="btn jaune" id="go-code" type="button" aria-label="Rejoindre"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg></button></div>
     </div>
   </section>
 
   <!-- EN LIGNE : créer ou rejoindre -->
   <section class="screen" id="s-ligne">
-    <h2>Jouer en ligne</h2>
-    <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
-    <div><label>Ton avatar</label><div id="choix-avatar"></div></div>
-    <button class="btn" id="creer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>CRÉER UN SALON</button>
-    <div class="case" style="display:flex;flex-direction:column;gap:10px">
-      <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
-      <input type="text" id="code-saisi" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
-      <button class="btn jaune" id="rejoindre" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>REJOINDRE</button>
+    <h2>Chacun son téléphone</h2>
+    <div class="case identite">
+      <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+      <div><label>Ton avatar</label><div id="choix-avatar"></div></div>
     </div>
-    <p class="bandeau" id="err-ligne" role="alert" style="display:none"></p>
-    <div class="bas"><button class="btn plat" id="retour-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button></div>
+    <p class="bandeau alerte" id="err-ligne" role="alert" style="display:none"></p>
+    <button class="btn" id="creer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>CRÉER UN SALON</button>
+    <div class="ou"><span>ou</span></div>
+    <div class="rangee">
+      <input type="text" id="code-saisi" class="champ-code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD" aria-label="Code du salon">
+      <button class="btn jaune" id="rejoindre" type="button">REJOINDRE</button>
+    </div>
   </section>
 
   <!-- INVITÉ : salle d'attente -->
   <section class="screen" id="s-invite">
-    <h2>Salon rejoint !</h2>
-    <div class="case jaune"><div class="petit">Code du salon</div><div class="code" id="code-invite"></div></div>
-    <div><label>Dans le salon</label><ul class="gens" id="gens-invite"></ul></div>
-    <div class="case"><p id="resume-invite">Connexion…</p></div>
-    <div class="case" style="display:flex;flex-direction:column;gap:10px">
-      <label style="margin:0">Proposer une carte perso</label>
-      <div class="rang">
-        <div><label for="ig" class="petit">Côté gauche</label><input type="text" id="ig" maxlength="40" autocomplete="off" placeholder="Nul"></div>
-        <div><label for="id" class="petit">Côté droit</label><input type="text" id="id" maxlength="40" autocomplete="off" placeholder="Génial"></div>
-      </div>
-      <button class="btn plat" id="i-ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer cette carte</button>
-      <p class="petit" id="i-info" role="status"></p>
+    <div class="case jaune bloc-code">
+      <div class="code-zone"><div class="petit">Code du salon</div><div class="code" id="code-invite"></div></div>
+      <button class="btn plat" id="inviter-invite" type="button"><svg class="ico" aria-hidden="true"><use href="#i-partager"/></svg><span>Inviter</span></button>
     </div>
-    <div class="bas"><button class="btn plat" id="quitter-invite" type="button"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg>Quitter le salon</button></div>
+    <div><h3 class="intertitre">Dans le salon</h3><ul class="gens grille" id="gens-invite"></ul></div>
+    <div class="case"><p id="resume-invite">Connexion…</p></div>
+    <details class="options">
+      <summary>Proposer une carte perso</summary>
+      <div class="options-corps">
+        <div class="rang">
+          <div><label for="ig" class="petit">Côté gauche</label><input type="text" id="ig" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+          <div><label for="id" class="petit">Côté droit</label><input type="text" id="id" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+        </div>
+        <button class="btn plat" id="i-ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer cette carte</button>
+        <p class="petit" id="i-info" role="status"></p>
+      </div>
+    </details>
+    <div class="barre-bas"><p class="bandeau centre" id="attente-hote">En attente de l'hôte…</p></div>
   </section>
 
   <!-- RÉGLAGES (local, ou hôte en ligne) -->
   <section class="screen" id="s-reglages">
-    <h2>Réglages de la partie</h2>
-    <div class="case jaune" id="bloc-salon">
-      <div class="salon-tele">
+    <h2 id="titre-reglages">Un seul téléphone</h2>
+    <div id="bloc-salon" style="display:flex;flex-direction:column;gap:16px">
+      <div class="case jaune bloc-code">
         <div class="qr" id="qr" style="display:none"></div>
-        <div>
-          <div class="petit">Code du salon, à donner aux autres joueurs</div>
+        <div class="code-zone">
+          <div class="petit" id="titre-code">Code du salon</div>
           <div class="code" id="code-hote"></div>
           <p class="adresse" id="adresse" style="display:none"></p>
         </div>
+        <button class="btn plat" id="inviter" type="button"><svg class="ico" aria-hidden="true"><use href="#i-partager"/></svg><span>Inviter</span></button>
       </div>
-      <div class="rang-btn" style="margin-top:10px">
-        <button class="btn plat" id="copier-code" type="button"><svg class="ico" aria-hidden="true"><use href="#i-copier"/></svg>Copier le code</button>
-        <button class="btn plat" id="copier-lien" type="button"><svg class="ico" aria-hidden="true"><use href="#i-lien"/></svg>Copier le lien</button>
+      <div><h3 class="intertitre">Dans le salon <span class="compte" id="etat-salon" role="status"></span></h3><ul class="gens grille" id="gens-hote"></ul></div>
+    </div>
+    <div class="case" id="bloc-noms" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Les deux joueurs</label>
+      <div class="rang">
+        <div><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Joueur 1" aria-label="Joueur 1"></div>
+        <div><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Joueur 2" aria-label="Joueur 2"></div>
       </div>
-      <p class="petit" id="etat-salon" role="status" style="text-align:center;margin-top:12px"></p>
-      <div class="petit" style="margin:10px 0 6px">Dans le salon</div>
-      <ul class="gens" id="gens-hote"></ul>
     </div>
-    <div class="rang" id="bloc-noms">
-      <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
-      <div><label for="p2">Joueur 2</label><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
-    </div>
+    <h3 class="intertitre">Réglages</h3>
     <div id="bloc-format">
-      <label id="l-format">Mode de jeu</label>
+      <label id="l-format">Comment on joue</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-format" id="format">
-        <label class="jeton"><input type="radio" name="format" value="duo" checked><span>À deux, ensemble</span></label>
-        <label class="jeton"><input type="radio" name="format" value="groupe"><span>À plusieurs (3 à 6), chacun pour soi</span></label>
+        <label class="jeton"><input type="radio" name="format" value="duo" checked><span class="long">Ensemble</span></label>
+        <label class="jeton"><input type="radio" name="format" value="groupe"><span class="long">Chacun pour soi</span></label>
       </div>
-      <p class="petit" id="format-aide" style="margin-top:8px"></p>
+      <p class="aide-reglage" id="format-aide"></p>
     </div>
     <div id="bloc-tours" style="display:none">
       <label id="l-tours">Combien de fois chacun donne l'indice</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div>
     </div>
     <div id="bloc-manches">
-      <label id="l-manches">Nombre de manches</label>
+      <label id="l-manches">Manches</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
     </div>
-    <div class="case" style="display:flex;flex-direction:column;gap:10px">
-      <label style="margin:0">Cartes perso (pour cette partie seulement)</label>
-      <p class="petit" id="nb-cartes"></p>
-      <div class="rang">
-        <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
-        <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+    <details class="options">
+      <summary>Cartes perso <small id="nb-cartes"></small></summary>
+      <div class="options-corps">
+        <div class="rang">
+          <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+          <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+        </div>
+        <button class="btn plat" id="ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter cette carte</button>
+        <ul class="liste" id="perso"></ul>
       </div>
-      <button class="btn plat" id="ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter cette carte</button>
-      <ul class="liste" id="perso"></ul>
-    </div>
-    <p class="bandeau" id="err-reglages" role="alert" style="display:none"></p>
-    <div class="bas">
-      <button class="btn" id="lancer" type="button">LANCER LA PARTIE</button>
-      <button class="btn plat" id="retour-reglages" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
+    </details>
+    <div class="barre-bas">
+      <p class="bandeau alerte" id="err-reglages" role="alert" style="display:none"></p>
+      <button class="btn" id="lancer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
     </div>
   </section>
 
@@ -442,6 +527,16 @@ body.tele .badge-detail{font-size:17px}
   </section>
 </div>
 
+<div class="modale feuille" id="m-menu" hidden role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="case menu">
+    <button class="item" id="aide" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg><span class="lib">Règles du jeu</span></button>
+    <button class="item" id="son" type="button" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg><span class="lib">Son : activé</span></button>
+    <button class="item" id="musique" type="button" aria-pressed="false" style="display:none"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg><span class="lib">Musique : coupée</span></button>
+    <a class="item" id="maison" href="../"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg><span class="lib">Tous les jeux</span></a>
+    <button class="item rouge" id="sortir" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg><span class="lib">Quitter la partie</span></button>
+    <button class="btn plat" id="fermer-menu" type="button">Fermer</button>
+  </div>
+</div>
 <div class="modale" id="m-regles" hidden role="dialog" aria-modal="true" aria-labelledby="t-regles">
   <div class="case">
     <h3 id="t-regles">Les règles</h3>
@@ -461,7 +556,7 @@ body.tele .badge-detail{font-size:17px}
 </div>
 <div class="modale" id="m-quitter" hidden role="dialog" aria-modal="true" aria-labelledby="t-quitter">
   <div class="case jaune">
-    <h3 id="t-quitter">Quitter la partie ?</h3>
+    <h3 id="t-quitter">Quitter ?</h3>
     <p id="quitter-texte">La partie en cours sera perdue.</p>
     <div class="rang-btn">
       <button class="btn" id="quitter-oui" type="button">OUI</button>
@@ -523,6 +618,7 @@ const sons = {
 function majSon() {
   $("son").setAttribute("aria-pressed", sonActif); $("son").setAttribute("aria-label", sonActif ? "Son activé" : "Son coupé");
   $("son").querySelector("use").setAttribute("href", sonActif ? "#i-son" : "#i-muet");
+  $("son").querySelector(".lib").textContent = sonActif ? "Son : activé" : "Son : coupé";
 }
 $("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonActif ? "1" : "0"); majSon(); sons.clic(); };
 majSon();
@@ -532,7 +628,13 @@ let ecranActuel = "accueil";
 function ecran(nom) {
   ecranActuel = nom;
   const enJeu = ["manche", "passe"].includes(nom);
-  $("sortir").style.display = enJeu ? "" : "none"; $("maison").style.display = enJeu ? "none" : "";
+  // retour : maison sur l'accueil, flèche vers l'accueil, croix (avec confirmation) dès qu'on est dans un salon ou une partie
+  const quitte = enJeu || nom === "invite" || nom === "fin" && enLigne() || nom === "reglages" && enLigne();
+  const icone = quitte ? "quitter" : nom === "accueil" ? "maison" : "retour";
+  $("retour").querySelector("use").setAttribute("href", "#i-" + icone);
+  $("retour").setAttribute("aria-label", quitte ? "Quitter" : nom === "accueil" ? "Tous les jeux" : "Retour");
+  $("retour").onclick = () => { sons.clic(); if (quitte) demanderQuitter(); else if (nom === "accueil") location.href = "../"; else { if (enLigne()) quitterSalon(); ecran("accueil"); } };
+  $("sortir").style.display = quitte ? "" : "none";
   if (window.Eveil) Eveil.regler(enJeu || nom === "fin" || nom === "reglages" || nom === "invite");
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   window.scrollTo(0, 0);
@@ -560,10 +662,10 @@ const majCouls = () => { COULS = Avatar.couleurs(P.gj); };
 /* ---------- Réglages ---------- */
 let persos = [];
 $("manches").innerHTML = MANCHES.map(n =>
-  `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "Sans fin"}</span></label>`).join("");
+  `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "∞"}</span></label>`).join("");
 const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
 $("tours").innerHTML = [1, 2, 3].map(n =>
-  `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 1 ? "checked" : ""}><span>${n} fois</span></label>`).join("");
+  `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 1 ? "checked" : ""}><span>${n}</span></label>`).join("");
 const toursChoisis = () => +document.querySelector("#tours input:checked").value;
 const formatChoisi = () => document.querySelector("#format input:checked").value;
 function majFormat() {
@@ -579,7 +681,7 @@ $("format").onchange = () => { majFormat(); reglagesChanges(); };
 $("tours").onchange = () => { majFormat(); reglagesChanges(); };
 function compteCartes() {
   const n = CARTES.length + persos.length;
-  $("nb-cartes").textContent = CARTES.length + " cartes dans le jeu" + (persos.length ? " + " + persos.length + " perso" : "") + ".";
+  $("nb-cartes").textContent = persos.length ? persos.length + " ajoutée" + (persos.length > 1 ? "s" : "") : CARTES.length + " cartes dans le jeu";
   return n;
 }
 function reglagesChanges() { compteCartes(); if (enLigne()) envoyerReglages(); }
@@ -606,6 +708,9 @@ function ouvrirReglages() {
   $("bloc-salon").style.display = ligne ? "" : "none";
   $("bloc-noms").style.display = ligne ? "none" : "";
   $("bloc-format").style.display = ligne && !P.ecran ? "" : "none";
+  $("titre-reglages").style.display = ligne ? "none" : "";
+  $("titre-code").textContent = P.ecran ? "Scannez ou tapez le code" : "Code du salon";
+  $("inviter").style.display = P.ecran ? "none" : "";
   $("qr").style.display = P.ecran ? "" : "none"; $("adresse").style.display = P.ecran ? "" : "none";
   if (P.ecran) document.querySelector('#format input[value="groupe"]').checked = true;
   if (!ligne) { document.querySelector('#format input[value="duo"]').checked = true; }
@@ -617,7 +722,6 @@ $("go-local").onclick = () => {
   $("p1").value = $("p1").value || memo.lire("cadran-p1", ""); $("p2").value = $("p2").value || memo.lire("cadran-p2", "");
   ouvrirReglages();
 };
-$("retour-reglages").onclick = () => { sons.clic(); if (enLigne()) quitterSalon(); ecran("accueil"); };
 
 $("lancer").onclick = () => {
   const cartes = CARTES.concat(persos);
@@ -985,10 +1089,14 @@ $("passer").onclick = () => { if (groupe() && chefSalon() && P.phase !== "reveal
 let focusAvant = null;
 function ouvrir(id) { focusAvant = document.activeElement; $(id).hidden = false; sons.clic(); const b = $(id).querySelector("button"); if (b) b.focus(); }
 function fermer(id) { $(id).hidden = true; if (focusAvant && focusAvant.focus) focusAvant.focus(); }
-$("aide").onclick = () => ouvrir("m-regles");
+const dansMenu = f => () => { $("m-menu").hidden = true; f(); };
+$("aide").onclick = dansMenu(() => ouvrir("m-regles"));
+$("ouvrir-menu").onclick = () => ouvrir("m-menu");
+$("fermer-menu").onclick = () => { sons.clic(); fermer("m-menu"); };
 $("voir-regles").onclick = () => ouvrir("m-regles");
 $("fermer-regles").onclick = () => { sons.clic(); fermer("m-regles"); };
-$("sortir").onclick = () => {
+$("sortir").onclick = () => { $("m-menu").hidden = true; demanderQuitter(); };
+function demanderQuitter() {
   $("quitter-texte").textContent = enLigne() ? "Tu vas quitter le salon " + S.code + "." + (chefSalon() ? " Comme c'est toi qui l'as créé, la partie s'arrêtera pour tout le monde." : "") : "La partie en cours sera perdue.";
   ouvrir("m-quitter");
 };
@@ -1000,8 +1108,21 @@ function copier(texte, bouton, ok) {
   const fini = () => { const lab = bouton.lastChild, avant = lab.textContent; lab.textContent = ok; setTimeout(() => { lab.textContent = avant; }, 1600); sons.clic(); };
   try { navigator.clipboard.writeText(texte).then(fini, () => fini()); } catch (e) { fini(); }
 }
-$("copier-code").onclick = e => copier(S.code, e.currentTarget, "Copié !");
-$("copier-lien").onclick = e => copier(RACINE + "cadran/#" + S.code, e.currentTarget, "Lien copié !");
+function inviter(e) {
+  sons.clic(); const lien = RACINE + "cadran/#" + S.code;
+  if (navigator.share && matchMedia("(pointer:coarse)").matches) { navigator.share({ title: "Le Cadran", text: "Rejoins mon salon " + S.code + " :", url: lien }).catch(() => {}); return; }
+  copier(lien, e.currentTarget, "Lien copié !");
+}
+$("inviter").onclick = inviter; $("inviter-invite").onclick = inviter;
+// Code reçu : on rejoint directement si le pseudo est connu
+function codeRapide() {
+  const code = $("code-rapide").value.trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { $("code-rapide").focus(); return; }
+  sons.clic(); $("code-saisi").value = code; $("pseudo").value = $("pseudo").value || memo.lire("jeux-pseudo", memo.lire("cadran-pseudo", "")); alerte("err-ligne"); ecran("ligne");
+  if ($("pseudo").value) rejoindre(); else { alerte("err-ligne", "Choisis un pseudo, puis appuie sur REJOINDRE."); $("pseudo").focus(); }
+}
+$("go-code").onclick = codeRapide;
+$("code-rapide").addEventListener("keydown", e => { if (e.key === "Enter") codeRapide(); });
 // Ouvert depuis un lien d'invitation (…/#ABCD) : on arrive directement sur « Rejoindre ».
 function lienInvitation() { // …/cadran/#ABCD : on rejoint directement si le pseudo est connu
   const m = /^#([A-Za-z]{4})$/.exec(location.hash);
@@ -1197,13 +1318,13 @@ $("go-salon").onclick = async () => {
   sons.clic();
   try { await chargerTempsReel(); } catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   P.mode = "ligne"; P.moi = 0; P.phase = ""; P.ecran = true; document.body.classList.add("tele");
-  $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); $("musique").setAttribute("aria-pressed", "true"); }
+  $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); }
   ouvrirSalon(nouveauCode(), "ecran", "Écran");
   $("code-hote").textContent = S.code; dessinerQR(); majSalonHote(); ouvrirReglages();
 };
-$("musique").onclick = () => { const on = Musique.basculer(); $("musique").setAttribute("aria-pressed", on); };
+function majMusique(on) { $("musique").setAttribute("aria-pressed", on); $("musique").querySelector(".lib").textContent = on ? "Musique : activée" : "Musique : coupée"; }
+$("musique").onclick = () => majMusique(Musique.basculer());
 Avatar.choisisseur($("choix-avatar"), av => { if (S.canal) { S.av = av; try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran", av: S.av }); } catch (e) {} } });
-$("retour-ligne").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
 function pseudoValide() {
   const nom = $("pseudo").value.trim();
   if (!nom) { alerte("err-ligne", "Choisis d'abord un pseudo."); return null; }
@@ -1229,7 +1350,6 @@ async function rejoindre() {
 }
 $("rejoindre").onclick = rejoindre;
 $("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") rejoindre(); });
-$("quitter-invite").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
 
 function ouvrirSalon(code, role, nom) {
   quitterSalon(true);
@@ -1307,7 +1427,7 @@ function majPresence() {
   S.autre = autre;
   if (arrive) {
     clearTimeout(S.minuteur); alerte("deco");
-    if (S.role === "invite" && ecranActuel === "ligne") { alerte("err-ligne"); $("code-invite").textContent = S.code; $("resume-invite").textContent = autre.nom + " règle la partie…"; $("i-info").textContent = ""; ecran("invite"); }
+    if (S.role === "invite" && ecranActuel === "ligne") { alerte("err-ligne"); $("code-invite").textContent = S.code; $("resume-invite").textContent = (autre.role === "ecran" ? "La télé" : autre.nom) + " règle la partie…"; $("i-info").textContent = ""; ecran("invite"); }
   }
   if (nouveaux.length) { // quelqu'un arrive (ou revient) : on lui renvoie de quoi se mettre à jour
     sons.arrivee();
@@ -1332,6 +1452,7 @@ function majPresence() {
 }
 // Qui est dans le salon : l'hôte d'abord, puis les invités dans l'ordre d'arrivée.
 function majGens() {
+  if (S.role === "invite") { const h = S.gens.find(g => g.role !== "invite"); $("attente-hote").textContent = !h ? "Connexion…" : h.role === "ecran" ? "La partie se lance depuis la télé…" : "En attente de " + h.nom + "…"; }
   const ligne = enLigne() && !!S.canal;
   const liste = S.gens.length ? S.gens.map(g => ({ nom: g.cle === S.id ? S.nom : g.nom, av: g.cle === S.id ? S.av : g.av, hote: g.role === "hote", ecran: g.role === "ecran", moi: g.cle === S.id })) : [{ nom: S.nom, hote: S.role === "hote", ecran: S.role === "ecran", moi: true }];
   const places = liste.length >= 2 ? liste : (chefSalon() ? [liste[0], null] : [null, liste[0]]);
@@ -1350,7 +1471,7 @@ function majGens() {
 function majSalonHote() {
   majGens();
   const nb = S.gens.length || 1;
-  $("etat-salon").textContent = nb < 2 ? "En attente des autres joueurs…" : nb + " joueurs dans le salon (6 maximum).";
+  $("etat-salon").textContent = nb + " / 6" + (nb < 2 ? " · en attente des autres" : "");
   if (ecranActuel === "reglages") majFormat();
 }
 function envoyerReglages() {
@@ -1437,6 +1558,7 @@ function recevoir(m) {
       break;
   }
 }
+ecran("accueil");
 lienInvitation();
 </script>
 </body>

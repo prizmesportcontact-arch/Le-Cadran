@@ -11,7 +11,7 @@
 <link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icones/icone-180.png">
-<link rel="stylesheet" href="../commun/commun.css?v=2">
+<link rel="stylesheet" href="../commun/commun.css?v=3">
 <style>
 .mot-carte{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:18px 14px}
 .mot-carte .mot{font-family:var(--titre);font-size:48px;letter-spacing:2px;line-height:1;min-height:52px;overflow-wrap:anywhere}
@@ -42,28 +42,33 @@ body.tele .revelation{font-size:60px}
 </head>
 <body>
 <div id="app">
-  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:14px">
+  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:16px">
+    <h3 class="intertitre">Réglages</h3>
     <div>
-      <label id="l-manches">Nombre de manches</label>
+      <label id="l-manches">Manches</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
     </div>
     <div>
-      <label id="l-tours">Indices par joueur à chaque manche</label>
+      <label id="l-tours">Indices par joueur, à chaque manche</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div>
-    </div>
-    <div>
-      <label id="l-variante">Variante</label>
-      <div class="jetons" role="radiogroup" aria-labelledby="l-variante" id="variante">
-        <label class="jeton"><input type="radio" name="variante" value="classique" checked><span>Classique</span></label>
-        <label class="jeton"><input type="radio" name="variante" value="white"><span>Mister White (l'imposteur n'a pas de mot)</span></label>
-      </div>
     </div>
     <div>
       <label id="l-chrono">Chrono pour chaque indice</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-chrono" id="chronos"></div>
     </div>
-    <div class="case" style="display:flex;flex-direction:column;gap:10px">
-      <label style="margin:0">Vos paires de mots (pour cette partie, elles sortent en premier)</label>
+    <details class="options">
+      <summary>Plus d'options <small id="resume-options"></small></summary>
+      <div class="options-corps">
+    <div>
+      <label id="l-variante">Variante</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-variante" id="variante">
+        <label class="jeton"><input type="radio" name="variante" value="classique" checked><span>Classique</span></label>
+        <label class="jeton"><input type="radio" name="variante" value="white"><span>Mister White</span></label>
+      </div>
+      <p class="aide-reglage">Mister White : l'imposteur n'a aucun mot et doit bluffer.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Vos paires de mots (elles sortent en premier)</label>
       <div class="rang">
         <div><label for="pm1" class="petit">Mot 1</label><input type="text" id="pm1" maxlength="24" autocomplete="off" placeholder="Raclette"></div>
         <div><label for="pm2" class="petit">Mot proche</label><input type="text" id="pm2" maxlength="24" autocomplete="off" placeholder="Fondue"></div>
@@ -71,10 +76,12 @@ body.tele .revelation{font-size:60px}
       <button class="btn plat" id="ajout-paire" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter cette paire</button>
       <ul class="liste" id="paires"></ul>
     </div>
+      </div>
+    </details>
   </div>
 
   <section class="screen" id="s-local">
-    <h2>Sur cet appareil</h2>
+    <h2>Un seul téléphone</h2>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">Les joueurs (3 à 8)</label>
       <div id="local-noms"></div>
@@ -82,9 +89,8 @@ body.tele .revelation{font-size:60px}
     </div>
     <div id="place-local"></div>
     <p class="bandeau alerte" id="err-local" role="alert" style="display:none"></p>
-    <div class="bas">
+    <div class="barre-bas">
       <button class="btn" id="lancer-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
-      <button class="btn plat" id="retour-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
     </div>
   </section>
 
@@ -189,21 +195,23 @@ body.tele .revelation{font-size:60px}
 
 <script src="../commun/avatars.js?v=2"></script>
 <script src="../commun/ambiance.js?v=1"></script>
-<script src="../commun/commun.js?v=2"></script>
+<script src="../commun/commun.js?v=3"></script>
 <script>
 "use strict";
 /* ---------- Paires de mots proches ---------- */
 const MOTS = [["Pizza", "Tarte flambée"], ["Chat", "Tigre"], ["Plage", "Piscine"], ["Café", "Thé"], ["Chien", "Loup"], ["Avion", "Hélicoptère"], ["Guitare", "Violon"], ["Football", "Rugby"], ["Pomme", "Poire"], ["Lion", "Tigre"], ["Neige", "Glace"], ["Croissant", "Pain au chocolat"], ["Vélo", "Trottinette"], ["Ketchup", "Mayonnaise"], ["Montagne", "Colline"], ["Hiver", "Automne"], ["Lunettes", "Lentilles"], ["Train", "Métro"], ["Château", "Palais"], ["Fromage", "Yaourt"], ["Sorcière", "Fée"], ["Vampire", "Zombie"], ["Pirate", "Corsaire"], ["Requin", "Dauphin"], ["Abeille", "Guêpe"], ["Crocodile", "Alligator"], ["Fourchette", "Cuillère"], ["Parapluie", "Imperméable"], ["Chaussette", "Chausson"], ["Basket", "Volley"], ["Tennis", "Badminton"], ["Ski", "Snowboard"], ["Cinéma", "Théâtre"], ["Livre", "Magazine"], ["Crayon", "Stylo"], ["Gomme", "Correcteur"], ["Ordinateur", "Tablette"], ["Téléphone", "Talkie-walkie"], ["Télévision", "Cinéma"], ["Hamburger", "Sandwich"], ["Frites", "Chips"], ["Chocolat", "Caramel"], ["Glace", "Sorbet"], ["Gâteau", "Tarte"], ["Crêpe", "Gaufre"], ["Sushi", "Maki"], ["Pâtes", "Riz"], ["Soupe", "Purée"], ["Orange", "Mandarine"], ["Fraise", "Framboise"], ["Banane", "Ananas"], ["Citron", "Pamplemousse"], ["Carotte", "Navet"], ["Tomate", "Poivron"], ["Fleur", "Plante"], ["Rose", "Tulipe"], ["Arbre", "Buisson"], ["Forêt", "Jungle"], ["Désert", "Savane"], ["Océan", "Mer"], ["Rivière", "Lac"], ["Volcan", "Geyser"], ["Soleil", "Lune"], ["Étoile", "Planète"], ["Astronaute", "Pilote"], ["Médecin", "Infirmier"], ["Pompier", "Policier"], ["Boulanger", "Pâtissier"], ["Professeur", "Directeur"], ["Cuisinier", "Serveur"], ["Chanteur", "Rappeur"], ["Magicien", "Clown"], ["Roi", "Président"], ["Princesse", "Reine"], ["Chevalier", "Soldat"], ["Dragon", "Dinosaure"], ["Robot", "Cyborg"], ["Fantôme", "Esprit"], ["Licorne", "Cheval"], ["Hibou", "Chouette"], ["Poule", "Canard"], ["Vache", "Chèvre"], ["Mouton", "Lama"], ["Lapin", "Hamster"], ["Souris", "Rat"], ["Serpent", "Lézard"], ["Tortue", "Escargot"], ["Papillon", "Libellule"], ["Araignée", "Fourmi"], ["Baleine", "Requin"], ["Pingouin", "Manchot"], ["Girafe", "Zèbre"], ["Éléphant", "Hippopotame"], ["Singe", "Gorille"], ["Ours", "Panda"], ["Renard", "Loup"], ["Noël", "Nouvel An"], ["Anniversaire", "Mariage"], ["Halloween", "Carnaval"], ["Vacances", "Week-end"], ["Camping", "Hôtel"], ["Valise", "Sac à dos"], ["Bateau", "Sous-marin"], ["Voiture", "Camion"], ["Moto", "Scooter"], ["Bus", "Car"], ["Fusée", "Avion"], ["Douche", "Bain"], ["Lit", "Canapé"], ["Oreiller", "Couverture"], ["Fenêtre", "Porte"], ["Escalier", "Ascenseur"], ["Cuisine", "Salle de bain"], ["Jardin", "Parc"], ["Zoo", "Ferme"], ["École", "Collège"], ["Bibliothèque", "Librairie"], ["Supermarché", "Marché"], ["Restaurant", "Cantine"], ["Hôpital", "Pharmacie"], ["Musée", "Galerie"], ["Stade", "Gymnase"], ["Piano", "Synthétiseur"], ["Batterie", "Tambour"], ["Trompette", "Saxophone"], ["Chanson", "Poème"], ["Dessin", "Peinture"], ["Photo", "Selfie"], ["Jeu vidéo", "Jeu de société"], ["Cartes", "Dés"], ["Échecs", "Dames"], ["Ballon", "Bulle"], ["Toboggan", "Balançoire"], ["Cerf-volant", "Ballon de baudruche"], ["Sable", "Boue"], ["Pluie", "Orage"], ["Vent", "Tempête"], ["Arc-en-ciel", "Aurore boréale"], ["Bougie", "Lampe"], ["Feu", "Barbecue"], ["Montre", "Réveil"], ["Bague", "Bracelet"], ["Casquette", "Bonnet"], ["Écharpe", "Cravate"], ["Jean", "Jogging"], ["Basket", "Tong"], ["Pyjama", "Peignoir"], ["Dentifrice", "Savon"], ["Brosse à dents", "Peigne"], ["Miroir", "Vitre"], ["Clé", "Cadenas"], ["Trésor", "Coffre-fort"], ["Carte au trésor", "GPS"], ["Boussole", "Montre"], ["Tente", "Cabane"], ["Igloo", "Chalet"], ["Paris", "Londres"], ["Tour Eiffel", "Arc de triomphe"], ["Espagne", "Portugal"], ["Italie", "Grèce"], ["Mario", "Sonic"], ["YouTube", "TikTok"], ["Instagram", "Snapchat"], ["Netflix", "Disney+"], ["Minecraft", "Roblox"], ["Fortnite", "Valorant"], ["Superman", "Batman"], ["Spider-Man", "Iron Man"]];
-$("manches").innerHTML = [3, 5, 8].map(n => `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 5 ? "checked" : ""}><span>${n} manches</span></label>`).join("");
-$("tours").innerHTML = [1, 2].map(n => `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 2 ? "checked" : ""}><span>${n} indice${n > 1 ? "s" : ""}</span></label>`).join("");
+$("manches").innerHTML = [3, 5, 8].map(n => `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 5 ? "checked" : ""}><span>${n}</span></label>`).join("");
+$("tours").innerHTML = [1, 2].map(n => `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 2 ? "checked" : ""}><span>${n}</span></label>`).join("");
 const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
 const toursChoisis = () => +document.querySelector("#tours input:checked").value;
-$("chronos").innerHTML = [0, 30, 60].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Sans chrono"}</span></label>`).join("");
+$("chronos").innerHTML = [0, 30, 60].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Aucun"}</span></label>`).join("");
 const chronoChoisi = () => +document.querySelector("#chronos input:checked").value;
 const varianteChoisie = () => document.querySelector("#variante input:checked").value;
 $("manches").onchange = $("tours").onchange = $("chronos").onchange = $("variante").onchange = () => Lobby.envoyerReglages();
 let paires = [];
-function majPaires() {
+function majOptions() { const v = varianteChoisie() === "white", n = paires.length; $("resume-options").textContent = [v ? "Mister White" : "", n ? n + " paire" + (n > 1 ? "s" : "") : ""].filter(Boolean).join(" · "); }
+$("variante").addEventListener("change", majOptions);
+function majPaires() { majOptions();
   const ul = $("paires"); ul.textContent = "";
   paires.forEach((x, i) => {
     const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("button");
@@ -279,7 +287,6 @@ function ajouterNom(nom) {
   d.append(i, b); $("local-noms").append(d);
 }
 $("ajout-joueur").onclick = () => { ajouterNom(""); const l = $("local-noms").lastChild; l && l.firstChild.focus(); };
-$("retour-local").onclick = () => { sons.clic(); ecran("modes"); };
 $("lancer-local").onclick = () => {
   const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
   if (noms.length < 3) { alerte("err-local", "Il faut au moins 3 joueurs."); return; }
