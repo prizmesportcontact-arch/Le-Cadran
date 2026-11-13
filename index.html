@@ -4,9 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Cadran</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&display=swap">
+<meta name="description" content="Un jeu à deux : l'un donne un indice, l'autre place l'aiguille sur le cadran. En ligne ou sur un seul appareil.">
+<meta name="theme-color" content="#19B5F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 50a28 28 0 0 1 56 0z' fill='%23FFE600' stroke='%23111' stroke-width='5'/%3E%3Cpath d='M32 50 44 22' stroke='%23111' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='50' r='6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:'Bangers';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/bangers.woff2) format('woff2')}
+@font-face{font-family:'Comic Neue';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/comic-neue-700.woff2) format('woff2')}
 :root{
   /* Planche de BD : aplats vifs, contours noirs épais, ombres dures décalées, trame de points. */
   --bleu:#19B5F0; --jaune:#FFE600; --rouge:#FF2D2D; --orange:#FF8A00; --noir:#111111; --blanc:#FFFFFF;
@@ -164,16 +169,9 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <label id="l-manches">Nombre de manches</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
     </div>
-    <div>
-      <label id="l-packs">Packs de cartes <span id="nb-cartes"></span></label>
-      <div class="rang" style="margin-bottom:12px">
-        <button class="btn plat" id="tout" type="button">Tout cocher</button>
-        <button class="btn plat" id="rien" type="button">Tout décocher</button>
-      </div>
-      <div class="jetons" role="group" aria-labelledby="l-packs" id="packs"></div>
-    </div>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">Cartes perso (pour cette partie seulement)</label>
+      <p class="petit" id="nb-cartes"></p>
       <div class="rang">
         <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
         <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
@@ -278,36 +276,14 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
   </section>
 </div>
 
-<script src="supabase.js"></script>
 <script>
 "use strict";
 /* ---------- Connexion temps réel (Supabase, clé publique faite pour être dans la page) ---------- */
-const SUPA_URL = "https://cbbnrdfvaaikawszaysu.supabase.co";
+const SUPA_URL = "wss://cbbnrdfvaaikawszaysu.supabase.co/realtime/v1";
 const SUPA_CLE = "sb_publishable_rfB8KSptjcdTpp8QxvST9A_UlpQ8rW0";
 
-/* ---------- Cartes : 20 packs de 15 ---------- */
-const PACKS = [
-["Classiques","Froid|Chaud;Petit|Grand;Lent|Rapide;Silencieux|Bruyant;Léger|Lourd;Mou|Dur;Ancien|Moderne;Banal|Rare;Facile|Difficile;Moche|Beau;Triste|Joyeux;Dangereux|Sans danger;Sec|Mouillé;Court|Long;Inutile|Indispensable"],
-["Bouffe","Goûter d'enfant|Repas de grand restaurant;Fade|Trop épicé;Se mange froid|Se mange brûlant;Petit creux|Repas de fête;Dégoûtant|Délicieux;Sain|Gras;Facile à cuisiner|Impossible à réussir;Se mange avec les doigts|Se mange avec des couverts;Petite portion|Portion énorme;Plat de cantine|Plat de mamie;Sent bon|Sent fort;Meilleur le matin|Meilleur le soir;Pas cher|Hors de prix;Croustillant|Fondant;On en laisse dans l'assiette|On en redemande"],
-["Jeux vidéo","Jeu pour se détendre|Jeu qui rend fou;Meilleur en solo|Meilleur entre potes;Fini en une soirée|Jamais terminé;Jeu oublié|Jeu légendaire;Jeu facile|Réservé aux acharnés;Personnage attachant|Personnage insupportable;Graphismes moches|Graphismes magnifiques;Jeu de chance|Jeu de talent;Boss facile|Boss cauchemar;Arme inutile|Arme trop forte;Jeu pour enfants|Jeu pour adultes;Histoire nulle|Histoire inoubliable;Carte minuscule|Monde gigantesque;Musique agaçante|Musique qu'on écoute hors du jeu;Jeu vite lassant|Jeu dont on ne se lasse pas"],
-["Films et séries","À voir une fois|À revoir tous les ans;Fait rire|Fait pleurer;Film pour enfants|Film pour adultes;Fin décevante|Fin parfaite;Méchant ridicule|Méchant terrifiant;On s'endort devant|On ne peut pas décrocher;Meilleur au cinéma|Meilleur sur le canapé;Série trop courte|Série trop longue;Héros détestable|Héros adoré;Réaliste|Complètement délirant;À voir seul|À voir en famille;Le livre est mieux|Le film est mieux;Fait peur|Rassure;Navet|Chef-d'œuvre;Vite oublié|On en parle encore"],
-["Musique","Musique pour dormir|Musique pour faire la fête;Chanson triste|Chanson joyeuse;Instrument facile|Instrument très dur;À écouter seul|À chanter en groupe;Chanson oubliée|Chanson éternelle;Agaçant|Envoûtant;Musique de vieux|Musique de jeunes;Reste en tête une minute|Reste en tête une semaine;Meilleur au casque|Meilleur en concert;Musique pour travailler|Musique pour faire du sport;Voix douce|Voix puissante;Chanson de douche|Chanson de voiture;Paroles bêtes|Paroles profondes;Rythme lent|Rythme effréné;On zappe|On monte le son"],
-["Sport","Sport tranquille|Sport épuisant;Sport sans danger|Sport risqué;Ennuyeux à regarder|Passionnant à regarder;On transpire à peine|On finit trempé;Sport de vieux|Sport de jeunes;Facile à apprendre|Des années d'entraînement;Se pratique partout|Demande un lieu spécial;Demande de la force|Demande de la précision;Pas besoin de matériel|Matériel hors de prix;Sport de récré|Sport olympique;Règles simples|Règles incompréhensibles;Peu connu|Mondialement connu;Se joue en 5 minutes|Dure des heures;Sport élégant|Sport brutal;Loisir|Vrai sport"],
-["Lycée et école","Matière inutile|Matière indispensable;Cours qui passe vite|Cours interminable;Excuse crédible|Excuse ridicule;Devoir vite fait|Devoir qui prend le week-end;Meilleur moment de la journée|Pire moment de la journée;Prof cool|Prof sévère;Fourniture inutile|Fourniture vitale;Facile d'avoir 20|Impossible d'avoir la moyenne;Sortie scolaire nulle|Sortie scolaire géniale;Meilleure place en classe|Pire place en classe;Révisé la veille|Révisé depuis un mois;Petite bêtise|Convocation chez le proviseur;Plat de cantine raté|Plat de cantine réussi;Lundi matin|Vendredi soir;Devoir sympa|Devoir cauchemar"],
-["Vie quotidienne","Corvée supportable|Corvée insupportable;Réveil facile|Réveil impossible;Petit plaisir|Grand bonheur;Objet qu'on perd tout le temps|Objet qu'on ne perd jamais;Bruit agréable|Bruit insupportable;Bonne odeur|Mauvaise odeur;Petite flemme|Flemme absolue;Se fait en 2 minutes|Prend toute la journée;Habitude saine|Mauvaise habitude;Petit retard|Retard impardonnable;Pièce préférée de la maison|Pièce où on ne va jamais;Dépense utile|Dépense regrettée;Activité du dimanche|Activité du samedi soir;Normal de le faire seul|Bizarre de le faire seul;Se range tout de suite|Traîne pendant des semaines"],
-["Débats de potes","Sous-coté|Sur-coté;Pas grave|Impardonnable;Normal|Bizarre;Ringard|Stylé;Mauvaise idée|Idée de génie;Personne n'aime|Tout le monde aime;Avis partagé|Avis qui fâche;Petit mensonge|Gros mensonge;Bon cadeau|Cadeau raté;Démodé|À la mode;Courageux|Inconscient;Drôle une fois|Toujours drôle;Poli|Malpoli;Bon signe|Signal d'alerte;Luxe inutile|Vrai besoin"],
-["Internet et réseaux","Vite oublié|Devenu culte;Info fiable|Grosse intox;Appli inutile|Appli indispensable;Vidéo de 10 secondes|Vidéo de 3 heures;Message à envoyer|Message à ne jamais envoyer;Photo de profil sérieuse|Photo de profil ridicule;Mot de passe nul|Mot de passe incassable;Notification agréable|Notification stressante;Emoji sympa|Emoji louche;Perte de temps|Temps bien utilisé;Commentaire gentil|Commentaire qui lance une dispute;Tendance passagère|Là pour durer;Réponse immédiate|Réponse trois jours après;Connexion parfaite|Connexion qui rend fou;À poster|À garder pour soi"],
-["Animaux","Animal mignon|Animal flippant;Bon animal de compagnie|Très mauvaise idée;Animal bête|Animal malin;Animal paresseux|Animal hyperactif;Animal discret|Animal bruyant;Inoffensif|Redoutable;Animal banal|Animal incroyable;Vit très peu|Vit très longtemps;Animal propre|Animal sale;Animal maladroit|Animal agile;Facile à dessiner|Impossible à dessiner;Petit mangeur|Gros mangeur;Doux au toucher|Pas envie de le toucher;Animal froussard|Animal courageux;On le voit partout|On ne le voit jamais"],
-["Voyages et lieux","Pour une journée|Pour y vivre;Près de chez soi|Bout du monde;Destination reposante|Destination d'aventure;Trop de monde|Personne;Voyage pas cher|Voyage de luxe;Lieu banal|Lieu magique;Trop froid|Trop chaud;Vacances ratées|Vacances de rêve;Trajet agréable|Trajet interminable;Souvenir inutile|Souvenir précieux;Valise légère|Valise énorme;Voyage tout organisé|Voyage à l'improviste;Piège à touristes|Trésor caché;Lieu calme|Lieu qui ne dort jamais;À visiter une fois|À visiter chaque année"],
-["Métiers","Métier reposant|Métier stressant;Mal payé|Très bien payé;Métier calme|Métier bruyant;Peu d'études|Études interminables;Métier ennuyeux|Métier passionnant;Métier discret|Métier célèbre;Métier sans risque|Métier dangereux;Métier répétitif|Métier plein de surprises;Métier d'hier|Métier de demain;Horaires tranquilles|Horaires impossibles;Métier facile à apprendre|Métier très dur à apprendre;Personne n'en rêve|Rêve d'enfant;Peu de responsabilités|Énormes responsabilités;Facile à expliquer|Personne ne comprend ce que c'est;On pourrait s'en passer|Métier vital"],
-["Super-pouvoirs et fiction","Pouvoir inutile|Pouvoir trop fort;Personnage qu'on oublie|Personnage qu'on adore;Créature gentille|Créature terrifiante;Monde où on aimerait vivre|Monde à fuir;Arme ridicule|Arme légendaire;Plan foireux|Plan parfait;Pouvoir pratique au quotidien|Pouvoir pour sauver le monde;Acolyte inutile|Acolyte indispensable;Faiblesse gênante|Faiblesse fatale;Costume discret|Costume ridicule;Possible un jour|Jamais possible;Pouvoir discret|Pouvoir spectaculaire;Quête facile|Quête impossible;Base secrète nulle|Base secrète de rêve;Fin tragique|Fin heureuse"],
-["Objets et inventions","Gadget|Invention qui a changé le monde;Objet fragile|Objet indestructible;Bon marché|Luxueux;Dans toutes les maisons|Presque personne n'en a;Simple à utiliser|Il faut lire la notice;Tient dans la poche|Prend toute la place;Objet silencieux|Objet bruyant;Casse en un mois|Dure toute la vie;Objet moche|Bel objet;Dépassé|En avance sur son temps;Une fois par an|Tous les jours;Bonne idée mal faite|Mauvaise idée bien faite;Objet rassurant|Objet inquiétant;À offrir|À ne jamais offrir;Se prête facilement|Ne se prête jamais"],
-["Émotions et situations","Légèrement gênant|Envie de disparaître;Petite peur|Terreur;Petite joie|Meilleur jour de l'année;Un peu agaçant|Insupportable;Petit stress|Panique totale;Mauvaise surprise|Bonne surprise;Compliment banal|Compliment qui marque;Pas besoin de s'excuser|Excuses obligatoires;Se raconte à tout le monde|Ne se raconte à personne;Petite fierté|Immense fierté;Ennui léger|Ennui mortel;Vite pardonné|Jamais oublié;Fou rire discret|Fou rire incontrôlable;Ça passe|Ça ne passe pas du tout;Détail|Catastrophe"],
-["Fêtes et saisons","Meilleur en été|Meilleur en hiver;Petite fête|Fête de l'année;Cadeau de dernière minute|Cadeau préparé depuis des mois;Tradition sympa|Tradition pénible;Activité de jour de pluie|Activité de grand soleil;Vêtement d'été|Vêtement d'hiver;Déguisement raté|Déguisement réussi;Jour férié inutile|Jour férié sacré;Repas de fête léger|Repas de fête interminable;Décoration discrète|Décoration exagérée;Fête pour les enfants|Fête pour les adultes;Vacances trop courtes|Vacances trop longues;Soirée tranquille|Soirée mémorable;Mieux à la maison|Mieux dehors;Fête calme|Fête déchaînée"],
-["Argent et achats","Arnaque|Bonne affaire;Achat réfléchi|Achat coup de tête;Ça vaut 1 €|Ça vaut 1 000 €;À acheter neuf|À acheter d'occasion;Dépense de radin|Dépense de flambeur;Marque inutile|Marque qui vaut le coup;Prix normal|Prix scandaleux;À louer|À posséder;Achat discret|Achat pour frimer;Économie ridicule|Vraie économie;Ne vaut plus rien|Se revend bien;Plaisir immédiat|Investissement;Petit prix|Grosse somme;Petit pourboire|Gros pourboire;Achat inutile|Achat utile"],
-["Famille","Truc de jeunes|Truc de vieux;Repas de famille court|Repas de famille sans fin;Sujet tranquille|Sujet à éviter à table;Règle souple|Règle stricte;Corvée des enfants|Corvée des parents;Blague de papa|Vraie bonne blague;Souvenir flou|Souvenir très net;Activité qui plaît à tous|Activité qui divise;Petit secret|Secret de famille;Conseil qu'on n'écoute jamais|Conseil utile;Trajet en voiture calme|Trajet en voiture explosif;Surnom mignon|Surnom gênant;Photo à cacher|Photo à encadrer;Se décide vite|Débat interminable;Dimanche raté|Dimanche parfait"],
-["N'importe quoi","Rond|Pointu;Sent le propre|Sent le vieux;Ça gratte|C'est doux;Mot moche|Joli mot;Mot sérieux|Mot rigolo;Ressemble à un nuage|Ressemble à un caillou;Se mange|Ne se mange surtout pas;Ambiance de lundi matin|Ambiance de samedi soir;Couleur triste|Couleur joyeuse;Tient dans une main|Ne rentre pas dans la pièce;Bruit de pluie|Bruit de travaux;Minuscule|Gigantesque;Chiffre sympa|Chiffre louche;Objet qui a l'air gentil|Objet qui a l'air méchant;Ça roule|Ça rebondit"]
-].map(([nom, c]) => ({ nom, cartes: c.split(";").map(x => x.split("|")) }));
+/* ---------- Cartes : des échelles avec un vrai milieu ---------- */
+const CARTES = "Froid|Chaud;Minuscule|Gigantesque;Léger|Lourd;Lent|Rapide;Silencieux|Bruyant;Mou|Dur;Lisse|Rugueux;Sec|Mouillé;Doux|Piquant;Sombre|Lumineux;Calme|Chaotique;Propre|Sale;Fragile|Indestructible;Court|Interminable;Simple|Compliqué;Facile|Difficile;Inutile|Indispensable;Banal|Rare;Ancien|Moderne;Démodé|À la mode;Ringard|Stylé;Moche|Magnifique;Nul|Génial;Ennuyeux|Passionnant;Triste|Joyeux;Rassurant|Effrayant;Sans danger|Dangereux;Bon pour la santé|Mauvais pour la santé;Pas cher|Hors de prix;Sous-coté|Sur-coté;Détesté|Adoré;Normal|Bizarre;Sérieux|Déjanté;Réaliste|Complètement irréaliste;Prudent|Inconscient;Poli|Malpoli;Classe|Beauf;Bon goût|Mauvais goût;Discret|Tape-à-l'œil;Minimaliste|Surchargé;Naturel|Artificiel;Gadget|Invention qui a changé le monde;Pure chance|Vrai talent;Amateur|Professionnel;Faible|Puissant;Lâche|Courageux;Égoïste|Généreux;Naïf|Méfiant;Optimiste|Pessimiste;Bon perdant|Mauvais perdant;Bien rangé|Gros bazar;Organisé|Improvisé;Prévisible|Imprévisible;Logique|Absurde;Possible|Impossible;Très improbable|Sûr et certain;Cliché|Original;Grand public|Pour initiés;Inconnu|Célèbre;Pour les enfants|Pour les adultes;Truc d'ado|Truc de retraité;Pour les débutants|Pour les experts;Accessible à tous|Réservé à une élite;Coloré|Terne;Appétissant|Dégoûtant;Romantique|Pas romantique du tout;Reposant|Épuisant;Motivant|Démotivant;Réconfortant|Déprimant;Rêve|Cauchemar;Paradis|Enfer;Bon présage|Mauvais présage;Normal|Paranormal;Flou|Net;Clair|Mystérieux;Rond|Pointu;Mauvais pour la planète|Bon pour la planète;Fait perdre du temps|Fait gagner du temps;Vieillit mal|Vieillit bien;Était mieux avant|Est mieux maintenant;Va bientôt disparaître|Existera encore dans 100 ans;Vite oublié|Inoubliable;Mode passagère|Classique éternel;Plaisir assumé|Plaisir coupable;Petit plaisir|Bonheur absolu;Un peu agaçant|Insupportable;Petite peur|Terreur absolue;Légèrement gênant|Envie de disparaître;Petit stress|Panique totale;Pas surprenant|Choquant;Petite bêtise|Impardonnable;Pas grave|Catastrophe;Petit mensonge|Énorme mensonge;Mensonge raté|Mensonge parfait;Secret banal|Secret explosif;Rumeur crédible|Rumeur absurde;Jour normal|Jour historique;Un peu de chance|Miracle;Idée nulle|Idée de génie;Bonne idée à 3 h du matin|Terrible idée à 3 h du matin;Mauvais conseil|Conseil en or;Mauvaise habitude|Bonne habitude;Excuse pas crédible|Excuse imparable;Pas drôle du tout|Hilarant;Blague nulle|Blague culte;Blague de papa|Vraie bonne blague;Gênant|Cool;Petite honte|Honte éternelle;Avis banal|Avis qui fâche;Moralement correct|Moralement douteux;Sage|Rebelle;Toléré au lycée|Interdit au lycée;Normal en public|Bizarre en public;Se dit au travail|Ne se dit jamais au travail;Ça se partage|Ça ne se partage pas;Ça se prête|Ça ne se prête jamais;Facile à dessiner|Impossible à dessiner;Facile à expliquer|Impossible à expliquer;Facile à prononcer|Imprononçable;Facile à deviner|Impossible à deviner;Facile à apprendre|Des années pour maîtriser;Dure une seconde|Dure toute une vie;Se fait en 2 minutes|Prend toute la journée;Tient dans une main|Ne rentre pas dans une maison;Ça vaut 1 €|Ça vaut 1 000 €;Arnaque|Bonne affaire;Achat regretté|Meilleur achat de ma vie;Pourboire radin|Pourboire généreux;Truc de radin|Truc de flambeur;Petit budget|Gros budget;Hobby pas cher|Hobby ruineux;Hobby ennuyeux|Hobby passionnant;Compétence inutile|Compétence vitale;Talent inutile|Talent impressionnant;Super-pouvoir nul|Super-pouvoir incroyable;Métier ennuyeux|Métier de rêve;Métier tranquille|Métier stressant;Métier sans risque|Métier dangereux;Métier mal payé|Métier très bien payé;Matière inutile|Matière indispensable;Cours ennuyeux|Cours passionnant;Prof cool|Prof sévère;Question facile|Question impossible;Mauvais professeur|Professeur idéal;Mauvais colocataire|Colocataire idéal;Mauvais coéquipier|Coéquipier idéal;Mauvais voisin|Voisin parfait;Mauvais leader|Leader né;Ami de passage|Ami pour la vie;Mauvais animal de compagnie|Animal de compagnie idéal;Animal mignon|Animal flippant;Animal bête|Animal intelligent;Animal inoffensif|Animal redoutable;Meurt en premier dans un film d'horreur|Survit jusqu'à la fin;Arme nulle contre des zombies|Arme parfaite contre des zombies;Inutile sur une île déserte|Indispensable sur une île déserte;Pire chose à trouver dans sa poche|Meilleure chose à trouver dans sa poche;Pire moment pour éternuer|Moment parfait pour éternuer;Pire endroit pour dormir|Meilleur endroit pour dormir;Pire endroit pour un rendez-vous|Meilleur endroit pour un rendez-vous;Pire cadeau d'anniversaire|Meilleur cadeau d'anniversaire;Pire costume d'Halloween|Meilleur costume d'Halloween;Pire sonnerie de réveil|Meilleure sonnerie de réveil;Pire garniture de pizza|Meilleure garniture de pizza;Pire parfum de glace|Meilleur parfum de glace;Pire bonbon|Meilleur bonbon;Pire début de journée|Meilleur début de journée;Dimanche raté|Dimanche parfait;Vacances ratées|Vacances de rêve;Soirée calme|Soirée mémorable;Mauvais nom de groupe de musique|Super nom de groupe de musique;Mauvais nom de restaurant|Super nom de restaurant;Mauvais nom de bateau|Nom de bateau parfait;Prénom de méchant|Prénom de héros;Prénom démodé|Prénom tendance;Pseudo gênant|Pseudo stylé;Mauvais slogan|Slogan génial;Tatouage regretté|Tatouage stylé;Mot moche|Joli mot;Bruit agréable|Bruit insupportable;Couleur triste|Couleur joyeuse;Plat dégoûtant|Plat délicieux;Repas léger|Repas copieux;Encas sain|Encas pas sain du tout;Facile à cuisiner|Impossible à réussir;Bouffe de cantine|Grande gastronomie;Meilleur en hiver|Meilleur en été;Meilleur le matin|Meilleur le soir;Mieux seul|Mieux à plusieurs;Mieux à la maison|Mieux dehors;À faire une fois dans sa vie|À faire tous les jours;Vaut le coup d'attendre|Pas la peine d'attendre;Film nul|Chef-d'œuvre;Méchant raté|Méchant culte;Héros insupportable|Héros adoré;Personnage oubliable|Personnage iconique;Fin ratée|Fin parfaite;Série à oublier|Série à dévorer d'une traite;Livre ennuyeux|Livre qu'on ne lâche pas;Chanson agaçante|Chanson envoûtante;Musique pour dormir|Musique pour faire la fête;Chanson triste|Chanson joyeuse;Jeu vidéo relaxant|Jeu vidéo qui rend fou;Jeu facile|Jeu impossible;Boss facile|Boss cauchemar;Arme nulle dans un jeu|Arme cheatée;Pire jeu de société|Meilleur jeu de société;Sport facile|Sport exigeant;Sport ennuyeux à regarder|Sport captivant à regarder;Sport de brutes|Sport élégant;Vidéo vite oubliée|Vidéo culte;Info fiable|Grosse intox;Appli inutile|Appli indispensable;Message à envoyer|Message à ne jamais envoyer;Commentaire gentil|Commentaire toxique;Emoji innocent|Emoji douteux;Repas de famille tranquille|Repas de famille explosif;Sujet tranquille|Sujet à éviter à table;Conseil de grand-mère inutile|Conseil de grand-mère précieux;Endroit calme|Endroit bondé;Lieu rassurant|Lieu flippant;Ville où on s'ennuie|Ville où on s'éclate;Pour une journée|Pour y vivre toute sa vie;Destination pas chère|Destination de luxe;Gentil robot|Robot maléfique;Fait avéré|Légende urbaine;Petit événement|Événement historique;Bonne phrase d'accroche|Phrase d'accroche catastrophique;Bon pour le moral|Mauvais pour le moral;Tendu|Détendu;Pas assez épicé|Beaucoup trop épicé;Sent mauvais|Sent très bon".split(";").map(x => x.split("|"));
 
 const MANCHES = [4, 10, 14, 20, 0]; // 0 = sans fin
 const $ = id => document.getElementById(id);
@@ -368,19 +344,14 @@ const jeDevine = () => !enLigne() || P.n % 2 !== P.moi;
 let persos = [];
 $("manches").innerHTML = MANCHES.map(n =>
   `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "Sans fin"}</span></label>`).join("");
-$("packs").innerHTML = PACKS.map((p, i) =>
-  `<label class="jeton"><input type="checkbox" value="${i}" checked><span>${p.nom}</span></label>`).join("");
-const casesPacks = () => [...document.querySelectorAll("#packs input")];
 const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
 function compteCartes() {
-  const n = casesPacks().filter(c => c.checked).reduce((s, c) => s + PACKS[c.value].cartes.length, 0) + persos.length;
-  $("nb-cartes").textContent = "· " + n + " carte" + (n > 1 ? "s" : "");
+  const n = CARTES.length + persos.length;
+  $("nb-cartes").textContent = CARTES.length + " cartes dans le jeu" + (persos.length ? " + " + persos.length + " perso" : "") + ".";
   return n;
 }
 function reglagesChanges() { compteCartes(); if (enLigne()) envoyerReglages(); }
-$("packs").onchange = reglagesChanges; $("manches").onchange = reglagesChanges;
-$("tout").onclick = () => { casesPacks().forEach(c => c.checked = true); reglagesChanges(); };
-$("rien").onclick = () => { casesPacks().forEach(c => c.checked = false); reglagesChanges(); };
+$("manches").onchange = reglagesChanges;
 function majPersos() {
   const ul = $("perso"); ul.textContent = "";
   persos.forEach((c, i) => {
@@ -412,8 +383,7 @@ $("go-local").onclick = () => {
 $("retour-reglages").onclick = () => { sons.clic(); if (enLigne()) quitterSalon(); ecran("accueil"); };
 
 $("lancer").onclick = () => {
-  const cartes = casesPacks().filter(c => c.checked).flatMap(c => PACKS[c.value].cartes).concat(persos);
-  if (!cartes.length) { alerte("err-reglages", "Coche au moins un pack ou ajoute une carte perso."); return; }
+  const cartes = CARTES.concat(persos);
   if (enLigne()) {
     if (!S.autre) { alerte("err-reglages", "L'autre joueur n'est pas encore dans le salon. Donne-lui le code " + S.code + "."); return; }
     P.joueurs = [S.nom, S.autre.nom];
@@ -504,14 +474,22 @@ svg.addEventListener("pointermove", e => { if (glisse && P.phase === "devine") r
 ["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { if (glisse) { glisse = false; diffuserAiguille(true); } }));
 $("fin").addEventListener("input", e => { if (P.phase === "devine") regler(+e.target.value); });
 // Aiguille de l'autre joueur : on glisse vers sa dernière position connue pour un mouvement fluide.
-let aigDistante = null;
-(function lisser() {
-  if (P.phase === "regarde" && aigDistante !== null) {
-    const ecart = aigDistante - P.angle;
-    if (Math.abs(ecart) > 0.05) poserAiguille(P.angle + ecart * 0.28);
-  }
-  requestAnimationFrame(lisser);
-})();
+let aigDistante = null, lissage = 0, filet = 0;
+function lisser() {
+  lissage = 0;
+  if (P.phase !== "regarde" || aigDistante === null) return;
+  const ecart = aigDistante - P.angle;
+  if (Math.abs(ecart) < 0.05) { poserAiguille(aigDistante); return; }
+  poserAiguille(P.angle + ecart * 0.28);
+  lissage = requestAnimationFrame(lisser);
+}
+function viserAiguille(a) {
+  aigDistante = a;
+  if (document.hidden) { poserAiguille(a, true); return; } // onglet en arrière-plan : pas d'animation, on place directement
+  if (!lissage) lissage = requestAnimationFrame(lisser);
+  // filet de sécurité si le navigateur ralentit les animations : l'aiguille rejoint sa place quoi qu'il arrive
+  clearTimeout(filet); filet = setTimeout(() => { if (P.phase === "regarde" && aigDistante !== null) poserAiguille(aigDistante, true); }, 350);
+}
 
 /* ---------- Phases ---------- */
 function enTete() {
@@ -664,22 +642,36 @@ const S = { client: null, canal: null, code: "", nom: "", role: "", id: Math.ran
 const LETTRES = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const nouveauCode = () => Array.from({ length: 4 }, () => LETTRES[Math.floor(Math.random() * LETTRES.length)]).join("");
 
-$("go-ligne").onclick = () => { sons.clic(); $("pseudo").value = $("pseudo").value || memo.lire("cadran-pseudo", ""); alerte("err-ligne"); ecran("ligne"); };
+let chargement = null;
+function chargerTempsReel() { // ~17 Ko, téléchargés uniquement si on joue en ligne
+  if (window.RealtimeClient) return Promise.resolve();
+  if (!chargement) chargement = new Promise((ok, ko) => {
+    const sc = document.createElement("script");
+    sc.src = "realtime.min.js?v=2"; sc.async = true;
+    sc.onload = ok; sc.onerror = () => { chargement = null; sc.remove(); ko(); };
+    document.head.append(sc);
+  });
+  return chargement;
+}
+$("go-ligne").onclick = () => { sons.clic(); chargerTempsReel().catch(() => {}); $("pseudo").value = $("pseudo").value || memo.lire("cadran-pseudo", ""); alerte("err-ligne"); ecran("ligne"); };
 $("retour-ligne").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
 function pseudoValide() {
   const nom = $("pseudo").value.trim();
   if (!nom) { alerte("err-ligne", "Choisis d'abord un pseudo."); return null; }
-  if (!window.supabase) { alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Recharge la page."); return null; }
   memo.ecrire("cadran-pseudo", nom); return nom;
 }
-$("creer").onclick = () => {
-  const nom = pseudoValide(); if (!nom) return;
+async function pret() {
+  try { await chargerTempsReel(); return true; }
+  catch (e) { alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return false; }
+}
+$("creer").onclick = async () => {
+  const nom = pseudoValide(); if (!nom || !(await pret())) return;
   sons.clic(); P.mode = "ligne"; P.moi = 0; P.phase = "";
   ouvrirSalon(nouveauCode(), "hote", nom);
   $("code-hote").textContent = S.code; majSalonHote(); ouvrirReglages();
 };
-function rejoindre() {
-  const nom = pseudoValide(); if (!nom) return;
+async function rejoindre() {
+  const nom = pseudoValide(); if (!nom || !(await pret())) return;
   const code = $("code-saisi").value.trim().toUpperCase();
   if (!/^[A-Z]{4}$/.test(code)) { alerte("err-ligne", "Le code d'un salon fait 4 lettres."); return; }
   sons.clic(); alerte("err-ligne", "Connexion au salon " + code + "…");
@@ -694,7 +686,7 @@ function ouvrirSalon(code, role, nom) {
   quitterSalon(true);
   P.mode = "ligne";
   S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.dernier = null;
-  S.client = S.client || window.supabase.createClient(SUPA_URL, SUPA_CLE, { realtime: { params: { eventsPerSecond: 12 } } });
+  S.client = S.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
   const canal = S.client.channel("cadran-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
   S.canal = canal;
   canal.on("broadcast", { event: "m" }, ({ payload }) => { if (S.canal === canal) recevoir(payload); })
@@ -711,11 +703,14 @@ function ouvrirSalon(code, role, nom) {
 }
 function quitterSalon(silencieux) {
   clearTimeout(S.minuteur);
-  if (S.canal && S.client) { try { S.client.removeChannel(S.canal); } catch (e) {} }
+  if (S.canal && S.client) { const c = S.canal, client = S.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!S.canal && client.getChannels().length === 0) client.disconnect(); }); }
   S.canal = null; S.autre = null; S.dernier = null;
   if (!silencieux) { P.mode = "local"; P.phase = ""; }
   alerte("deco"); majGens();
 }
+// Page fermée ou mise en arrière-plan sur iPhone : on prévient tout de suite le salon.
+addEventListener("pagehide", () => { if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
+addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.track({ nom: S.nom, role: S.role, t: S.t }); } catch (x) {} } });
 function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
 function envoyer(message, important) {
   if (!S.canal) return;
@@ -805,7 +800,7 @@ function recevoir(m) {
       if (memeManche && P.phase === "attente-indice") { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); phaseDevine(); }
       break;
     case "aig": // donneur : aiguille de l'autre en direct
-      if (memeManche && P.phase === "regarde" && typeof m.a === "number") aigDistante = Math.max(3, Math.min(177, m.a));
+      if (memeManche && P.phase === "regarde" && typeof m.a === "number") viserAiguille(Math.max(3, Math.min(177, m.a)));
       break;
     case "valide": // donneur : il est le seul à connaître la cible, il compte et révèle
       if (memeManche && P.phase === "regarde" && typeof m.a === "number") {
