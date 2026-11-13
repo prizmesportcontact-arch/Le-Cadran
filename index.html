@@ -21,7 +21,13 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bleu);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:17px;line-height:1.35;-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:var(--bleu);background-image:radial-gradient(rgba(0,0,0,.2) 2.2px,rgba(0,0,0,0) 2.6px);background-size:14px 14px}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:var(--bleu);
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.28),rgba(255,255,255,0) 60%),
+   repeating-conic-gradient(from 0deg at 50% -6%,rgba(255,255,255,.09) 0deg 5deg,rgba(255,255,255,0) 5deg 11deg),
+   radial-gradient(rgba(0,0,0,.2) 2.2px,rgba(0,0,0,0) 2.6px);
+  background-size:100% 100%,100% 100%,14px 14px}
+/* Textures de planche : grain de papier sur les cases, trame de points dans l'angle */
+:root{--grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")}
 #app{max-width:440px;min-height:100%;margin:0 auto;padding:20px 22px 30px;display:flex;flex-direction:column;gap:16px}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px}
 h1{font-family:var(--titre);font-weight:400;font-size:32px;letter-spacing:2px;line-height:1;margin:0;white-space:nowrap;color:var(--blanc);background:var(--noir);padding:4px 16px 6px;transform:rotate(-3deg);box-shadow:5px 5px 0 var(--rouge)}
@@ -29,15 +35,30 @@ h2{font-family:var(--titre);font-weight:400;font-size:30px;letter-spacing:1px;li
 p{margin:0}
 .screen{display:none;flex-direction:column;gap:16px;flex:1}
 .screen.on{display:flex}
-.case{background:var(--blanc);border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);padding:12px 14px}
-.case.jaune{background:var(--jaune)}
+.case{position:relative;isolation:isolate;background:var(--grain),var(--blanc);border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);padding:12px 14px}
+.case::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(rgba(0,0,0,.14) 1.4px,rgba(0,0,0,0) 1.8px) 0 0/7px 7px;-webkit-mask-image:linear-gradient(135deg,transparent 58%,#000);mask-image:linear-gradient(135deg,transparent 58%,#000)}
+.case.jaune{background:var(--grain),var(--jaune)}
+.case.jaune::before{background-image:radial-gradient(rgba(255,120,0,.55) 1.6px,rgba(0,0,0,0) 2px)}
 .petit{font-size:15px}
-.btn{font-family:var(--titre);font-size:26px;letter-spacing:2px;color:var(--blanc);background:var(--rouge);min-height:60px;padding:8px 16px;border:4px solid var(--noir);border-radius:0;box-shadow:6px 6px 0 var(--noir);cursor:pointer;transition:transform .06s,box-shadow .06s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--titre);font-size:26px;letter-spacing:2px;color:var(--blanc);background:var(--rouge);min-height:60px;padding:8px 16px;border:4px solid var(--noir);border-radius:0;box-shadow:6px 6px 0 var(--noir);cursor:pointer;transition:transform .08s,box-shadow .08s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.28) 0 30%,rgba(255,255,255,0) 30%),radial-gradient(rgba(0,0,0,.16) 1.4px,rgba(0,0,0,0) 1.8px) 0 0/6px 6px;-webkit-mask-image:linear-gradient(160deg,#000 40%,transparent 41%,transparent 62%,#000 63%);mask-image:linear-gradient(160deg,#000 40%,transparent 41%,transparent 62%,#000 63%)}
+@media (hover:hover){.btn:not(:disabled):hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--noir)}.btn.plat:not(:disabled):hover{box-shadow:5px 5px 0 var(--noir)}}
+.ico{width:26px;height:26px;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.btn .ico{margin-top:-2px}
+.btn.plat .ico{width:20px;height:20px}
+.btn.icone{width:50px;min-height:50px;padding:0;background:var(--blanc);color:var(--noir);border-width:3px;box-shadow:4px 4px 0 var(--noir)}
+.btn.icone::before{display:none}
+.btn.icone .ico{width:26px;height:26px;margin:0}
+.btn.icone:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--noir)}
+.btn.icone[aria-pressed="false"]{background:#D9D9D9}
+.nav{display:flex;gap:10px}
+@media (max-width:380px){h1{font-size:26px;padding:4px 12px 6px}.nav{gap:7px}.btn.icone{width:44px;min-height:44px}.btn.icone .ico{width:22px;height:22px}}
 .btn:active,.btn.enfonce{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--noir)}
 .btn:disabled{background:#B9B9B9;color:#3A3A3A;cursor:not-allowed}
 .btn.jaune{background:var(--jaune);color:var(--noir)}
 .btn.plat{font-family:var(--texte);font-weight:700;font-size:15px;letter-spacing:0;min-height:44px;padding:6px 12px;background:var(--blanc);color:var(--noir);border-width:3px;box-shadow:3px 3px 0 var(--noir)}
 .btn.plat{white-space:nowrap}
+.btn.plat::before{display:none}
 .btn.plat:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--noir)}
 :focus-visible{outline:4px solid var(--noir);outline-offset:3px}
 .bas{margin-top:auto;display:flex;flex-direction:column;gap:18px;padding-bottom:8px}
@@ -109,34 +130,84 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 @keyframes tremble{0%,100%{transform:translate(-50%,-50%) rotate(-4deg)}50%{transform:translate(-50%,-50%) rotate(-1deg) scale(1.03)}}
 .roule{animation:roule .18s ease-out}
 @keyframes roule{from{transform:translateY(-65%);opacity:0}to{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){#volet,.btn{transition:none}.tic,.boum div.pop,.boum svg.boom,.boum svg.tremble,.roule{animation:none}}
+/* Effets : planches qui arrivent, bulle qui gonfle, cartes qui claquent, alertes qui tremblent */
+.screen.on{animation:planche .34s cubic-bezier(.2,1.25,.4,1)}
+@keyframes planche{from{opacity:0;transform:translateY(22px) rotate(-1.4deg)}to{opacity:1;transform:none}}
+.bulle.arrive{animation:gonfle .42s cubic-bezier(.3,1.6,.5,1);transform-origin:40px 100%}
+@keyframes gonfle{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.carte span:first-child{--r:-2deg}.carte span:last-child{--r:2deg}
+.carte span.claque{animation:claque .36s cubic-bezier(.3,1.5,.5,1) both}
+.carte span.claque:last-child{animation-delay:.08s}
+@keyframes claque{0%{transform:rotate(var(--r)) scale(1.7);opacity:0}100%{transform:rotate(var(--r)) scale(1);opacity:1}}
+.secoue{animation:secoue .45s}
+@keyframes secoue{0%,100%{transform:none}20%{transform:translateX(-7px) rotate(-1deg)}40%{transform:translateX(6px) rotate(1deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+h1{cursor:default;transition:transform .15s}
+/* Couverture de l'accueil : petit cadran dont l'aiguille hésite */
+.couverture{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 14px 14px;text-align:center}
+.couverture svg{width:100%;max-width:280px;height:auto}
+#mini-aig{transform-origin:100px 100px;animation:hesite 3.6s ease-in-out infinite}
+@keyframes hesite{0%,100%{transform:rotate(-48deg)}30%{transform:rotate(26deg)}48%{transform:rotate(8deg)}70%{transform:rotate(40deg)}85%{transform:rotate(-12deg)}}
+.accroche{font-family:var(--titre);font-size:30px;letter-spacing:1px;line-height:1.05;text-wrap:balance}
+/* Fenêtres (règles, confirmation) */
+.modale{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(17,17,17,.55)}
+.modale[hidden]{display:none}
+.modale>.case{width:100%;max-width:400px;max-height:calc(100% - 20px);overflow:auto;display:flex;flex-direction:column;gap:14px;animation:gonfle .35s cubic-bezier(.3,1.6,.5,1)}
+.modale h3{font-family:var(--titre);font-weight:400;font-size:30px;letter-spacing:1px;margin:0}
+.modale ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:7px;font-size:16px}
+.modale h4{font-family:var(--titre);font-weight:400;font-size:21px;letter-spacing:1px;margin:4px 0 0}
+.rang-btn{display:flex;gap:12px;flex-wrap:wrap}.rang-btn>*{flex:1}
+@media (prefers-reduced-motion:reduce){.screen.on,.bulle.arrive,.carte span.claque,.secoue,#mini-aig,.modale>.case{animation:none}
+#volet,.btn{transition:none}.tic,.boum div.pop,.boum svg.boom,.boum svg.tremble,.roule{animation:none}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-son" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+  <symbol id="i-muet" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></symbol>
+  <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4 2.7c-.8.4-1.2 1-1.2 1.9v.6"/><path d="M12 17.6v.1"/></symbol>
+  <symbol id="i-quitter" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-retour" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7"/></symbol>
+  <symbol id="i-gens" viewBox="0 0 24 24"><circle cx="8.5" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.7-6 6-6s6 2.4 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.4c3.3-.6 6 1.6 6 5.6"/></symbol>
+  <symbol id="i-tel" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M10.5 18.2h3"/></symbol>
+  <symbol id="i-copier" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="1.5"/><path d="M15.5 8.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h3.5"/></symbol>
+  <symbol id="i-lien" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-envoyer" viewBox="0 0 24 24"><path d="M3.5 11.5 20.5 4l-5.5 16-3.5-6.5z"/><path d="M11.5 13.5 20.5 4"/></symbol>
+  <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-rejouer" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20.5 3.5v5h-5"/></symbol>
+  <symbol id="i-reglages" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></symbol>
+  <symbol id="i-suite" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7"/></symbol>
+</svg>
 <div id="app">
   <header>
-    <h1>LE CADRAN !</h1>
-    <button class="btn plat" id="son" type="button" aria-pressed="true">Son : oui</button>
+    <h1 id="logo">LE CADRAN !</h1>
+    <nav class="nav" aria-label="Menu">
+      <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg></button>
+      <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg></button>
+      <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg></button>
+    </nav>
   </header>
 
   <!-- ACCUEIL -->
   <section class="screen on" id="s-accueil">
-    <div class="case"><p>Un jeu à deux. L'un voit une cible cachée sur le cadran et donne un seul indice. L'autre place l'aiguille. Plus c'est près, plus vous marquez, ensemble.</p></div>
-    <div class="case jaune">
-      <details>
-        <summary>Les règles en 30 secondes</summary>
-        <ol>
-          <li>Une carte sort avec deux opposés, par exemple « Froid ↔ Chaud ».</li>
-          <li>Celui qui donne l'indice regarde où est la cible, puis tape un indice qui correspond à cet endroit.</li>
-          <li>L'autre déplace l'aiguille là où il pense que la cible se trouve, puis valide.</li>
-          <li>La cible se révèle : 4 points au centre, 3 juste à côté, 2 au bord, 0 en dehors.</li>
-          <li>On échange les rôles à chaque manche.</li>
-        </ol>
-      </details>
+    <div class="case jaune couverture">
+      <svg viewBox="0 0 200 118" aria-hidden="true">
+        <path d="M6 104a94 94 0 0 1 188 0v10H6z" fill="#111" transform="translate(5 4)"/>
+        <path d="M6 104a94 94 0 0 1 188 0v10H6z" fill="#111"/>
+        <path d="M12 104a88 88 0 0 1 176 0z" fill="#fff"/>
+        <path d="M100 100 82 15A88 88 0 0 1 118 15z" fill="#FFE600" stroke="#111" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M100 100 92 13A88 88 0 0 1 108 13z" fill="#FF8A00" stroke="#111" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M100 100 97.5 12.5A88 88 0 0 1 102.5 12.5z" fill="#FF2D2D" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+        <g id="mini-aig"><polygon points="96,100 104,100 102,34 107,34 100,18 93,34 98,34" fill="#19B5F0" stroke="#111" stroke-width="3" stroke-linejoin="round"/></g>
+        <circle cx="100" cy="100" r="13" fill="#111"/><circle cx="100" cy="100" r="6.5" fill="#FF2D2D"/>
+      </svg>
+      <p class="accroche">Un indice. Une aiguille. Êtes-vous sur la même longueur ?</p>
+      <p class="petit">À deux ensemble, ou de 3 à 6 en ligne, chacun pour soi.</p>
     </div>
+    <button class="btn plat" id="voir-regles" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg>Les règles en 30 secondes</button>
     <div class="bas">
-      <button class="btn" id="go-ligne" type="button">JOUER EN LIGNE</button>
-      <button class="btn jaune" id="go-local" type="button">JOUER SUR CET APPAREIL</button>
+      <button class="btn" id="go-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>JOUER EN LIGNE</button>
+      <button class="btn jaune" id="go-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-tel"/></svg>JOUER SUR CET APPAREIL</button>
     </div>
   </section>
 
@@ -144,14 +215,14 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
   <section class="screen" id="s-ligne">
     <h2>Jouer en ligne</h2>
     <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
-    <button class="btn" id="creer" type="button">CRÉER UN SALON</button>
+    <button class="btn" id="creer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>CRÉER UN SALON</button>
     <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
       <input type="text" id="code-saisi" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
-      <button class="btn jaune" id="rejoindre" type="button">REJOINDRE</button>
+      <button class="btn jaune" id="rejoindre" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>REJOINDRE</button>
     </div>
     <p class="bandeau" id="err-ligne" role="alert" style="display:none"></p>
-    <div class="bas"><button class="btn plat" id="retour-ligne" type="button">Retour</button></div>
+    <div class="bas"><button class="btn plat" id="retour-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button></div>
   </section>
 
   <!-- INVITÉ : salle d'attente -->
@@ -166,10 +237,10 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
         <div><label for="ig" class="petit">Côté gauche</label><input type="text" id="ig" maxlength="40" autocomplete="off" placeholder="Nul"></div>
         <div><label for="id" class="petit">Côté droit</label><input type="text" id="id" maxlength="40" autocomplete="off" placeholder="Génial"></div>
       </div>
-      <button class="btn plat" id="i-ajout" type="button">Envoyer cette carte</button>
+      <button class="btn plat" id="i-ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer cette carte</button>
       <p class="petit" id="i-info" role="status"></p>
     </div>
-    <div class="bas"><button class="btn plat" id="quitter-invite" type="button">Quitter le salon</button></div>
+    <div class="bas"><button class="btn plat" id="quitter-invite" type="button"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg>Quitter le salon</button></div>
   </section>
 
   <!-- RÉGLAGES (local, ou hôte en ligne) -->
@@ -178,7 +249,11 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
     <div class="case jaune" id="bloc-salon">
       <div class="petit">Code du salon, à donner aux autres joueurs</div>
       <div class="code" id="code-hote"></div>
-      <p class="petit" id="etat-salon" role="status" style="text-align:center"></p>
+      <div class="rang-btn" style="margin-top:10px">
+        <button class="btn plat" id="copier-code" type="button"><svg class="ico" aria-hidden="true"><use href="#i-copier"/></svg>Copier le code</button>
+        <button class="btn plat" id="copier-lien" type="button"><svg class="ico" aria-hidden="true"><use href="#i-lien"/></svg>Copier le lien</button>
+      </div>
+      <p class="petit" id="etat-salon" role="status" style="text-align:center;margin-top:12px"></p>
       <div class="petit" style="margin:10px 0 6px">Dans le salon</div>
       <ul class="gens" id="gens-hote"></ul>
     </div>
@@ -209,13 +284,13 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
         <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
         <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
       </div>
-      <button class="btn plat" id="ajout" type="button">Ajouter cette carte</button>
+      <button class="btn plat" id="ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter cette carte</button>
       <ul class="liste" id="perso"></ul>
     </div>
     <p class="bandeau" id="err-reglages" role="alert" style="display:none"></p>
     <div class="bas">
       <button class="btn" id="lancer" type="button">LANCER LA PARTIE</button>
-      <button class="btn plat" id="retour-reglages" type="button">Retour</button>
+      <button class="btn plat" id="retour-reglages" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
     </div>
   </section>
 
@@ -272,9 +347,9 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 
     <!-- donner l'indice -->
     <div id="ph-indice" class="bas">
-      <button class="btn jaune" id="voir" type="button">MAINTIENS POUR VOIR LA CIBLE</button>
+      <button class="btn jaune" id="voir" type="button"><svg class="ico" aria-hidden="true"><use href="#i-oeil"/></svg>MAINTIENS POUR VOIR LA CIBLE</button>
       <div><label for="indice">Ton indice</label><input type="text" id="indice" maxlength="60" autocomplete="off" placeholder="Un mot, une chose, une idée…"></div>
-      <button class="btn" id="envoyer" type="button">ENVOYER L'INDICE</button>
+      <button class="btn" id="envoyer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>ENVOYER L'INDICE</button>
       <p class="bandeau" id="err-indice" role="alert" style="display:none"></p>
     </div>
 
@@ -306,10 +381,38 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
     <div class="case"><ul class="liste" id="recap"></ul></div>
     <div class="bas">
       <button class="btn" id="rejouer" type="button">REJOUER</button>
-      <button class="btn plat" id="accueil" type="button">Changer les réglages</button>
-      <button class="btn plat" id="quitter-fin" type="button">Quitter le salon</button>
+      <button class="btn plat" id="accueil" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
+      <button class="btn plat" id="quitter-fin" type="button"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg>Quitter le salon</button>
     </div>
   </section>
+</div>
+
+<div class="modale" id="m-regles" hidden role="dialog" aria-modal="true" aria-labelledby="t-regles">
+  <div class="case">
+    <h3 id="t-regles">Les règles</h3>
+    <ol>
+      <li>Une carte sort avec deux opposés, par exemple « Froid ↔ Chaud ».</li>
+      <li>Celui qui donne l'indice voit où est la cible et tape un indice qui correspond à cet endroit.</li>
+      <li>On place l'aiguille là où on pense que la cible se trouve, puis on valide.</li>
+      <li>La cible se révèle : 4 points au centre, 3 juste à côté, 2 au bord, 0 en dehors.</li>
+      <li>Le rôle de celui qui donne l'indice tourne à chaque manche.</li>
+    </ol>
+    <h4>À deux</h4>
+    <p class="petit">Vous jouez ensemble et additionnez vos points. Battez votre record !</p>
+    <h4>À plusieurs (3 à 6, en ligne)</h4>
+    <p class="petit">Chacun place son aiguille en secret et garde ses points. Celui qui donne l'indice gagne 2 points par joueur qui trouve la cible, mais 0 si tout le monde trouve ou si personne ne trouve.</p>
+    <button class="btn" id="fermer-regles" type="button">C'EST PARTI !</button>
+  </div>
+</div>
+<div class="modale" id="m-quitter" hidden role="dialog" aria-modal="true" aria-labelledby="t-quitter">
+  <div class="case jaune">
+    <h3 id="t-quitter">Quitter la partie ?</h3>
+    <p id="quitter-texte">La partie en cours sera perdue.</p>
+    <div class="rang-btn">
+      <button class="btn" id="quitter-oui" type="button">OUI</button>
+      <button class="btn plat" id="quitter-non" type="button">Non, je reste</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -327,7 +430,11 @@ const memo = {
   lire(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
   ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 };
-function alerte(id, texte) { const e = $(id); e.textContent = texte || ""; e.style.display = texte ? "" : "none"; }
+function alerte(id, texte) {
+  const e = $(id), avant = e.textContent;
+  e.textContent = texte || ""; e.style.display = texte ? "" : "none";
+  if (texte && texte !== avant) { e.classList.remove("secoue"); void e.offsetWidth; e.classList.add("secoue"); }
+}
 
 /* ---------- Sons légers ---------- */
 let audio = null, sonActif = memo.lire("cadran-son", "1") === "1";
@@ -356,7 +463,10 @@ const sons = {
   },
   fin() { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.3, "triangle", 0.06, i * 0.13)); }
 };
-function majSon() { $("son").textContent = "Son : " + (sonActif ? "oui" : "non"); $("son").setAttribute("aria-pressed", sonActif); }
+function majSon() {
+  $("son").setAttribute("aria-pressed", sonActif); $("son").setAttribute("aria-label", sonActif ? "Son activé" : "Son coupé");
+  $("son").querySelector("use").setAttribute("href", sonActif ? "#i-son" : "#i-muet");
+}
 $("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonActif ? "1" : "0"); majSon(); sons.clic(); };
 majSon();
 
@@ -364,6 +474,7 @@ majSon();
 let ecranActuel = "accueil";
 function ecran(nom) {
   ecranActuel = nom;
+  $("sortir").style.display = ["manche", "passe"].includes(nom) ? "" : "none";
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   window.scrollTo(0, 0);
 }
@@ -572,7 +683,10 @@ function enTete() {
   $("lbl-score").textContent = groupe() ? "Ton score" : "Score commun";
   majStatut();
   $("num").textContent = (P.n + 1) + (P.manches ? " / " + P.manches : "");
-  $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
+  if ($("gauche").textContent !== P.carte[0] || $("droite").textContent !== P.carte[1]) {
+    $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
+    ["gauche", "droite"].forEach(id => rejouerAnim($(id), "claque"));
+  }
 }
 const BLOCS = ["ph-indice", "voir", "ph-devine", "bulle", "zone-reglage", "resultat", "valider", "reveler-mnt", "passer", "suivante", "arreter"];
 function montrer(ids) { BLOCS.forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
@@ -614,7 +728,11 @@ function envoyerIndice() {
 $("envoyer").onclick = envoyerIndice;
 $("indice").addEventListener("keydown", e => { if (e.key === "Enter") envoyerIndice(); });
 
-function afficherIndice() { $("de").textContent = donneur(); $("indice-affiche").textContent = "« " + P.indice + " »"; }
+function afficherIndice() {
+  const t = "« " + P.indice + " »";
+  $("de").textContent = donneur();
+  if ($("indice-affiche").textContent !== t) { $("indice-affiche").textContent = t; requestAnimationFrame(() => rejouerAnim($("bulle"), "arrive")); }
+}
 function phaseAttenteIndice() { // en ligne, côté devineur
   P.phase = "attente-indice"; enTete(); dessinerCible(null); volet(false, true);
   $("aiguille").style.display = ""; poserAiguille(90, true); svg.classList.remove("reglable");
@@ -768,6 +886,39 @@ function majStatut() {
 }
 $("reveler-mnt").onclick = () => { sons.clic(); revelerMaintenant(); };
 $("passer").onclick = () => { if (groupe() && P.moi === 0 && P.phase !== "reveal") { sons.clic(); avancer(); } };
+
+/* ---------- Navigation : règles, quitter, inviter ---------- */
+let focusAvant = null;
+function ouvrir(id) { focusAvant = document.activeElement; $(id).hidden = false; sons.clic(); const b = $(id).querySelector("button"); if (b) b.focus(); }
+function fermer(id) { $(id).hidden = true; if (focusAvant && focusAvant.focus) focusAvant.focus(); }
+$("aide").onclick = () => ouvrir("m-regles");
+$("voir-regles").onclick = () => ouvrir("m-regles");
+$("fermer-regles").onclick = () => { sons.clic(); fermer("m-regles"); };
+$("sortir").onclick = () => {
+  $("quitter-texte").textContent = enLigne() ? "Tu vas quitter le salon " + S.code + "." + (S.role === "hote" ? " Comme tu es l'hôte, la partie s'arrêtera pour tout le monde." : "") : "La partie en cours sera perdue.";
+  ouvrir("m-quitter");
+};
+$("quitter-non").onclick = () => { sons.clic(); fermer("m-quitter"); };
+$("quitter-oui").onclick = () => { sons.clic(); $("m-quitter").hidden = true; P.phase = ""; if (enLigne()) quitterSalon(); else P.mode = "local"; ecran("accueil"); };
+document.querySelectorAll(".modale").forEach(m => m.addEventListener("click", e => { if (e.target === m) fermer(m.id); }));
+addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".modale:not([hidden])").forEach(m => fermer(m.id)); });
+function copier(texte, bouton, ok) {
+  const fini = () => { const lab = bouton.lastChild, avant = lab.textContent; lab.textContent = ok; setTimeout(() => { lab.textContent = avant; }, 1600); sons.clic(); };
+  try { navigator.clipboard.writeText(texte).then(fini, () => fini()); } catch (e) { fini(); }
+}
+$("copier-code").onclick = e => copier(S.code, e.currentTarget, "Copié !");
+$("copier-lien").onclick = e => copier(location.origin + location.pathname + "#" + S.code, e.currentTarget, "Lien copié !");
+// Ouvert depuis un lien d'invitation (…/#ABCD) : on arrive directement sur « Rejoindre ».
+function lienInvitation() {
+  const m = /^#([A-Za-z]{4})$/.exec(location.hash);
+  if (!m) return;
+  $("code-saisi").value = m[1].toUpperCase();
+  $("pseudo").value = memo.lire("cadran-pseudo", "");
+  chargerTempsReel().catch(() => {}); ecran("ligne");
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  setTimeout(() => ($("pseudo").value ? $("rejoindre") : $("pseudo")).focus(), 50);
+}
+$("logo").addEventListener("click", () => { const l = $("logo"); l.style.transform = "rotate(-3deg) scale(1.08)"; setTimeout(() => { l.style.transform = ""; }, 150); });
 
 /* ---------- Animations des points ---------- */
 const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1114,6 +1265,7 @@ function recevoir(m) {
       break;
   }
 }
+lienInvitation();
 </script>
 </body>
 </html>
