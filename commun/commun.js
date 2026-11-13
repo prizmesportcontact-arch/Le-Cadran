@@ -89,6 +89,12 @@ function ecran(nom) {
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   ecouteursEcran.forEach(f => f(nom));
   if (typeof Eveil !== "undefined") Eveil.regler(Entete.ecransQuitter.includes(nom));
+  if (typeof ambianceEcran !== "undefined") {
+    const partie = Entete.ecransQuitter.includes(nom) && nom !== "salon" && nom !== "fin";
+    ambianceEcran(partie, nom === "fin");
+    // sur un seul téléphone, la musique démarre avec la partie (si on ne l'a pas coupée)
+    if (partie && !Salon.canal && Musique.voulue() && !Musique.active) { Musique.demarrer(); majMusique(true); }
+  }
   window.scrollTo(0, 0);
 }
 function alerte(id, texte) {
@@ -131,9 +137,14 @@ const Chrono = {
     this.el.querySelector(".chrono-feu").style.width = (reste / this.total * 100).toFixed(1) + "%";
     this.el.querySelector(".chrono-n").textContent = s;
     if (s !== this.dernier) { this.dernier = s; if (s <= 5 && s > 0) { this.el.classList.add("urgent"); sons.tic(s); } }
+    const tendu = s <= 10 && s > 0 && this.total > 12000; // les dernières secondes : musique et fond plus intenses
+    if (tendu !== !!this.tendu) { this.tendu = tendu; if (typeof Fond !== "undefined") { Fond.tension(tendu); Musique.tension(tendu); } }
     if (reste <= 0) { const f = this.surFin; this.arreter(true); f && f(); }
   },
-  arreter(garder) { clearInterval(this.minu); this.minu = null; this.surFin = null; if (this.el && !garder) this.el.style.display = "none"; }
+  arreter(garder) {
+    clearInterval(this.minu); this.minu = null; this.surFin = null; if (this.el && !garder) this.el.style.display = "none";
+    if (this.tendu) { this.tendu = false; if (typeof Fond !== "undefined") { Fond.tension(false); Musique.tension(false); } }
+  }
 };
 
 /* ---------- Moments forts de la fin de partie ---------- */
@@ -202,7 +213,7 @@ const MENU_HTML = () => `
   <div class="case menu">
     <button class="item" id="aide" type="button">${ico("aide")}<span class="lib">Règles du jeu</span></button>
     <button class="item" id="son" type="button" aria-pressed="true">${ico("son")}<span class="lib">Son : activé</span></button>
-    <button class="item" id="musique" type="button" aria-pressed="false" style="display:none">${ico("musique")}<span class="lib">Musique : coupée</span></button>
+    <button class="item" id="musique" type="button" aria-pressed="false">${ico("musique")}<span class="lib">Musique : coupée</span></button>
     <a class="item" id="maison" href="${RACINE}">${ico("maison")}<span class="lib">Tous les jeux</span></a>
     <button class="item rouge" id="sortir" type="button" style="display:none">${ico("quitter")}<span class="lib">Quitter la partie</span></button>
     <button class="btn plat" id="fermer-menu" type="button">Fermer</button>
@@ -521,7 +532,6 @@ const Lobby = {
     try { await Salon.creer(this.o.jeu, nom, role, this.o.max); }
     catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
     document.body.classList.toggle("tele", role === "ecran");
-    $("musique").style.display = role === "ecran" ? "" : "none";
     if (role === "ecran" && Musique.voulue()) { Musique.demarrer(); majMusique(true); }
     this.ouvrirSalon();
   },
@@ -547,7 +557,7 @@ const Lobby = {
     alerte("err-salon"); this.majListe(); this.envoyerReglages(); ecran("salon");
   },
   sortir() { Salon.quitter(); this.arret(); ecran("modes"); },
-  arret() { document.body.classList.remove("tele"); Musique.arreter(); majMusique(false); $("musique").style.display = "none"; this.o.surArret && this.o.surArret(); },
+  arret() { document.body.classList.remove("tele"); Musique.arreter(); majMusique(false); this.o.surArret && this.o.surArret(); },
   majListe() {
     const joueurs = Salon.joueurs().length, min = this.o.min, chefG = Salon.gens.find(g => g.role !== "invite");
     $("attente-hote").textContent = chefG && chefG.role === "hote" ? "En attente de " + chefG.nom + "…" : "La partie se lance depuis la télé…";
@@ -591,7 +601,7 @@ const Lobby = {
       Salon.ouvrir(r.code, r.role, r.nom, r.t);
       if (!chef) return; // l'invité retrouve la partie grâce au rattrapage envoyé par le créateur
       Salon.dernier = r.dernier || {};
-      if (r.role === "ecran") { document.body.classList.add("tele"); $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
+      if (r.role === "ecran") { document.body.classList.add("tele"); if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
       alerte("err-ligne");
       if (r.enPartie && r.etat && this.o.reprendre) { try { this.o.reprendre(r.etat); return; } catch (e) { console.warn(e); } }
       this.ouvrirSalon();

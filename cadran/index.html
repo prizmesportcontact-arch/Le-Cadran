@@ -532,7 +532,7 @@ body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #
   <div class="case menu">
     <button class="item" id="aide" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg><span class="lib">Règles du jeu</span></button>
     <button class="item" id="son" type="button" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg><span class="lib">Son : activé</span></button>
-    <button class="item" id="musique" type="button" aria-pressed="false" style="display:none"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg><span class="lib">Musique : coupée</span></button>
+    <button class="item" id="musique" type="button" aria-pressed="false"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg><span class="lib">Musique : coupée</span></button>
     <a class="item" id="maison" href="../"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg><span class="lib">Tous les jeux</span></a>
     <button class="item rouge" id="sortir" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg><span class="lib">Quitter la partie</span></button>
     <button class="btn plat" id="fermer-menu" type="button">Fermer</button>
@@ -567,7 +567,7 @@ body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #
 </div>
 
 <script src="../commun/avatars.js?v=3"></script>
-<script src="../commun/ambiance.js?v=1"></script>
+<script src="../commun/ambiance.js?v=2"></script>
 <script>
 "use strict";
 /* ---------- Connexion temps réel (Supabase, clé publique faite pour être dans la page) ---------- */
@@ -636,7 +636,11 @@ function ecran(nom) {
   $("retour").setAttribute("aria-label", quitte ? "Quitter" : nom === "accueil" ? "Tous les jeux" : "Retour");
   $("retour").onclick = () => { sons.clic(); if (quitte) demanderQuitter(); else if (nom === "accueil") location.href = "../"; else { if (enLigne()) quitterSalon(); ecran("accueil"); } };
   $("sortir").style.display = quitte ? "" : "none";
-  if (window.Eveil) Eveil.regler(enJeu || nom === "fin" || nom === "reglages" || nom === "invite");
+  if (typeof Eveil !== "undefined") Eveil.regler(enJeu || nom === "fin" || nom === "reglages" || nom === "invite");
+  if (window.ambianceEcran) {
+    ambianceEcran(enJeu, nom === "fin");
+    if (enJeu && !S.canal && Musique.voulue() && !Musique.active) { Musique.demarrer(); majMusique(true); } // un seul téléphone
+  }
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   window.scrollTo(0, 0);
 }
@@ -1322,7 +1326,7 @@ $("go-salon").onclick = async () => {
   sons.clic();
   try { await chargerTempsReel(); } catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
   P.mode = "ligne"; P.moi = 0; P.phase = ""; P.ecran = true; document.body.classList.add("tele");
-  $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); }
+  if (Musique.voulue()) { Musique.demarrer(); majMusique(true); }
   ouvrirSalon(nouveauCode(), "ecran", "Écran");
   $("code-hote").textContent = S.code; dessinerQR(); majSalonHote(); ouvrirReglages();
 };
@@ -1381,7 +1385,7 @@ function quitterSalon(silencieux) {
   S.canal = null; S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   if (!silencieux) { P.mode = "local"; P.phase = ""; try { sessionStorage.removeItem(REPRISE); } catch (e) {} }
   alerte("deco"); majGens();
-  if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; Musique.arreter(); $("musique").style.display = "none"; }
+  if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; Musique.arreter(); majMusique(false); }
 }
 // Page fermée ou mise en arrière-plan sur iPhone : on prévient tout de suite le salon.
 addEventListener("pagehide", () => { sauverReprise(); if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
@@ -1412,7 +1416,7 @@ function reprendreSalon() {
     const phase = P.phase;
     S.reprise = true; ouvrirSalon(r.code, r.role, r.nom, r.t);
     S.dernier = r.dernier || {};
-    if (r.role === "ecran") { P.ecran = true; document.body.classList.add("tele"); $("musique").style.display = ""; if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
+    if (r.role === "ecran") { P.ecran = true; document.body.classList.add("tele"); if (Musique.voulue()) { Musique.demarrer(); majMusique(true); } }
     if (P.gj && P.gj.length) majCouls();
     alerte("err-ligne");
     reprendrePhase(phase);

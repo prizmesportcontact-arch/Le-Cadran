@@ -120,9 +120,8 @@ body.tele #role{display:none}
             <button class="btn plat" id="effacer" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Tout</button>
           </div>
         </div>
-        <div class="case" id="bloc-trouve-local" style="display:none;flex-direction:column;gap:10px">
-          <label style="margin:0">Qui a trouvé ?</label>
-          <div class="trouve-local" id="trouve-local"></div>
+        <div id="bloc-trouve-local" style="display:none;flex-direction:column;gap:10px">
+          <button class="btn jaune" id="fini" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>J'AI FINI MON DESSIN</button>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -166,8 +165,8 @@ body.tele #role{display:none}
 </div>
 
 <script src="../commun/avatars.js?v=3"></script>
-<script src="../commun/ambiance.js?v=1"></script>
-<script src="../commun/commun.js?v=5"></script>
+<script src="../commun/ambiance.js?v=2"></script>
+<script src="../commun/commun.js?v=6"></script>
 <script>
 "use strict";
 /* ---------- Mots à dessiner ---------- */
@@ -227,7 +226,7 @@ const Vus = {
 /* ---------- Mise en route ---------- */
 Lobby.monter({
   jeu: "gribouillage", titre: "LE GRIBOUILLAGE", min: 2, max: 8,
-  texteLocal: "On dessine sur le téléphone, les autres crient leurs réponses.",
+  texteLocal: "On dessine, puis chacun écrit sa réponse en secret.",
   couverture: `<svg viewBox="0 0 220 130" aria-hidden="true" style="max-width:300px">
       <rect x="22" y="12" width="176" height="104" fill="#111" transform="translate(6 6)"/>
       <rect x="22" y="12" width="176" height="104" fill="#fff" stroke="#111" stroke-width="4"/>
@@ -241,7 +240,7 @@ Lobby.monter({
       <li>Les autres devinent le plus vite possible. Des lettres du mot apparaissent au fil du temps pour aider.</li>
       <li>Points : celui qui trouve marque de 1 à 5 points selon sa rapidité (+1 pour le premier). Le dessinateur marque 1 point par joueur qui a trouvé (+1 si au moins un a trouvé).</li>
     </ol>
-    <h4>Sur un appareil</h4><p class="petit">Le dessinateur tient le téléphone, les autres crient leurs réponses. Quand quelqu'un trouve, le dessinateur touche son nom.</p>
+    <h4>Sur un appareil</h4><p class="petit">Le dessinateur dessine pendant que les autres regardent. Ensuite, le téléphone passe de main en main : chacun écrit sa réponse en secret. Bonne réponse : 3 points, presque juste : 1 point.</p>
     <h4>En ligne ou en salon</h4><p class="petit">Le dessin s'affiche en direct chez tout le monde, chacun tape ses réponses. En salon, la télé montre le dessin en grand.</p>`,
   ecransJeu: ["jeu", "passe", "fin"],
   ordre: ["g-tour", "g-debut", "g-lettres", "g-fin-tour", "g-fin"],
@@ -364,14 +363,11 @@ function debutDessin(m) {
   $("voir-mot").style.display = !enLigne() ? "" : "none";
   $("bloc-trouve-local").style.display = !enLigne() ? "flex" : "none";
   $("bloc-essai").style.display = enLigne() && jeJoue() && !moiDessine && !(Salon.id in P.trouves) ? "" : "none";
-  if (!enLigne()) {
-    role(nomDe(P.dess) + " dessine. Les autres, criez vos réponses !");
-    $("trouve-local").innerHTML = P.joueurs.filter(j => j.id !== P.dess).map(j => `<button class="btn plat" type="button" data-id="${j.id}">${Avatar.svg(avDe(j.id), 26, ' style="vertical-align:-7px;margin-right:6px"')}${echapper(j.nom)}</button>`).join("") + `<button class="btn rouge" type="button" data-id="">Personne</button>`;
-    $("trouve-local").querySelectorAll("[data-id]").forEach(b => b.onclick = () => finTourLocal(b.dataset.id || null));
-  } else role(moiDessine ? "Dessine ton mot ! Pas de lettres ni de chiffres." : Salon.role === "ecran" ? "Devinez sur vos téléphones !" : jeJoue() ? "Devine le dessin de " + nomDe(P.dess) + " !" : "Tu regardes la partie.");
+  if (!enLigne()) role(nomDe(P.dess) + " dessine. Les autres regardent… et écriront leur réponse juste après !");
+  else role(moiDessine ? "Dessine ton mot ! Pas de lettres ni de chiffres." : Salon.role === "ecran" ? "Devinez sur vos téléphones !" : jeJoue() ? "Devine le dessin de " + nomDe(P.dess) + " !" : "Tu regardes la partie.");
   Chrono.lancer(reste, () => {
     if (P.phase !== "dessin") return;
-    if (!enLigne()) { finTourLocal(null); return; }
+    if (!enLigne()) { finDessinLocal(); return; }
     if (chef()) finTour();
   });
   // lettres dévoilées petit à petit (à la moitié, puis aux trois quarts du temps)
@@ -389,14 +385,40 @@ function devoilerLettre(combien) {
   const m = { t: "g-lettres", pid: P.pid, n: P.n, motif: motifDe(P.mot, P.revelees) };
   Salon.envoyer(m, true); P.motif = m.motif; majMotif(); sons.tic(1);
 }
-// Local : le dessinateur touche le nom de celui qui a trouvé (ou « Personne »).
-function finTourLocal(id) {
-  if (P.phase !== "dessin") return;
-  const reste = Math.max(0, Chrono.fin - Date.now()) / (P.temps * 1000), pts = {};
-  if (id) { pts[id] = 2 + Math.round(4 * reste); pts[P.dess] = 2; P.temps_trouve[id] = Math.round((Date.now() - P.debut) / 1000); }
-  P.trouves = id ? { [id]: pts[id] } : {};
+// Local : le dessin est fini, le téléphone passe à chaque devineur qui écrit sa réponse en secret.
+$("fini").onclick = () => { sons.clic(); finDessinLocal(); };
+function finDessinLocal() {
+  if (P.phase !== "dessin" || enLigne()) return;
+  Chrono.arreter(); trait = null;
+  P.phase = "reponses"; P.reponses = {}; P.file = P.joueurs.map(j => j.id).filter(id => id !== P.dess);
+  demanderReponse();
+}
+function demanderReponse() {
+  const id = P.file[0];
+  if (!id) { resultatsLocal(); return; }
+  passe(nomDe(id) + ", à toi de deviner !", "Regarde bien le dessin et écris ta réponse en secret. Les autres ne regardent pas !", "JE SUIS " + nomDe(id).toUpperCase(), () => {
+    ecran("jeu"); montrer([]); $("bloc-trouve-local").style.display = "none"; $("voir-mot").style.display = "none";
+    $("toile").classList.add("fige"); $("bloc-essai").style.display = ""; $("essai").value = "";
+    role("Écris ta réponse, " + nomDe(id) + " (laisse vide si tu ne sais pas)"); majMotif();
+    setTimeout(() => $("essai").focus(), 50);
+  });
+}
+function reponseLocale(t) {
+  const id = P.file.shift(); if (!id) return;
+  P.reponses[id] = t; $("bloc-essai").style.display = "none"; sons.clic();
+  demanderReponse();
+}
+function resultatsLocal() {
+  const pts = {}, trouves = {}, rep = {};
+  Object.keys(P.reponses).forEach(id => {
+    const t = P.reponses[id], bon = !!t && estBon(t, P.mot), presque = !bon && !!t && estPresque(t, P.mot);
+    rep[id] = { texte: t, bon, presque };
+    if (bon) { pts[id] = 3; trouves[id] = 3; } else if (presque) pts[id] = 1;
+  });
+  const nb = Object.keys(trouves).length; if (nb) pts[P.dess] = nb + 1;
   Object.keys(pts).forEach(k => { P.scores[k] = (P.scores[k] || 0) + pts[k]; });
-  afficherFinTour({ t: "g-fin-tour", pid: P.pid, n: P.n, mot: P.mot, pts, scores: P.scores, trouves: P.trouves, temps_trouve: P.temps_trouve });
+  P.trouves = trouves;
+  afficherFinTour({ t: "g-fin-tour", pid: P.pid, n: P.n, mot: P.mot, pts, scores: P.scores, trouves, reponses: rep });
 }
 // En ligne : fin du tour (temps écoulé, tout le monde a trouvé, ou le dessinateur est parti).
 function finTour() {
@@ -417,17 +439,19 @@ function afficherFinTour(m) {
   P.motif = m.mot.toUpperCase(); $("motif").textContent = P.motif;
   $("revele-mot").textContent = m.mot.toUpperCase(); rejouerAnim($("revele-mot"), "pop");
   const ul = $("points-tour"); ul.textContent = "";
-  const ids = Object.keys(m.pts || {}).sort((a, b) => (a === P.dess) - (b === P.dess) || m.pts[b] - m.pts[a]);
+  const ids = m.reponses ? P.joueurs.map(j => j.id).filter(id => id !== P.dess).concat(m.pts[P.dess] ? [P.dess] : []).sort((a, b) => (a === P.dess) - (b === P.dess) || (m.pts[b] || 0) - (m.pts[a] || 0))
+    : Object.keys(m.pts || {}).sort((a, b) => (a === P.dess) - (b === P.dess) || m.pts[b] - m.pts[a]);
   if (!ids.length) { const li = document.createElement("li"); li.textContent = "Personne n'a trouvé…"; ul.append(li); }
   ids.forEach(id => {
     const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b");
     t.insertAdjacentHTML("beforeend", Avatar.svg(avDe(id), 22, ' style="vertical-align:-6px;margin-right:6px"'));
-    t.append(document.createTextNode(nomDe(id) + (id === P.dess ? " (dessin)" : m.temps_trouve && m.temps_trouve[id] !== undefined ? " · " + m.temps_trouve[id] + " s" : "")));
-    b.textContent = "+" + m.pts[id]; li.append(t, b); ul.append(li);
+    const r = m.reponses && m.reponses[id];
+    t.append(document.createTextNode(nomDe(id) + (id === P.dess ? " (dessin)" : r ? " : « " + (r.texte || "…") + " »" + (r.bon ? " ✓" : r.presque ? " (presque !)" : " ✗") : m.temps_trouve && m.temps_trouve[id] !== undefined ? " · " + m.temps_trouve[id] + " s" : "")));
+    b.textContent = m.pts[id] ? "+" + m.pts[id] : "0"; li.append(t, b); ul.append(li);
   });
   $("bloc-revele").style.display = "flex";
   const moi = enLigne() ? Salon.id : null;
-  if (Object.keys(m.pts || {}).length) sons.bon(); else sons.rate();
+  if (Object.keys(m.trouves || m.pts || {}).length) sons.bon(); else sons.rate();
   enTete(); majStatut();
   const derniere = P.n + 1 >= P.total;
   role(derniere ? "Dernier dessin terminé !" : "Fin du tour !");
@@ -550,6 +574,7 @@ $("effacer").onclick = () => {
 /* ---------- Deviner (en ligne) ---------- */
 function envoyerEssai() {
   const t = $("essai").value.trim().slice(0, 40);
+  if (!enLigne()) { if (P.phase === "reponses") reponseLocale(t); return; }
   if (!t || P.phase !== "dessin") return;
   $("essai").value = ""; $("essai").focus();
   if (chef()) traiterEssai(Salon.id, t); else Salon.envoyer({ t: "g-essai", pid: P.pid, n: P.n, id: Salon.id, texte: t });
@@ -635,7 +660,7 @@ function finir() {
   const moi = enLigne() ? cl.find(c => c.id === Salon.id) : null;
   $("fin-lbl").textContent = moi ? "TON SCORE" : "MEILLEUR SCORE";
   $("fin-score").textContent = moi ? moi.s : (cl[0] ? cl[0].s : 0);
-  $("fin-detail").textContent = moi ? (rangDe(moi.s) === 1 ? "Tu finis 1er" : "Tu finis " + rangDe(moi.s) + "e") + " sur " + cl.length : (P.journal || []).length + " dessins";
+  $("fin-detail").textContent = moi ? (rangDe(moi.s) === 1 ? "Tu finis 1er" : "Tu finis " + rangDe(moi.s) + "e") + " sur " + cl.length : (P.journal || []).length + " dessin" + ((P.journal || []).length > 1 ? "s" : "");
   const best = cl.length ? cl[0].s : 0, gagnants = cl.filter(c => c.s === best).map(c => c.nom);
   $("fin-gagnant").textContent = (gagnants.length > 1 ? "Égalité en tête : " : "Victoire de ") + gagnants.join(", ") + " !";
   const ul = $("classement"); ul.textContent = "";
