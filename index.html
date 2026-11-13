@@ -71,8 +71,8 @@ input[type=text]{width:100%;min-height:50px;padding:8px 12px;border:3px solid va
 .bulle{position:relative;background:var(--blanc);border:4px solid var(--noir);border-radius:26px;padding:10px 18px 14px;box-shadow:6px 6px 0 var(--noir);margin-bottom:22px}
 .bulle::after{content:"";position:absolute;left:36px;bottom:-24px;width:26px;height:26px;background:var(--blanc);border-right:4px solid var(--noir);border-bottom:4px solid var(--noir);transform:skewX(28deg) rotate(8deg);clip-path:polygon(0 38%,100% 0,100% 100%,0 100%)}
 .bulle .indice{font-size:25px;line-height:1.15;overflow-wrap:anywhere}
-.boum{position:relative;height:108px;display:flex;align-items:center;justify-content:center}
-.boum svg{position:absolute;left:50%;top:50%;width:270px;height:118px;transform:translate(-50%,-50%) rotate(-4deg)}
+.boum{position:relative;height:132px;display:flex;align-items:center;justify-content:center}
+.boum svg{position:absolute;left:50%;top:50%;width:300px;height:138px;transform:translate(-50%,-50%) rotate(-4deg)}
 .boum div{position:relative;font-family:var(--titre);font-size:28px;letter-spacing:1px;line-height:1.05;text-align:center;color:var(--rouge);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill;transform:rotate(-4deg);max-width:190px}
 input[type=range]{width:100%;accent-color:var(--rouge);height:34px}
 .liste{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0}
@@ -88,7 +88,23 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 .grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
 .code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
 #code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
-@media (prefers-reduced-motion:reduce){#volet,.btn{transition:none}}
+/* animations de la révélation : rouleau de points, explosion, compteur de score */
+.plaques b{display:inline-block}
+#resultat-texte{display:flex;flex-direction:column;align-items:center;max-width:220px}
+#res-mot:empty{display:none}
+.reel{display:inline-block;font-size:50px;line-height:1;white-space:nowrap}
+.reel b{display:inline-block;font-weight:400}
+.tic{animation:tic .1s ease-out}
+@keyframes tic{from{transform:translateY(-75%);opacity:.15}to{transform:none;opacity:1}}
+.boum div.pop{animation:pop .4s cubic-bezier(.3,1.7,.5,1)}
+@keyframes pop{0%{transform:rotate(-4deg) scale(.35)}100%{transform:rotate(-4deg) scale(1)}}
+.boum svg.boom{animation:boom .45s cubic-bezier(.3,1.7,.5,1)}
+@keyframes boom{0%{transform:translate(-50%,-50%) rotate(-14deg) scale(.5)}100%{transform:translate(-50%,-50%) rotate(-4deg) scale(1)}}
+.boum svg.tremble{animation:tremble .12s linear infinite}
+@keyframes tremble{0%,100%{transform:translate(-50%,-50%) rotate(-4deg)}50%{transform:translate(-50%,-50%) rotate(-1deg) scale(1.03)}}
+.roule{animation:roule .18s ease-out}
+@keyframes roule{from{transform:translateY(-65%);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){#volet,.btn{transition:none}.tic,.boum div.pop,.boum svg.boom,.boum svg.tremble,.roule{animation:none}}
 </style>
 </head>
 <body>
@@ -308,6 +324,7 @@ function note(freq, duree, type, volume, quand) {
 }
 const sons = {
   cran() { note(1500, 0.025, "square", 0.018); },
+  tic(i) { note(700 + (i % 4) * 90, 0.035, "square", 0.03); },
   clic() { note(520, 0.06, "triangle", 0.05); },
   volet() { note(220, 0.35, "sawtooth", 0.02); note(330, 0.3, "sawtooth", 0.015, 0.12); },
   arrivee() { note(660, 0.1, "triangle", 0.06); note(990, 0.2, "triangle", 0.06, 0.1); },
@@ -574,16 +591,54 @@ function reveler(angle, cible, pts) {
   montrer(["ph-devine", "bulle"]); role("Révélation…");
   volet(true, false);
   const nAuMoment = P.n, pidAuMoment = P.pid;
+  const garde = () => P.phase === "reveal" && P.n === nAuMoment && P.pid === pidAuMoment;
   setTimeout(() => {
-    if (P.phase !== "reveal" || P.n !== nAuMoment || P.pid !== pidAuMoment) return;
-    $("score").textContent = P.score;
-    $("resultat-texte").textContent = (pts === 4 ? "DANS LE MILLE ! " : pts === 3 ? "PRESQUE ! " : pts === 2 ? "PAS LOIN ! " : "RATÉ ! ") + "+" + pts;
+    if (!garde()) return;
     role(enLigne() ? "Cible révélée pour vous deux." : "Les deux joueurs peuvent regarder.");
-    sons.points(pts);
-    const derniere = P.manches && P.n + 1 >= P.manches;
-    $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE RÉSULTAT" : "MANCHE SUIVANTE";
-    montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    montrer(["ph-devine", "bulle", "resultat"]);
+    tournerPoints(pts, garde, () => {
+      $("res-mot").textContent = pts === 4 ? "DANS LE MILLE ! " : pts === 3 ? "PRESQUE ! " : pts === 2 ? "PAS LOIN ! " : "RATÉ ! ";
+      rejouerAnim($("resultat-texte"), "pop"); rejouerAnim(boomSvg, "boom");
+      sons.points(pts);
+      roulerScore(P.score - pts, P.score);
+      const derniere = P.manches && P.n + 1 >= P.manches;
+      $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE RÉSULTAT" : "MANCHE SUIVANTE";
+      montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    });
   }, 800);
+}
+/* ---------- Animations des points ---------- */
+const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const boomSvg = document.querySelector("#resultat svg");
+function rejouerAnim(el, cls) { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
+// Le « +N » défile comme un rouleau (4, 3, 2, 0…), ralentit, puis s'arrête sur les points gagnés.
+function tournerPoints(pts, garde, fini) {
+  $("resultat-texte").innerHTML = '<span id="res-mot"></span><span class="reel">+<b id="res-num"></b></span>';
+  const num = $("res-num");
+  if (reduit) { num.textContent = pts; fini(); return; }
+  const valeurs = [4, 3, 2, 0], delais = [40, 40, 45, 45, 50, 55, 65, 75, 90, 110, 135, 165, 200];
+  let i = Math.floor(Math.random() * 4), etape = 0;
+  boomSvg.classList.remove("boom"); boomSvg.classList.add("tremble");
+  (function suivant() {
+    if (!garde()) { boomSvg.classList.remove("tremble"); return; }
+    if (etape < delais.length) {
+      num.textContent = valeurs[i++ % 4]; rejouerAnim(num, "tic"); sons.tic(etape);
+      setTimeout(suivant, delais[etape++]);
+    } else {
+      boomSvg.classList.remove("tremble");
+      num.textContent = pts; rejouerAnim(num, "tic"); fini();
+    }
+  })();
+}
+// Le score commun monte point par point, chaque chiffre arrive en roulant.
+function roulerScore(de, a) {
+  const el = $("score");
+  if (reduit || de >= a) { el.textContent = a; return; }
+  let v = de;
+  (function pas() {
+    v++; el.textContent = v; rejouerAnim(el, "roule");
+    if (v < a) setTimeout(pas, 150);
+  })();
 }
 function avancer() { // local, ou hôte en ligne
   P.n++;
