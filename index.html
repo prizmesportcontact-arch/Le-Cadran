@@ -5,104 +5,94 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Cadran</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&display=swap">
 <style>
 :root{
-  /* Un cadran-objet posé sur une table en bois : tout est en relief, rien n'est plat. */
-  --bois:#5A3520; --bois-clair:#7A4A2B; --bois-fonce:#2B1A10;
-  --creme:#FFF4E0; --papier:#FFFDF4; --sable:#FFE9C2;
-  --rouge:#C92A16; --rouge-clair:#F0583C; --rouge-fonce:#7A1206;
-  --bleu:#2F6FD0; --orange:#E8752A; --jaune:#F2C230; --or:#FFD66B;
-  --titre:'DM Serif Display',Georgia,serif; --texte:'DM Sans',system-ui,sans-serif;
-  color-scheme:dark;
+  /* Planche de BD : aplats vifs, contours noirs épais, ombres dures décalées, trame de points. */
+  --bleu:#19B5F0; --jaune:#FFE600; --rouge:#FF2D2D; --orange:#FF8A00; --noir:#111111; --blanc:#FFFFFF;
+  --titre:'Bangers',Impact,'Arial Narrow Bold',sans-serif; --texte:'Comic Neue','Comic Sans MS','Trebuchet MS',sans-serif;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{
-  background:#4A2A18;
-  color:var(--creme);font-family:var(--texte);font-size:16px;line-height:1.4;
-  -webkit-tap-highlight-color:transparent;
-}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:#6B4126;
-  background-image:radial-gradient(ellipse at 50% 30%,rgba(255,200,140,.22),rgba(0,0,0,0) 55%,rgba(0,0,0,.5) 100%),
-   repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 168px,rgba(0,0,0,.55) 169px,rgba(255,220,170,.12) 171px,rgba(0,0,0,0) 172px),
-   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006 0.28' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.08 0 0 0 0 0.03 1.5 0 0 0 -0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E")}
-#app{max-width:440px;min-height:100%;margin:0 auto;padding:20px 20px 28px;display:flex;flex-direction:column;gap:16px}
+body{background:var(--bleu);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:17px;line-height:1.35;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:var(--bleu);background-image:radial-gradient(rgba(0,0,0,.2) 2.2px,rgba(0,0,0,0) 2.6px);background-size:14px 14px}
+#app{max-width:440px;min-height:100%;margin:0 auto;padding:20px 22px 30px;display:flex;flex-direction:column;gap:16px}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-h1{font-family:var(--titre);font-weight:400;font-size:28px;margin:0;text-shadow:0 2px 0 rgba(0,0,0,.5)}
-h2{font-family:var(--titre);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
+h1{font-family:var(--titre);font-weight:400;font-size:32px;letter-spacing:2px;line-height:1;margin:0;white-space:nowrap;color:var(--blanc);background:var(--noir);padding:4px 16px 6px;transform:rotate(-3deg);box-shadow:5px 5px 0 var(--rouge)}
+h2{font-family:var(--titre);font-weight:400;font-size:30px;letter-spacing:1px;line-height:1.1;margin:0;text-wrap:balance;color:var(--blanc);-webkit-text-stroke:5px var(--noir);paint-order:stroke fill;text-shadow:3px 3px 0 var(--noir)}
 p{margin:0}
 .screen{display:none;flex-direction:column;gap:16px;flex:1}
 .screen.on{display:flex}
-.creux{background:var(--bois-fonce);border-radius:10px;padding:14px 16px;box-shadow:inset 0 3px 8px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.12)}
-.petit{font-size:14px;color:var(--sable)}
-.btn{
-  font-family:var(--texte);font-weight:700;font-size:18px;color:#fff;min-height:56px;padding:10px 18px;border:none;border-radius:12px;cursor:pointer;
-  background:linear-gradient(180deg,var(--rouge-clair),var(--rouge));
-  box-shadow:0 7px 0 var(--rouge-fonce),0 14px 18px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4);
-  transition:transform .08s,box-shadow .08s;touch-action:manipulation;user-select:none;-webkit-user-select:none;
-}
-.btn:active,.btn.enfonce{transform:translateY(5px);box-shadow:0 2px 0 var(--rouge-fonce),0 5px 8px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
-.btn:disabled{filter:grayscale(.7) brightness(.75);cursor:not-allowed}
-.btn.bleu{background:linear-gradient(180deg,#4B8AE8,#1D4C99);box-shadow:0 7px 0 #123466,0 14px 18px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
-.btn.bleu:active,.btn.bleu.enfonce{box-shadow:0 2px 0 #123466,0 5px 8px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
-.btn.plat{min-height:44px;font-size:14px;padding:8px 14px;background:var(--bois-fonce);color:var(--sable);box-shadow:inset 0 2px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.15)}
-.btn.plat:active{transform:none}
-:focus-visible{outline:3px solid var(--or);outline-offset:3px}
+.case{background:var(--blanc);border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);padding:12px 14px}
+.case.jaune{background:var(--jaune)}
+.petit{font-size:15px}
+.btn{font-family:var(--titre);font-size:26px;letter-spacing:2px;color:var(--blanc);background:var(--rouge);min-height:60px;padding:8px 16px;border:4px solid var(--noir);border-radius:0;box-shadow:6px 6px 0 var(--noir);cursor:pointer;transition:transform .06s,box-shadow .06s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn:active,.btn.enfonce{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--noir)}
+.btn:disabled{background:#B9B9B9;color:#3A3A3A;cursor:not-allowed}
+.btn.jaune{background:var(--jaune);color:var(--noir)}
+.btn.plat{font-family:var(--texte);font-weight:700;font-size:15px;letter-spacing:0;min-height:44px;padding:6px 12px;background:var(--blanc);color:var(--noir);border-width:3px;box-shadow:3px 3px 0 var(--noir)}
+.btn.plat{white-space:nowrap}
+.btn.plat:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--noir)}
+:focus-visible{outline:4px solid var(--noir);outline-offset:3px}
 .bas{margin-top:auto;display:flex;flex-direction:column;gap:18px;padding-bottom:8px}
-label{font-size:14px;font-weight:700;color:var(--sable);display:block;margin-bottom:6px}
-input[type=text]{width:100%;min-height:48px;padding:10px 14px;border-radius:8px;border:none;background:var(--papier);color:var(--bois-fonce);font-family:var(--texte);font-size:17px;font-weight:500;box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
-.rang{display:flex;gap:12px;flex-wrap:wrap}
+label{font-size:15px;display:block;margin-bottom:6px}
+input[type=text]{width:100%;min-height:50px;padding:8px 12px;border:3px solid var(--noir);border-radius:0;background:var(--blanc);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:18px}
+.rang{display:flex;gap:14px;flex-wrap:wrap}
 .rang>*{flex:1;min-width:0}
-/* choix à cocher sous forme de jetons */
-.jetons{display:flex;flex-wrap:wrap;gap:8px}
+.jetons{display:flex;flex-wrap:wrap;gap:10px}
 .jeton{position:relative}
 .jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.jeton span{display:block;padding:10px 14px;min-height:44px;border-radius:9px;font-size:14px;font-weight:700;background:var(--bois-fonce);color:var(--sable);box-shadow:inset 0 2px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.15)}
-.jeton input:checked+span{background:linear-gradient(180deg,#FFFDF4,#EADFC4);color:#2B1A10;box-shadow:0 3px 0 #B9A77F,0 6px 8px rgba(0,0,0,.4)}
-.jeton input:checked+span::before{content:"✓ ";color:#1F6E67}
-.jeton input:focus-visible+span{outline:3px solid var(--or);outline-offset:3px}
-/* plaquettes de score */
-.plaques{display:flex;gap:12px}
-.plaque{flex:1;padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#2F6FD0,#1D4C99);box-shadow:0 5px 0 #123466,0 10px 14px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.35)}
-.plaque.jaune{background:linear-gradient(180deg,#F2C230,#D99A12);box-shadow:0 5px 0 #8F6208,0 10px 14px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.5);color:#2B1A10}
-.plaque small{display:block;font-size:13px;font-weight:700}
-.plaque b{font-family:var(--titre);font-weight:400;font-size:34px;line-height:1.05;font-variant-numeric:tabular-nums}
-/* le cadran */
-.poste{display:flex;flex-direction:column;align-items:center}
-#cadran{width:100%;max-width:380px;height:auto;display:block;filter:drop-shadow(0 16px 14px rgba(0,0,0,.6));touch-action:none;user-select:none;-webkit-user-select:none}
+.jeton span{display:block;padding:8px 12px;min-height:44px;font-size:15px;background:var(--blanc);border:3px solid var(--noir);opacity:.72}
+.jeton input:checked+span{background:var(--jaune);opacity:1;box-shadow:3px 3px 0 var(--noir)}
+.jeton input:checked+span::before{content:"✓ "}
+.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:3px}
+.plaques{display:flex;gap:14px}
+.plaques .case{flex:1;padding:6px 14px 8px}
+.plaques small{display:block;font-size:14px;text-transform:uppercase}
+.plaques b{font-family:var(--titre);font-weight:400;font-size:42px;line-height:1;letter-spacing:1px}
+.bandeau{background:var(--noir);color:var(--blanc);padding:8px 12px;font-size:15px}
+.bandeau.alerte{background:var(--rouge);border:3px solid var(--noir)}
+.poste{padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#cadran{width:100%;max-width:360px;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
 #cadran.reglable{cursor:grab}
 #volet{transform-origin:170px 175px;transition:transform .7s cubic-bezier(.5,0,.2,1)}
 #volet.vite{transition-duration:.28s}
 #aiguille{transform-origin:170px 175px}
-.carte{width:92%;margin-top:-4px;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;background:var(--papier);color:var(--bois-fonce);font-family:var(--titre);font-size:18px;line-height:1.2;box-shadow:0 3px 0 #CDBE9C,0 10px 14px rgba(0,0,0,.5);transform:rotate(-1.2deg)}
-.carte span{flex:1;text-wrap:balance}
-.carte span:last-child{text-align:right}
-.carte i{font-style:normal;font-family:var(--texte);font-size:20px;color:#9A8A66}
-.indice{font-family:var(--titre);font-size:25px;color:#fff;overflow-wrap:anywhere}
-.resultat{text-align:center;font-family:var(--titre);font-size:26px;color:var(--or);min-height:34px}
-input[type=range]{width:100%;accent-color:var(--rouge-clair);height:32px}
+.carte{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.carte span{font-family:var(--titre);font-size:20px;letter-spacing:1px;line-height:1.15;background:var(--noir);color:var(--blanc);padding:4px 10px 6px;max-width:48%;text-wrap:balance}
+.carte span:first-child{transform:rotate(-2deg)}
+.carte span:last-child{transform:rotate(2deg);text-align:right}
+.bulle{position:relative;background:var(--blanc);border:4px solid var(--noir);border-radius:26px;padding:10px 18px 14px;box-shadow:6px 6px 0 var(--noir);margin-bottom:22px}
+.bulle::after{content:"";position:absolute;left:36px;bottom:-24px;width:26px;height:26px;background:var(--blanc);border-right:4px solid var(--noir);border-bottom:4px solid var(--noir);transform:skewX(28deg) rotate(8deg);clip-path:polygon(0 38%,100% 0,100% 100%,0 100%)}
+.bulle .indice{font-size:25px;line-height:1.15;overflow-wrap:anywhere}
+.boum{position:relative;height:108px;display:flex;align-items:center;justify-content:center}
+.boum svg{position:absolute;left:50%;top:50%;width:270px;height:118px;transform:translate(-50%,-50%) rotate(-4deg)}
+.boum div{position:relative;font-family:var(--titre);font-size:28px;letter-spacing:1px;line-height:1.05;text-align:center;color:var(--rouge);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill;transform:rotate(-4deg);max-width:190px}
+input[type=range]{width:100%;accent-color:var(--rouge);height:34px}
 .liste{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0}
-.liste li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
-.liste li b{font-variant-numeric:tabular-nums;color:var(--or);white-space:nowrap}
-.liste em{font-style:normal;color:var(--sable)}
-details summary{cursor:pointer;font-weight:700;min-height:28px}
-details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px}
-.grand{font-family:var(--titre);font-size:64px;line-height:1;text-align:center;color:#fff;font-variant-numeric:tabular-nums}
+.liste li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
+.liste li b{font-family:var(--titre);font-weight:400;font-size:22px;color:var(--rouge);white-space:nowrap}
+.liste em{font-style:normal;opacity:.75}
+details summary{cursor:pointer;min-height:28px}
+details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:16px}
+.grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
+.code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
+#code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
 @media (prefers-reduced-motion:reduce){#volet,.btn{transition:none}}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>Le Cadran</h1>
+    <h1>LE CADRAN !</h1>
     <button class="btn plat" id="son" type="button" aria-pressed="true">Son : oui</button>
   </header>
 
   <!-- ACCUEIL -->
   <section class="screen on" id="s-accueil">
-    <p>Un jeu à deux. L'un voit une cible cachée sur le cadran et donne un seul indice. L'autre place l'aiguille. Plus c'est près, plus vous marquez, ensemble.</p>
-    <div class="creux">
+    <div class="case"><p>Un jeu à deux. L'un voit une cible cachée sur le cadran et donne un seul indice. L'autre place l'aiguille. Plus c'est près, plus vous marquez, ensemble.</p></div>
+    <div class="case jaune">
       <details>
         <summary>Les règles en 30 secondes</summary>
         <ol>
@@ -115,15 +105,51 @@ details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;
       </details>
     </div>
     <div class="bas">
-      <button class="btn" id="go-local" type="button">Jouer sur cet appareil</button>
-      <button class="btn bleu" type="button" disabled>Jouer en ligne (bientôt)</button>
+      <button class="btn" id="go-ligne" type="button">JOUER EN LIGNE</button>
+      <button class="btn jaune" id="go-local" type="button">JOUER SUR CET APPAREIL</button>
     </div>
   </section>
 
-  <!-- RÉGLAGES -->
+  <!-- EN LIGNE : créer ou rejoindre -->
+  <section class="screen" id="s-ligne">
+    <h2>Jouer en ligne</h2>
+    <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    <button class="btn" id="creer" type="button">CRÉER UN SALON</button>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
+      <input type="text" id="code-saisi" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
+      <button class="btn jaune" id="rejoindre" type="button">REJOINDRE</button>
+    </div>
+    <p class="bandeau" id="err-ligne" role="alert" style="display:none"></p>
+    <div class="bas"><button class="btn plat" id="retour-ligne" type="button">Retour</button></div>
+  </section>
+
+  <!-- INVITÉ : salle d'attente -->
+  <section class="screen" id="s-invite">
+    <h2>Salon rejoint !</h2>
+    <div class="case jaune"><div class="petit">Code du salon</div><div class="code" id="code-invite"></div></div>
+    <div class="case"><p id="resume-invite">Connexion…</p></div>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Proposer une carte perso</label>
+      <div class="rang">
+        <div><label for="ig" class="petit">Côté gauche</label><input type="text" id="ig" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+        <div><label for="id" class="petit">Côté droit</label><input type="text" id="id" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+      </div>
+      <button class="btn plat" id="i-ajout" type="button">Envoyer cette carte</button>
+      <p class="petit" id="i-info" role="status"></p>
+    </div>
+    <div class="bas"><button class="btn plat" id="quitter-invite" type="button">Quitter le salon</button></div>
+  </section>
+
+  <!-- RÉGLAGES (local, ou hôte en ligne) -->
   <section class="screen" id="s-reglages">
     <h2>Réglages de la partie</h2>
-    <div class="rang">
+    <div class="case jaune" id="bloc-salon">
+      <div class="petit">Code du salon, à donner à l'autre joueur</div>
+      <div class="code" id="code-hote"></div>
+      <p class="petit" id="etat-salon" role="status" style="text-align:center"></p>
+    </div>
+    <div class="rang" id="bloc-noms">
       <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
       <div><label for="p2">Joueur 2</label><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
     </div>
@@ -133,13 +159,13 @@ details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;
     </div>
     <div>
       <label id="l-packs">Packs de cartes <span id="nb-cartes"></span></label>
-      <div class="rang" style="margin-bottom:10px">
+      <div class="rang" style="margin-bottom:12px">
         <button class="btn plat" id="tout" type="button">Tout cocher</button>
         <button class="btn plat" id="rien" type="button">Tout décocher</button>
       </div>
       <div class="jetons" role="group" aria-labelledby="l-packs" id="packs"></div>
     </div>
-    <div class="creux" style="display:flex;flex-direction:column;gap:10px">
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
       <label style="margin:0">Cartes perso (pour cette partie seulement)</label>
       <div class="rang">
         <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
@@ -148,104 +174,109 @@ details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;
       <button class="btn plat" id="ajout" type="button">Ajouter cette carte</button>
       <ul class="liste" id="perso"></ul>
     </div>
-    <p class="petit" id="err-reglages" role="alert"></p>
+    <p class="bandeau" id="err-reglages" role="alert" style="display:none"></p>
     <div class="bas">
-      <button class="btn" id="lancer" type="button">Lancer la partie</button>
+      <button class="btn" id="lancer" type="button">LANCER LA PARTIE</button>
+      <button class="btn plat" id="retour-reglages" type="button">Retour</button>
     </div>
   </section>
 
-  <!-- PASSAGE DE L'APPAREIL -->
+  <!-- PASSAGE DE L'APPAREIL (local) -->
   <section class="screen" id="s-passe">
     <h2 id="passe-titre"></h2>
-    <p id="passe-texte"></p>
+    <div class="case"><p id="passe-texte"></p></div>
     <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
   </section>
 
   <!-- MANCHE -->
   <section class="screen" id="s-manche">
     <div class="plaques">
-      <div class="plaque"><small>Score commun</small><b id="score">0</b></div>
-      <div class="plaque jaune"><small>Manche</small><b id="num"></b></div>
+      <div class="case jaune"><small>Score commun</small><b id="score">0</b></div>
+      <div class="case"><small>Manche</small><b id="num"></b></div>
     </div>
-    <p class="petit" id="role" aria-live="polite"></p>
-    <div class="poste">
-      <svg id="cadran" viewBox="-12 -6 364 224" role="img" aria-label="Cadran">
+    <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
+    <p class="bandeau" id="role" aria-live="polite"></p>
+    <div class="case poste">
+      <svg id="cadran" viewBox="-12 -8 372 232" role="img" aria-label="Cadran">
         <defs>
-          <linearGradient id="g-bord" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D4656"/><stop offset=".5" stop-color="#1B212C"/><stop offset="1" stop-color="#0C1017"/></linearGradient>
-          <radialGradient id="g-face" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#FFFDF4"/><stop offset=".7" stop-color="#F1E6CC"/><stop offset="1" stop-color="#D9C9A3"/></radialGradient>
-          <radialGradient id="g-volet" cx=".5" cy="1" r="1"><stop offset="0" stop-color="#3F9C93"/><stop offset=".75" stop-color="#1F6E67"/><stop offset="1" stop-color="#124A45"/></radialGradient>
-          <linearGradient id="g-laiton" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6DC8C"/><stop offset=".5" stop-color="#B98A2C"/><stop offset="1" stop-color="#6E4D10"/></linearGradient>
-          <radialGradient id="g-bouton" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF8D75"/><stop offset=".6" stop-color="#C92A16"/><stop offset="1" stop-color="#7A1206"/></radialGradient>
-          <clipPath id="c-face"><path d="M20,175 A150,150 0 0 1 320,175 Z"/></clipPath>
+          <pattern id="trame" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.5" fill="#19B5F0" opacity=".4"/></pattern>
+          <pattern id="trame-volet" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2" fill="#111" opacity=".22"/></pattern>
+          <clipPath id="c-face"><path d="M24,175 A146,146 0 0 1 316,175 Z"/></clipPath>
         </defs>
-        <path d="M-6,175 A176,176 0 0 1 346,175 L346,205 Q346,212 339,212 L1,212 Q-6,212 -6,205 Z" fill="url(#g-bord)"/>
-        <path d="M-6,175 A176,176 0 0 1 346,175" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
-        <g id="grad" stroke="#C9D1DE" stroke-linecap="round"></g>
-        <path d="M17,175 A153,153 0 0 1 323,175" fill="none" stroke="url(#g-laiton)" stroke-width="3"/>
-        <path d="M20,175 A150,150 0 0 1 320,175 Z" fill="url(#g-face)" stroke="#0C1017" stroke-width="4"/>
+        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111" transform="translate(8 8)"/>
+        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111"/>
+        <path d="M6,175 A164,164 0 0 1 334,175 Z" fill="#FFE600"/>
+        <g id="grad" stroke="#111" stroke-linecap="round"></g>
+        <path d="M18,175 A152,152 0 0 1 322,175 Z" fill="#111"/>
+        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#fff"/>
+        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame)"/>
         <g clip-path="url(#c-face)">
           <g id="cible"></g>
           <g id="volet">
-            <path d="M20,175 A150,150 0 0 1 320,175 Z" fill="url(#g-volet)"/>
-            <path d="M50,175 A120,120 0 0 1 290,175 M85,175 A85,85 0 0 1 255,175 M120,175 A50,50 0 0 1 220,175" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
-            <rect x="160" y="34" width="20" height="8" rx="4" fill="rgba(0,0,0,.3)"/>
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#FF2D2D"/>
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame-volet)"/>
+            <text x="170" y="132" font-family="Bangers,Impact,sans-serif" font-size="96" text-anchor="middle" fill="#FFE600" stroke="#111" stroke-width="5" paint-order="stroke" stroke-linejoin="round">?</text>
           </g>
         </g>
-        <path d="M20,175 A150,150 0 0 1 320,175" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="10"/>
+        <rect x="6" y="178" width="328" height="22" fill="#FFE600"/>
+        <circle cx="20" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="320" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/>
         <g id="aiguille">
-          <polygon points="170,179 178,179 175.5,46 172.5,44" fill="rgba(0,0,0,.28)"/>
-          <polygon points="165.5,175 174.5,175 171.6,40 168.4,40" fill="#C92A16"/>
-          <polygon points="165.5,175 170,175 170,40 168.4,40" fill="#FF6A4D"/>
-          <circle cx="170" cy="40" r="1.7" fill="#E0452C"/>
+          <polygon points="164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
         </g>
-        <circle cx="172" cy="179" r="26" fill="rgba(0,0,0,.35)"/>
-        <circle cx="170" cy="175" r="25" fill="url(#g-laiton)" stroke="#4A3408" stroke-width="1"/>
-        <circle cx="170" cy="175" r="20" fill="url(#g-bouton)" stroke="#5C0D04" stroke-width="1.5"/>
-        <ellipse cx="163" cy="167" rx="7" ry="4.5" fill="#fff" opacity=".45" transform="rotate(-30 163 167)"/>
-        <g stroke="#4A3408"><circle cx="12" cy="197" r="5" fill="url(#g-laiton)"/><path d="M8.5,195.5 L15.5,198.5"/><circle cx="328" cy="197" r="5" fill="url(#g-laiton)"/><path d="M324.5,198.5 L331.5,195.5"/></g>
-        <path d="M34,150 A140,140 0 0 1 190,37 A170,170 0 0 0 34,150 Z" fill="#fff" opacity=".1" pointer-events="none"/>
+        <circle cx="170" cy="175" r="23" fill="#111"/>
+        <circle cx="170" cy="175" r="12" fill="#FF2D2D"/>
+        <circle cx="165" cy="170" r="4" fill="#fff"/>
       </svg>
-      <div class="carte"><span id="gauche"></span><i aria-hidden="true">↔</i><span id="droite"></span></div>
+      <div class="carte"><span id="gauche"></span><span id="droite"></span></div>
     </div>
 
-    <!-- phase : donner l'indice -->
+    <!-- donner l'indice -->
     <div id="ph-indice" class="bas">
-      <button class="btn bleu" id="voir" type="button">Maintiens pour voir la cible</button>
+      <button class="btn jaune" id="voir" type="button">MAINTIENS POUR VOIR LA CIBLE</button>
       <div><label for="indice">Ton indice</label><input type="text" id="indice" maxlength="60" autocomplete="off" placeholder="Un mot, une chose, une idée…"></div>
-      <button class="btn" id="envoyer" type="button">Envoyer l'indice</button>
-      <p class="petit" id="err-indice" role="alert"></p>
+      <button class="btn" id="envoyer" type="button">ENVOYER L'INDICE</button>
+      <p class="bandeau" id="err-indice" role="alert" style="display:none"></p>
     </div>
 
-    <!-- phase : deviner + révélation -->
+    <!-- deviner, regarder, révélation -->
     <div id="ph-devine" class="bas">
-      <div class="creux"><div class="petit">Indice de <span id="de"></span></div><div class="indice" id="indice-affiche"></div></div>
+      <div class="bulle" id="bulle"><div class="petit"><span id="de"></span> dit :</div><div class="indice" id="indice-affiche"></div></div>
       <div id="zone-reglage"><label for="fin">Fais glisser l'aiguille, ou règle ici</label><input type="range" id="fin" min="3" max="177" step="1" value="90"></div>
-      <div class="resultat" id="resultat" aria-live="polite"></div>
-      <button class="btn" id="valider" type="button">Valider l'aiguille</button>
-      <button class="btn" id="suivante" type="button">Manche suivante</button>
+      <div class="boum" id="resultat" aria-live="polite">
+        <svg aria-hidden="true" viewBox="0 0 240 110"><polygon points="120,2 138,26 168,8 170,36 206,26 194,52 236,58 198,72 216,100 176,88 168,108 142,88 120,108 100,88 70,106 68,84 26,96 46,70 4,58 44,46 30,20 68,34 74,8 100,26" fill="#FFE600" stroke="#111" stroke-width="4" stroke-linejoin="round"/></svg>
+        <div id="resultat-texte"></div>
+      </div>
+      <button class="btn" id="valider" type="button">VALIDER L'AIGUILLE</button>
+      <button class="btn" id="suivante" type="button">MANCHE SUIVANTE</button>
       <button class="btn plat" id="arreter" type="button">Terminer la partie ici</button>
     </div>
   </section>
 
   <!-- FIN -->
   <section class="screen" id="s-fin">
-    <h2>Partie terminée</h2>
-    <div class="creux" style="text-align:center">
-      <div class="petit">Score commun</div>
+    <h2>Partie terminée !</h2>
+    <div class="case jaune" style="text-align:center">
+      <div class="petit">SCORE COMMUN</div>
       <div class="grand" id="fin-score"></div>
       <div class="petit" id="fin-detail"></div>
     </div>
-    <p id="fin-record" style="text-align:center;color:var(--or);font-weight:700"></p>
-    <div class="creux"><ul class="liste" id="recap"></ul></div>
+    <p class="bandeau" id="fin-record" style="text-align:center"></p>
+    <div class="case"><ul class="liste" id="recap"></ul></div>
     <div class="bas">
-      <button class="btn" id="rejouer" type="button">Rejouer</button>
+      <button class="btn" id="rejouer" type="button">REJOUER</button>
       <button class="btn plat" id="accueil" type="button">Changer les réglages</button>
+      <button class="btn plat" id="quitter-fin" type="button">Quitter le salon</button>
     </div>
   </section>
 </div>
 
+<script src="supabase.js"></script>
 <script>
 "use strict";
+/* ---------- Connexion temps réel (Supabase, clé publique faite pour être dans la page) ---------- */
+const SUPA_URL = "https://cbbnrdfvaaikawszaysu.supabase.co";
+const SUPA_CLE = "sb_publishable_rfB8KSptjcdTpp8QxvST9A_UlpQ8rW0";
+
 /* ---------- Cartes : 20 packs de 15 ---------- */
 const PACKS = [
 ["Classiques","Froid|Chaud;Petit|Grand;Lent|Rapide;Silencieux|Bruyant;Léger|Lourd;Mou|Dur;Ancien|Moderne;Banal|Rare;Facile|Difficile;Moche|Beau;Triste|Joyeux;Dangereux|Sans danger;Sec|Mouillé;Court|Long;Inutile|Indispensable"],
@@ -276,6 +307,7 @@ const memo = {
   lire(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
   ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 };
+function alerte(id, texte) { const e = $(id); e.textContent = texte || ""; e.style.display = texte ? "" : "none"; }
 
 /* ---------- Sons légers ---------- */
 let audio = null, sonActif = memo.lire("cadran-son", "1") === "1";
@@ -294,6 +326,7 @@ const sons = {
   cran() { note(1500, 0.025, "square", 0.018); },
   clic() { note(520, 0.06, "triangle", 0.05); },
   volet() { note(220, 0.35, "sawtooth", 0.02); note(330, 0.3, "sawtooth", 0.015, 0.12); },
+  arrivee() { note(660, 0.1, "triangle", 0.06); note(990, 0.2, "triangle", 0.06, 0.1); },
   points(p) {
     if (p === 4) { note(659, 0.14, "triangle", 0.07); note(784, 0.14, "triangle", 0.07, 0.12); note(1047, 0.32, "triangle", 0.07, 0.24); }
     else if (p === 3) { note(659, 0.14, "triangle", 0.07); note(880, 0.28, "triangle", 0.07, 0.13); }
@@ -307,10 +340,21 @@ $("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonAc
 majSon();
 
 /* ---------- Écrans ---------- */
+let ecranActuel = "accueil";
 function ecran(nom) {
+  ecranActuel = nom;
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
   window.scrollTo(0, 0);
 }
+
+/* ---------- État de la partie ---------- */
+// mode : "local" ou "ligne". moi : 0 = hôte, 1 = invité (en ligne seulement).
+const P = { mode: "local", moi: 0, pid: 0, joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: null, angle: 90, indice: "", phase: "" };
+const melange = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const donneur = () => P.joueurs[P.n % 2], devineur = () => P.joueurs[(P.n + 1) % 2];
+const enLigne = () => P.mode === "ligne";
+const jeDonne = () => !enLigne() || P.n % 2 === P.moi;
+const jeDevine = () => !enLigne() || P.n % 2 !== P.moi;
 
 /* ---------- Réglages ---------- */
 let persos = [];
@@ -319,14 +363,16 @@ $("manches").innerHTML = MANCHES.map(n =>
 $("packs").innerHTML = PACKS.map((p, i) =>
   `<label class="jeton"><input type="checkbox" value="${i}" checked><span>${p.nom}</span></label>`).join("");
 const casesPacks = () => [...document.querySelectorAll("#packs input")];
+const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
 function compteCartes() {
   const n = casesPacks().filter(c => c.checked).reduce((s, c) => s + PACKS[c.value].cartes.length, 0) + persos.length;
   $("nb-cartes").textContent = "· " + n + " carte" + (n > 1 ? "s" : "");
   return n;
 }
-$("packs").onchange = compteCartes;
-$("tout").onclick = () => { casesPacks().forEach(c => c.checked = true); compteCartes(); };
-$("rien").onclick = () => { casesPacks().forEach(c => c.checked = false); compteCartes(); };
+function reglagesChanges() { compteCartes(); if (enLigne()) envoyerReglages(); }
+$("packs").onchange = reglagesChanges; $("manches").onchange = reglagesChanges;
+$("tout").onclick = () => { casesPacks().forEach(c => c.checked = true); reglagesChanges(); };
+$("rien").onclick = () => { casesPacks().forEach(c => c.checked = false); reglagesChanges(); };
 function majPersos() {
   const ul = $("perso"); ul.textContent = "";
   persos.forEach((c, i) => {
@@ -336,52 +382,80 @@ function majPersos() {
     b.onclick = () => { persos.splice(i, 1); majPersos(); };
     li.append(t, b); ul.append(li);
   });
-  compteCartes();
+  reglagesChanges();
 }
 $("ajout").onclick = () => {
   const g = $("cg").value.trim(), d = $("cd").value.trim();
-  if (!g || !d) { $("err-reglages").textContent = "Une carte perso a besoin des deux côtés."; return; }
-  $("err-reglages").textContent = ""; persos.push([g, d]); $("cg").value = ""; $("cd").value = ""; majPersos(); $("cg").focus();
+  if (!g || !d) { alerte("err-reglages", "Une carte perso a besoin des deux côtés."); return; }
+  alerte("err-reglages"); persos.push([g, d]); $("cg").value = ""; $("cd").value = ""; majPersos(); $("cg").focus();
 };
-$("go-local").onclick = () => { sons.clic(); $("p1").value = $("p1").value || memo.lire("cadran-p1", ""); $("p2").value = $("p2").value || memo.lire("cadran-p2", ""); compteCartes(); ecran("reglages"); };
-
-/* ---------- Partie ---------- */
-const P = { joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: 90, angle: 90, indice: "", phase: "" };
-const melange = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const donneur = () => P.joueurs[P.n % 2], devineur = () => P.joueurs[(P.n + 1) % 2];
+function ouvrirReglages() {
+  const ligne = enLigne();
+  $("bloc-salon").style.display = ligne ? "" : "none";
+  $("bloc-noms").style.display = ligne ? "none" : "";
+  alerte("err-reglages"); compteCartes(); ecran("reglages");
+}
+$("go-local").onclick = () => {
+  sons.clic(); P.mode = "local";
+  $("p1").value = $("p1").value || memo.lire("cadran-p1", ""); $("p2").value = $("p2").value || memo.lire("cadran-p2", "");
+  ouvrirReglages();
+};
+$("retour-reglages").onclick = () => { sons.clic(); if (enLigne()) quitterSalon(); ecran("accueil"); };
 
 $("lancer").onclick = () => {
-  const a = $("p1").value.trim() || "Joueur 1", b = $("p2").value.trim() || "Joueur 2";
   const cartes = casesPacks().filter(c => c.checked).flatMap(c => PACKS[c.value].cartes).concat(persos);
-  if (!cartes.length) { $("err-reglages").textContent = "Coche au moins un pack ou ajoute une carte perso."; return; }
-  if (a.toLowerCase() === b.toLowerCase()) { $("err-reglages").textContent = "Choisissez deux pseudos différents."; return; }
-  $("err-reglages").textContent = "";
-  memo.ecrire("cadran-p1", a); memo.ecrire("cadran-p2", b);
-  P.joueurs = [a, b]; P.manches = +document.querySelector("#manches input:checked").value; P.toutes = cartes;
+  if (!cartes.length) { alerte("err-reglages", "Coche au moins un pack ou ajoute une carte perso."); return; }
+  if (enLigne()) {
+    if (!S.autre) { alerte("err-reglages", "L'autre joueur n'est pas encore dans le salon. Donne-lui le code " + S.code + "."); return; }
+    P.joueurs = [S.nom, S.autre.nom];
+  } else {
+    const a = $("p1").value.trim() || "Joueur 1", b = $("p2").value.trim() || "Joueur 2";
+    if (a.toLowerCase() === b.toLowerCase()) { alerte("err-reglages", "Choisissez deux pseudos différents."); return; }
+    memo.ecrire("cadran-p1", a); memo.ecrire("cadran-p2", b); P.joueurs = [a, b];
+  }
+  alerte("err-reglages");
+  P.manches = manchesChoisies(); P.toutes = cartes;
   nouvellePartie();
 };
-function nouvellePartie() { P.pioche = melange(P.toutes.slice()); P.n = 0; P.score = 0; P.histo = []; sons.clic(); preparerManche(); }
+function nouvellePartie() {
+  P.pioche = melange(P.toutes.slice()); P.pid++; P.n = 0; P.score = 0; P.histo = [];
+  sons.clic(); preparerManche();
+}
 
+/* ---------- Déroulé d'une manche ---------- */
 function passe(titre, texte, bouton, suite) {
   $("passe-titre").textContent = titre; $("passe-texte").textContent = texte; $("passe-ok").textContent = bouton;
   $("passe-ok").onclick = () => { sons.clic(); suite(); };
   ecran("passe");
 }
+// Appelé par celui qui tient la pioche : l'appareil unique en local, l'hôte en ligne.
 function preparerManche() {
-  if (!P.pioche.length) P.pioche = melange(P.toutes.slice()); // toutes les cartes sont sorties : on remélange
-  P.carte = P.pioche.pop();
-  P.cible = 22 + Math.random() * 136; // la cible reste toujours entière sur le cadran P.angle = 90; P.indice = "";
-  passe(donneur() + ", à toi de faire deviner", devineur() + " ne doit pas regarder l'écran pendant que tu découvres la cible.", "Je suis " + donneur() + ", personne ne regarde", phaseIndice);
+  if (!P.pioche.length) P.pioche = melange(P.toutes.slice());
+  const carte = P.pioche.pop();
+  if (enLigne()) envoyer({ t: "manche", pid: P.pid, n: P.n, carte, score: P.score, manches: P.manches, joueurs: P.joueurs }, true);
+  debutManche(carte);
 }
+function debutManche(carte) {
+  P.carte = carte; P.indice = ""; P.angle = 90; aigDistante = null;
+  if (enLigne()) {
+    if (jeDonne()) { P.cible = tirerCible(); phaseIndice(); } else { P.cible = null; phaseAttenteIndice(); }
+  } else {
+    P.cible = tirerCible();
+    passe(donneur() + ", à toi de faire deviner !", devineur() + " ne doit pas regarder l'écran pendant que tu découvres la cible.", "JE SUIS " + donneur().toUpperCase(), phaseIndice);
+  }
+}
+const tirerCible = () => 22 + Math.random() * 136; // la cible reste toujours entière sur le cadran
 
 /* ---------- Cadran ---------- */
 const pt = (a, r) => [170 - r * Math.cos(a * Math.PI / 180), 175 - r * Math.sin(a * Math.PI / 180)];
+$("grad").innerHTML = Array.from({ length: 35 }, (_, i) => { const a = 5 + i * 5, g = a % 15 === 0, [x1, y1] = pt(a, 154), [x2, y2] = pt(a, g ? 163 : 159); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${g ? 3.5 : 2}"/>`; }).join("");
 function dessinerCible(t) {
-  const zones = [[-20, -12, "#F2C230", 2, "#2B1A10"], [-12, -4, "#E8752A", 3, "#2B1A10"], [-4, 4, "#2F6FD0", 4, "#FFFFFF"], [4, 12, "#E8752A", 3, "#2B1A10"], [12, 20, "#F2C230", 2, "#2B1A10"]];
+  if (t === null) { $("cible").innerHTML = ""; return; }
+  const zones = [[-20, -12, "#FFE600", 2, "#111"], [-12, -4, "#FF8A00", 3, "#111"], [-4, 4, "#FF2D2D", 4, "#fff"], [4, 12, "#FF8A00", 3, "#111"], [12, 20, "#FFE600", 2, "#111"]];
   $("cible").innerHTML = zones.map(([d1, d2, coul, pts, enc]) => {
-    const [x1, y1] = pt(t + d1, 150), [x2, y2] = pt(t + d2, 150), [tx, ty] = pt(t + (d1 + d2) / 2, 127);
-    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}"/>` +
-      `<text x="${tx.toFixed(1)}" y="${(ty + 4).toFixed(1)}" font-family="DM Sans,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="${enc}">${pts}</text>`;
+    const [x1, y1] = pt(t + d1, 150), [x2, y2] = pt(t + d2, 150), [tx, ty] = pt(t + (d1 + d2) / 2, 122);
+    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}" stroke="#111" stroke-width="3" stroke-linejoin="round"/>` +
+      `<text x="${tx.toFixed(1)}" y="${(ty + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="16" text-anchor="middle" fill="${enc}">${pts}</text>`;
   }).join("");
 }
 function volet(ouvert, vite) {
@@ -396,38 +470,66 @@ function poserAiguille(a, silencieux) {
   $("fin").value = Math.round(P.angle);
   if (!silencieux && Math.abs(P.angle - dernierCran) >= 4) { dernierCran = P.angle; sons.cran(); }
 }
-$("grad").innerHTML = Array.from({ length: 35 }, (_, i) => { const a = 5 + i * 5, g = a % 15 === 0, [x1, y1] = pt(a, 158), [x2, y2] = pt(a, g ? 169 : 164); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${g ? 2 : 1}" opacity="${g ? .9 : .55}"/>`; }).join("");
 const svg = $("cadran");
 function angleDepuis(e) {
   const r = svg.getBoundingClientRect();
-  const x = -12 + (e.clientX - r.left) / r.width * 364, y = -6 + (e.clientY - r.top) / r.height * 224;
+  const x = -12 + (e.clientX - r.left) / r.width * 372, y = -8 + (e.clientY - r.top) / r.height * 232;
   const dx = 170 - x, dy = 175 - y;
   return dy <= 0 ? (dx > 0 ? 3 : 177) : Math.atan2(dy, dx) * 180 / Math.PI;
 }
+// En ligne, la position de l'aiguille part au plus 10 fois par seconde, et seulement si elle a bougé.
+let dernierEnvoiAig = 0, angleEnvoye = null, envoiPrevu = null;
+function diffuserAiguille(force) {
+  if (!enLigne() || P.phase !== "devine") return;
+  const maintenant = Date.now(), a = Math.round(P.angle * 10) / 10;
+  if (a === angleEnvoye) return;
+  if (force || maintenant - dernierEnvoiAig >= 100) {
+    clearTimeout(envoiPrevu); envoiPrevu = null; dernierEnvoiAig = maintenant; angleEnvoye = a;
+    envoyer({ t: "aig", pid: P.pid, n: P.n, a });
+  } else if (!envoiPrevu) envoiPrevu = setTimeout(() => { envoiPrevu = null; diffuserAiguille(true); }, 100 - (maintenant - dernierEnvoiAig));
+}
+function regler(a) { poserAiguille(a); diffuserAiguille(false); }
 let glisse = false;
-svg.addEventListener("pointerdown", e => { if (P.phase !== "devine") return; glisse = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} poserAiguille(angleDepuis(e)); e.preventDefault(); });
-svg.addEventListener("pointermove", e => { if (glisse && P.phase === "devine") poserAiguille(angleDepuis(e)); });
-["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { glisse = false; }));
-$("fin").addEventListener("input", e => { if (P.phase === "devine") poserAiguille(+e.target.value); });
+svg.addEventListener("pointerdown", e => { if (P.phase !== "devine") return; glisse = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} regler(angleDepuis(e)); e.preventDefault(); });
+svg.addEventListener("pointermove", e => { if (glisse && P.phase === "devine") regler(angleDepuis(e)); });
+["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { if (glisse) { glisse = false; diffuserAiguille(true); } }));
+$("fin").addEventListener("input", e => { if (P.phase === "devine") regler(+e.target.value); });
+// Aiguille de l'autre joueur : on glisse vers sa dernière position connue pour un mouvement fluide.
+let aigDistante = null;
+(function lisser() {
+  if (P.phase === "regarde" && aigDistante !== null) {
+    const ecart = aigDistante - P.angle;
+    if (Math.abs(ecart) > 0.05) poserAiguille(P.angle + ecart * 0.28);
+  }
+  requestAnimationFrame(lisser);
+})();
 
-/* ---------- Phases d'une manche ---------- */
+/* ---------- Phases ---------- */
 function enTete() {
   $("score").textContent = P.score;
   $("num").textContent = (P.n + 1) + (P.manches ? " / " + P.manches : "");
   $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
 }
-function montrer(ids) { ["ph-indice", "ph-devine", "zone-reglage", "resultat", "valider", "suivante", "arreter"].forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
+const BLOCS = ["ph-indice", "voir", "ph-devine", "bulle", "zone-reglage", "resultat", "valider", "suivante", "arreter"];
+function montrer(ids) { BLOCS.forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
+function role(texte) { $("role").textContent = texte; }
 
 function phaseIndice() {
   P.phase = "indice"; enTete();
-  $("cible").innerHTML = ""; volet(false, true); dessinerCible(P.cible);
+  dessinerCible(P.cible);
   $("aiguille").style.display = "none"; svg.classList.remove("reglable");
-  $("role").textContent = donneur() + " : regarde la cible, puis donne un indice qui correspond à cet endroit.";
-  $("indice").value = ""; $("err-indice").textContent = "";
-  montrer(["ph-indice"]); ecran("manche");
+  $("indice").value = ""; alerte("err-indice");
+  if (enLigne()) { // seul sur son appareil : la cible reste visible
+    volet(true, true); role("Voici la cible. Donne à " + devineur() + " un indice qui correspond à cet endroit.");
+    montrer(["ph-indice"]);
+  } else {
+    volet(false, true); role(donneur() + " : regarde la cible, puis donne un indice qui correspond à cet endroit.");
+    montrer(["ph-indice", "voir"]);
+  }
+  ecran("manche");
 }
 const voir = $("voir");
-function regarder(oui) { if (P.phase !== "indice") return; voir.classList.toggle("enfonce", oui); volet(oui, true); }
+function regarder(oui) { if (P.phase !== "indice" || enLigne()) return; voir.classList.toggle("enfonce", oui); volet(oui, true); }
 voir.addEventListener("pointerdown", e => { e.preventDefault(); regarder(true); });
 ["pointerup", "pointercancel", "pointerleave"].forEach(t => voir.addEventListener(t, () => regarder(false)));
 voir.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); regarder(true); } });
@@ -435,45 +537,85 @@ voir.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") re
 voir.addEventListener("contextmenu", e => e.preventDefault());
 
 function envoyerIndice() {
+  if (P.phase !== "indice") return;
   const t = $("indice").value.trim();
-  if (!t) { $("err-indice").textContent = "Écris un indice avant d'envoyer."; return; }
-  P.indice = t; P.phase = "attente"; volet(false, true);
-  passe("Passe l'appareil à " + devineur(), "L'indice est enregistré et la cible est cachée. Elle ne peut plus être montrée avant la révélation.", "Je suis " + devineur(), phaseDevine);
+  if (!t) { alerte("err-indice", "Écris un indice avant d'envoyer."); return; }
+  P.indice = t; sons.clic();
+  if (enLigne()) { envoyer({ t: "indice", pid: P.pid, n: P.n, texte: t }, true); phaseRegarde(); }
+  else {
+    P.phase = "attente"; volet(false, true);
+    passe("Passe l'appareil à " + devineur() + " !", "L'indice est enregistré et la cible est cachée. Elle ne peut plus être montrée avant la révélation.", "JE SUIS " + devineur().toUpperCase(), phaseDevine);
+  }
 }
 $("envoyer").onclick = envoyerIndice;
 $("indice").addEventListener("keydown", e => { if (e.key === "Enter") envoyerIndice(); });
 
+function afficherIndice() { $("de").textContent = donneur(); $("indice-affiche").textContent = "« " + P.indice + " »"; }
+function phaseAttenteIndice() { // en ligne, côté devineur
+  P.phase = "attente-indice"; enTete(); dessinerCible(null); volet(false, true);
+  $("aiguille").style.display = ""; poserAiguille(90, true); svg.classList.remove("reglable");
+  role(donneur() + " regarde la cible et prépare son indice…");
+  montrer([]); ecran("manche");
+}
+function phaseRegarde() { // en ligne, côté donneur : la cible reste visible, l'aiguille de l'autre bouge en direct
+  P.phase = "regarde"; enTete(); volet(true, true);
+  $("aiguille").style.display = ""; poserAiguille(90, true); aigDistante = null; svg.classList.remove("reglable");
+  role(devineur() + " place l'aiguille. Tu la vois bouger en direct, sans rien dire !");
+  afficherIndice(); montrer(["ph-devine", "bulle"]); ecran("manche");
+}
 function phaseDevine() {
   P.phase = "devine"; enTete(); volet(false, true);
-  $("aiguille").style.display = ""; dernierCran = 90; poserAiguille(90, true); svg.classList.add("reglable");
-  $("role").textContent = devineur() + " : place l'aiguille là où tu penses que la cible se trouve.";
-  $("de").textContent = donneur(); $("indice-affiche").textContent = "« " + P.indice + " »";
-  montrer(["ph-devine", "zone-reglage", "valider"]); ecran("manche");
+  $("aiguille").style.display = ""; dernierCran = 90; angleEnvoye = null; poserAiguille(90, true); svg.classList.add("reglable");
+  role(devineur() + " : place l'aiguille là où tu penses que la cible se trouve.");
+  afficherIndice(); $("valider").disabled = false; $("valider").textContent = "VALIDER L'AIGUILLE";
+  montrer(["ph-devine", "bulle", "zone-reglage", "valider"]); ecran("manche");
 }
 const pointsPour = ecart => ecart <= 4 ? 4 : ecart <= 12 ? 3 : ecart <= 20 ? 2 : 0;
 $("valider").onclick = () => {
   if (P.phase !== "devine") return;
-  P.phase = "reveal"; svg.classList.remove("reglable"); sons.clic();
-  const pts = pointsPour(Math.abs(P.angle - P.cible));
+  sons.clic(); svg.classList.remove("reglable");
+  if (enLigne()) { // seul le donneur connaît la cible : c'est lui qui compte les points
+    diffuserAiguille(true); P.phase = "attente-reveal";
+    $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…";
+    envoyer({ t: "valide", pid: P.pid, n: P.n, a: P.angle }, true);
+  } else reveler(P.angle, P.cible, pointsPour(Math.abs(P.angle - P.cible)));
+};
+function reveler(angle, cible, pts) {
+  P.phase = "reveal"; P.cible = cible; dessinerCible(cible); poserAiguille(angle, true); svg.classList.remove("reglable");
   P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur() });
-  montrer(["ph-devine", "resultat"]); $("resultat").textContent = "";
-  $("role").textContent = "Révélation…";
+  $("aiguille").style.display = ""; afficherIndice();
+  montrer(["ph-devine", "bulle"]); role("Révélation…");
   volet(true, false);
+  const nAuMoment = P.n, pidAuMoment = P.pid;
   setTimeout(() => {
+    if (P.phase !== "reveal" || P.n !== nAuMoment || P.pid !== pidAuMoment) return;
     $("score").textContent = P.score;
-    $("resultat").textContent = (pts === 4 ? "En plein dans le mille ! " : pts === 3 ? "Presque ! " : pts === 2 ? "Pas loin. " : "Raté. ") + "+" + pts + " point" + (pts > 1 ? "s" : "");
-    $("role").textContent = "Les deux joueurs peuvent regarder.";
+    $("resultat-texte").textContent = (pts === 4 ? "DANS LE MILLE ! " : pts === 3 ? "PRESQUE ! " : pts === 2 ? "PAS LOIN ! " : "RATÉ ! ") + "+" + pts;
+    role(enLigne() ? "Cible révélée pour vous deux." : "Les deux joueurs peuvent regarder.");
     sons.points(pts);
     const derniere = P.manches && P.n + 1 >= P.manches;
-    $("suivante").textContent = derniere ? "Voir le résultat" : "Manche suivante";
-    montrer(["ph-devine", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE RÉSULTAT" : "MANCHE SUIVANTE";
+    montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
   }, 800);
+}
+function avancer() { // local, ou hôte en ligne
+  P.n++;
+  if (P.manches && P.n >= P.manches) terminer(); else { sons.clic(); preparerManche(); }
+}
+function terminer() { if (enLigne()) envoyer({ t: "fin", pid: P.pid }, true); finir(); }
+$("suivante").onclick = () => {
+  if (P.phase !== "reveal") return;
+  if (enLigne() && P.moi !== 0) { $("suivante").disabled = true; $("suivante").textContent = "EN ATTENTE…"; envoyer({ t: "suivante?", pid: P.pid, n: P.n }); }
+  else avancer();
 };
-$("suivante").onclick = () => { P.n++; if (P.manches && P.n >= P.manches) finir(); else { sons.clic(); preparerManche(); } };
-$("arreter").onclick = () => { P.n++; finir(); };
+$("arreter").onclick = () => {
+  if (P.phase !== "reveal") return;
+  if (enLigne() && P.moi !== 0) envoyer({ t: "fin?", pid: P.pid }); else terminer();
+};
 
 /* ---------- Fin ---------- */
 function finir() {
+  P.phase = "fin";
   const jouees = P.histo.length, max = jouees * 4;
   $("fin-score").textContent = P.score;
   $("fin-detail").textContent = "sur " + max + " possibles, en " + jouees + " manche" + (jouees > 1 ? "s" : "");
@@ -483,17 +625,181 @@ function finir() {
     if (P.score > ancien) { memo.ecrire(cle, String(P.score)); msg = ancien < 0 ? "Premier record en " + P.manches + " manches : " + P.score : "Nouveau record ! L'ancien était de " + ancien; }
     else msg = "Record à battre en " + P.manches + " manches : " + ancien;
   } else if (jouees) msg = "Moyenne : " + (P.score / jouees).toFixed(1).replace(".", ",") + " point par manche";
-  $("fin-record").textContent = msg;
+  $("fin-record").textContent = msg; $("fin-record").style.display = msg ? "" : "none";
   const ul = $("recap"); ul.textContent = "";
   P.histo.forEach((h, i) => {
     const li = document.createElement("li"), t = document.createElement("span"), em = document.createElement("em"), b = document.createElement("b");
     t.textContent = (i + 1) + ". « " + h.indice + " » "; em.textContent = "(" + h.carte[0] + " ↔ " + h.carte[1] + ", par " + h.qui + ")"; t.append(em);
     b.textContent = "+" + h.pts; li.append(t, b); ul.append(li);
   });
+  const invite = enLigne() && P.moi !== 0;
+  $("rejouer").disabled = false; $("rejouer").textContent = "REJOUER";
+  $("accueil").style.display = invite ? "none" : ""; $("quitter-fin").style.display = enLigne() ? "" : "none";
   sons.fin(); ecran("fin");
 }
-$("rejouer").onclick = nouvellePartie;
-$("accueil").onclick = () => { sons.clic(); ecran("reglages"); };
+$("rejouer").onclick = () => {
+  if (enLigne() && P.moi !== 0) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; envoyer({ t: "rejouer?" }); }
+  else if (enLigne() && !S.autre) { $("fin-record").style.display = ""; $("fin-record").textContent = "L'autre joueur a quitté le salon."; }
+  else nouvellePartie();
+};
+$("accueil").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) { envoyer({ t: "salon" }, true); majSalonHote(); } ouvrirReglages(); };
+$("quitter-fin").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+
+/* =====================================================================
+   MODE EN LIGNE
+   Un canal temps réel par code de salon. Rien n'est stocké.
+   La cible n'existe que sur l'appareil de celui qui donne l'indice,
+   et n'est envoyée à l'autre qu'au moment de la révélation.
+   ===================================================================== */
+const S = { client: null, canal: null, code: "", nom: "", role: "", id: Math.random().toString(36).slice(2, 10), t: 0, autre: null, dernier: null, minuteur: null };
+const LETTRES = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+const nouveauCode = () => Array.from({ length: 4 }, () => LETTRES[Math.floor(Math.random() * LETTRES.length)]).join("");
+
+$("go-ligne").onclick = () => { sons.clic(); $("pseudo").value = $("pseudo").value || memo.lire("cadran-pseudo", ""); alerte("err-ligne"); ecran("ligne"); };
+$("retour-ligne").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+function pseudoValide() {
+  const nom = $("pseudo").value.trim();
+  if (!nom) { alerte("err-ligne", "Choisis d'abord un pseudo."); return null; }
+  if (!window.supabase) { alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Recharge la page."); return null; }
+  memo.ecrire("cadran-pseudo", nom); return nom;
+}
+$("creer").onclick = () => {
+  const nom = pseudoValide(); if (!nom) return;
+  sons.clic(); P.mode = "ligne"; P.moi = 0; P.phase = "";
+  ouvrirSalon(nouveauCode(), "hote", nom);
+  $("code-hote").textContent = S.code; majSalonHote(); ouvrirReglages();
+};
+function rejoindre() {
+  const nom = pseudoValide(); if (!nom) return;
+  const code = $("code-saisi").value.trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { alerte("err-ligne", "Le code d'un salon fait 4 lettres."); return; }
+  sons.clic(); alerte("err-ligne", "Connexion au salon " + code + "…");
+  P.mode = "ligne"; P.moi = 1; P.phase = ""; P.pid = 0;
+  ouvrirSalon(code, "invite", nom);
+}
+$("rejoindre").onclick = rejoindre;
+$("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") rejoindre(); });
+$("quitter-invite").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+
+function ouvrirSalon(code, role, nom) {
+  quitterSalon(true);
+  P.mode = "ligne";
+  S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.dernier = null;
+  S.client = S.client || window.supabase.createClient(SUPA_URL, SUPA_CLE, { realtime: { params: { eventsPerSecond: 12 } } });
+  const canal = S.client.channel("cadran-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
+  S.canal = canal;
+  canal.on("broadcast", { event: "m" }, ({ payload }) => { if (S.canal === canal) recevoir(payload); })
+    .on("presence", { event: "sync" }, () => { if (S.canal === canal) majPresence(); })
+    .subscribe(etat => {
+      if (S.canal !== canal) return;
+      if (etat === "SUBSCRIBED") {
+        canal.track({ nom: S.nom, role: S.role, t: S.t });
+        if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
+      } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
+        if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
+      }
+    });
+}
+function quitterSalon(silencieux) {
+  clearTimeout(S.minuteur);
+  if (S.canal && S.client) { try { S.client.removeChannel(S.canal); } catch (e) {} }
+  S.canal = null; S.autre = null; S.dernier = null;
+  if (!silencieux) { P.mode = "local"; P.phase = ""; }
+  alerte("deco");
+}
+function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
+function envoyer(message, important) {
+  if (!S.canal) return;
+  if (important) S.dernier = message; // renvoyé si l'autre joueur revient après une coupure
+  try { S.canal.send({ type: "broadcast", event: "m", payload: message }); } catch (e) {}
+}
+
+function majPresence() {
+  const etat = S.canal.presenceState(), gens = [];
+  Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: m.nom, role: m.role, t: m.t })));
+  const tri = r => gens.filter(g => g.role === r).sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
+  const hotes = tri("hote"), invites = tri("invite");
+  let autre = null;
+  if (S.role === "hote") {
+    if (hotes.length && hotes[0].cle !== S.id) { // code déjà pris par un autre salon : on en tire un nouveau
+      ouvrirSalon(nouveauCode(), "hote", S.nom); $("code-hote").textContent = S.code; majSalonHote(); return;
+    }
+    autre = invites[0] || null;
+  } else {
+    if (invites.length && invites[0].cle !== S.id) { echecConnexion("Ce salon est complet : il y a déjà 2 joueurs."); return; }
+    autre = hotes[0] || null;
+  }
+  const arrive = autre && !S.autre, parti = !autre && S.autre;
+  if (autre && autre.nom.toLowerCase() === S.nom.toLowerCase() && S.role === "invite") { S.nom = S.nom + " (2)"; S.canal.track({ nom: S.nom, role: S.role, t: S.t }); }
+  S.autre = autre;
+  if (arrive) {
+    clearTimeout(S.minuteur); sons.arrivee(); alerte("deco");
+    if (S.role === "invite" && ecranActuel === "ligne") { alerte("err-ligne"); $("code-invite").textContent = S.code; $("resume-invite").textContent = autre.nom + " règle la partie…"; $("i-info").textContent = ""; ecran("invite"); }
+    if (S.role === "hote") envoyerReglages();
+    if (S.dernier) envoyer(S.dernier); // rattrapage après une coupure
+  }
+  if (parti) {
+    if (["manche", "passe"].includes(ecranActuel)) alerte("deco", "L'autre joueur est déconnecté. La partie attend son retour.");
+    if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon.";
+  }
+  if (S.role === "hote") majSalonHote();
+}
+function majSalonHote() {
+  $("etat-salon").textContent = S.autre ? S.autre.nom + " est dans le salon. Vous pouvez lancer !" : "En attente de l'autre joueur…";
+}
+function envoyerReglages() {
+  if (S.role !== "hote" || !S.canal || P.phase) return;
+  envoyer({ t: "reglages", hote: S.nom, manches: manchesChoisies(), cartes: compteCartes(), persos: persos.length });
+}
+$("i-ajout").onclick = () => {
+  const g = $("ig").value.trim(), d = $("id").value.trim();
+  if (!g || !d) { $("i-info").textContent = "Une carte perso a besoin des deux côtés."; return; }
+  envoyer({ t: "perso", g, d }); $("ig").value = ""; $("id").value = ""; $("i-info").textContent = "Carte envoyée : " + g + " ↔ " + d;
+};
+
+function recevoir(m) {
+  if (!m || typeof m.t !== "string") return;
+  const hote = P.moi === 0, memeManche = m.pid === P.pid && m.n === P.n;
+  switch (m.t) {
+    case "reglages": // invité, en salle d'attente
+      if (!hote && !P.phase) $("resume-invite").textContent = m.hote + " règle la partie : " + (m.manches ? m.manches + " manches" : "sans fin") + ", " + m.cartes + " cartes" + (m.persos ? " dont " + m.persos + " perso" : "") + ".";
+      break;
+    case "perso": // hôte : carte proposée par l'invité
+      if (hote && !P.phase && typeof m.g === "string" && typeof m.d === "string") { persos.push([m.g.slice(0, 40), m.d.slice(0, 40)]); majPersos(); }
+      break;
+    case "manche": // invité : nouvelle manche décidée par l'hôte
+      if (hote || !Array.isArray(m.carte)) break;
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && !P.phase)) {
+        if (m.pid !== P.pid || m.n === 0) { P.histo = []; }
+        P.pid = m.pid; P.n = m.n; P.score = m.score; P.manches = m.manches; P.joueurs = m.joueurs;
+        sons.clic(); debutManche(m.carte);
+      }
+      break;
+    case "indice": // devineur
+      if (memeManche && P.phase === "attente-indice") { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); phaseDevine(); }
+      break;
+    case "aig": // donneur : aiguille de l'autre en direct
+      if (memeManche && P.phase === "regarde" && typeof m.a === "number") aigDistante = Math.max(3, Math.min(177, m.a));
+      break;
+    case "valide": // donneur : il est le seul à connaître la cible, il compte et révèle
+      if (memeManche && P.phase === "regarde" && typeof m.a === "number") {
+        const a = Math.max(3, Math.min(177, m.a)), pts = pointsPour(Math.abs(a - P.cible));
+        envoyer({ t: "reveal", pid: P.pid, n: P.n, a, cible: P.cible, pts }, true);
+        reveler(a, P.cible, pts);
+      }
+      break;
+    case "reveal": // devineur
+      if (memeManche && (P.phase === "attente-reveal" || P.phase === "devine")) reveler(m.a, m.cible, m.pts);
+      break;
+    case "suivante?": if (hote && memeManche && P.phase === "reveal") avancer(); break;
+    case "fin?": if (hote && m.pid === P.pid && P.phase === "reveal") terminer(); break;
+    case "fin": if (!hote && m.pid === P.pid && P.phase && P.phase !== "fin") finir(); break;
+    case "rejouer?": if (hote && P.phase === "fin") nouvellePartie(); break;
+    case "salon": // l'hôte retourne aux réglages
+      if (!hote) { P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = (S.autre ? S.autre.nom : "L'hôte") + " règle la partie…"; ecran("invite"); }
+      break;
+  }
+}
 </script>
 </body>
 </html>
