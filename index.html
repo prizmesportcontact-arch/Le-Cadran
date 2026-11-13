@@ -85,6 +85,11 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
 .gens li{flex:1;min-width:120px;background:var(--blanc);border:3px solid var(--noir);padding:6px 10px;font-size:17px;overflow-wrap:anywhere}
 .gens li small{display:block;font-size:13px;text-transform:uppercase}
 .gens li.vide{border-style:dashed;background:rgba(255,255,255,.6)}
+.gens li i{display:inline-block;width:14px;height:14px;border:2px solid var(--noir);margin-right:6px;vertical-align:-1px}
+.gens li em{float:right;font-style:normal;font-family:var(--titre);font-size:22px;line-height:1;margin-left:8px}
+#gens-jeu li{flex:1 1 40%;min-width:0;font-size:15px;padding:4px 8px}
+#gens-jeu li.donne{background:var(--jaune)}
+#gens-jeu li.ok small::after{content:" ✓"}
 .grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
 .code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
 #code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
@@ -171,7 +176,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
   <section class="screen" id="s-reglages">
     <h2>Réglages de la partie</h2>
     <div class="case jaune" id="bloc-salon">
-      <div class="petit">Code du salon, à donner à l'autre joueur</div>
+      <div class="petit">Code du salon, à donner aux autres joueurs</div>
       <div class="code" id="code-hote"></div>
       <p class="petit" id="etat-salon" role="status" style="text-align:center"></p>
       <div class="petit" style="margin:10px 0 6px">Dans le salon</div>
@@ -181,7 +186,19 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
       <div><label for="p2">Joueur 2</label><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
     </div>
-    <div>
+    <div id="bloc-format">
+      <label id="l-format">Mode de jeu</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-format" id="format">
+        <label class="jeton"><input type="radio" name="format" value="duo" checked><span>À deux, ensemble</span></label>
+        <label class="jeton"><input type="radio" name="format" value="groupe"><span>À plusieurs (3 à 6), chacun pour soi</span></label>
+      </div>
+      <p class="petit" id="format-aide" style="margin-top:8px"></p>
+    </div>
+    <div id="bloc-tours" style="display:none">
+      <label id="l-tours">Combien de fois chacun donne l'indice</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div>
+    </div>
+    <div id="bloc-manches">
       <label id="l-manches">Nombre de manches</label>
       <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
     </div>
@@ -212,7 +229,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
   <!-- MANCHE -->
   <section class="screen" id="s-manche">
     <div class="plaques">
-      <div class="case jaune"><small>Score commun</small><b id="score">0</b></div>
+      <div class="case jaune"><small id="lbl-score">Score commun</small><b id="score">0</b></div>
       <div class="case"><small>Manche</small><b id="num"></b></div>
     </div>
     <ul class="gens" id="gens-jeu"></ul>
@@ -242,6 +259,7 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
         </g>
         <rect x="6" y="178" width="328" height="22" fill="#FFE600"/>
         <circle cx="20" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="320" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/>
+        <g id="aig-autres"></g>
         <g id="aiguille">
           <polygon points="164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
         </g>
@@ -270,6 +288,8 @@ details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;
       </div>
       <button class="btn" id="valider" type="button">VALIDER L'AIGUILLE</button>
       <button class="btn" id="suivante" type="button">MANCHE SUIVANTE</button>
+      <button class="btn jaune" id="reveler-mnt" type="button">RÉVÉLER SANS ATTENDRE</button>
+      <button class="btn plat" id="passer" type="button">Passer cette manche</button>
       <button class="btn plat" id="arreter" type="button">Terminer la partie ici</button>
     </div>
   </section>
@@ -350,18 +370,39 @@ function ecran(nom) {
 
 /* ---------- État de la partie ---------- */
 // mode : "local" ou "ligne". moi : 0 = hôte, 1 = invité (en ligne seulement).
-const P = { mode: "local", moi: 0, pid: 0, joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: null, angle: 90, indice: "", phase: "" };
+// format (en ligne) : "duo" = à deux ensemble, "groupe" = 3 à 6 chacun pour soi.
+// gj = joueurs de la partie en groupe [{ id, nom }], scores = points par id, valides = aiguilles validées par id.
+const P = { mode: "local", format: "duo", gj: [], scores: {}, valides: {}, tours: 1, ids: [], moi: 0, pid: 0, joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: null, angle: 90, indice: "", phase: "" };
 const melange = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const donneur = () => P.joueurs[P.n % 2], devineur = () => P.joueurs[(P.n + 1) % 2];
 const enLigne = () => P.mode === "ligne";
-const jeDonne = () => !enLigne() || P.n % 2 === P.moi;
-const jeDevine = () => !enLigne() || P.n % 2 !== P.moi;
+const groupe = () => enLigne() && P.format === "groupe";
+const donneurG = () => P.gj[P.n % P.gj.length];
+const donneur = () => groupe() ? donneurG().nom : P.joueurs[P.n % 2];
+const devineur = () => groupe() ? "tout le monde" : P.joueurs[(P.n + 1) % 2];
+const jeDonne = () => !enLigne() || (groupe() ? donneurG().id === S.id : P.n % 2 === P.moi);
+const jeDevine = () => !jeDonne();
+const COULEURS = ["#19B5F0", "#9B5CFF", "#00C46A", "#FF4FB0", "#FF8A00", "#FFFFFF"];
+const couleurDe = id => COULEURS[Math.max(0, P.gj.findIndex(j => j.id === id)) % COULEURS.length];
 
 /* ---------- Réglages ---------- */
 let persos = [];
 $("manches").innerHTML = MANCHES.map(n =>
   `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "Sans fin"}</span></label>`).join("");
 const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
+$("tours").innerHTML = [1, 2, 3].map(n =>
+  `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 1 ? "checked" : ""}><span>${n} fois</span></label>`).join("");
+const toursChoisis = () => +document.querySelector("#tours input:checked").value;
+const formatChoisi = () => document.querySelector("#format input:checked").value;
+function majFormat() {
+  const g = formatChoisi() === "groupe";
+  $("bloc-tours").style.display = g ? "" : "none"; $("bloc-manches").style.display = g ? "none" : "";
+  const nb = S.gens.length || 1;
+  $("format-aide").textContent = g
+    ? "Chacun place son aiguille en secret et marque ses points. Celui qui donne l'indice gagne 2 points par joueur qui trouve la cible, mais 0 si tout le monde trouve ou si personne ne trouve." + (nb >= 3 ? " Partie de " + toursChoisis() * nb + " manches." : "")
+    : "Vous jouez ensemble et additionnez vos points.";
+}
+$("format").onchange = () => { majFormat(); reglagesChanges(); };
+$("tours").onchange = () => { majFormat(); reglagesChanges(); };
 function compteCartes() {
   const n = CARTES.length + persos.length;
   $("nb-cartes").textContent = CARTES.length + " cartes dans le jeu" + (persos.length ? " + " + persos.length + " perso" : "") + ".";
@@ -390,6 +431,9 @@ function ouvrirReglages() {
   const ligne = enLigne();
   $("bloc-salon").style.display = ligne ? "" : "none";
   $("bloc-noms").style.display = ligne ? "none" : "";
+  $("bloc-format").style.display = ligne ? "" : "none";
+  if (!ligne) { document.querySelector('#format input[value="duo"]').checked = true; }
+  majFormat();
   alerte("err-reglages"); compteCartes(); ecran("reglages");
 }
 $("go-local").onclick = () => {
@@ -402,8 +446,15 @@ $("retour-reglages").onclick = () => { sons.clic(); if (enLigne()) quitterSalon(
 $("lancer").onclick = () => {
   const cartes = CARTES.concat(persos);
   if (enLigne()) {
-    if (!S.autre) { alerte("err-reglages", "L'autre joueur n'est pas encore dans le salon. Donne-lui le code " + S.code + "."); return; }
-    P.joueurs = [S.nom, S.autre.nom];
+    P.format = formatChoisi();
+    const nb = S.gens.length;
+    if (P.format === "groupe") {
+      if (nb < 3) { alerte("err-reglages", "Il faut au moins 3 joueurs dans le salon (vous êtes " + nb + "). Donne le code " + S.code + " aux autres."); return; }
+      P.tours = toursChoisis(); alerte("err-reglages"); P.toutes = cartes;
+      nouvellePartie(); return;
+    }
+    if (nb !== 2) { alerte("err-reglages", nb < 2 ? "L'autre joueur n'est pas encore dans le salon. Donne-lui le code " + S.code + "." : "En mode à deux, il faut exactement 2 joueurs (vous êtes " + nb + "). Choisis « À plusieurs »."); return; }
+    P.joueurs = [S.nom, S.autre.nom]; P.ids = [S.id, S.autre.cle];
   } else {
     const a = $("p1").value.trim() || "Joueur 1", b = $("p2").value.trim() || "Joueur 2";
     if (a.toLowerCase() === b.toLowerCase()) { alerte("err-reglages", "Choisissez deux pseudos différents."); return; }
@@ -414,6 +465,11 @@ $("lancer").onclick = () => {
   nouvellePartie();
 };
 function nouvellePartie() {
+  if (groupe()) { // l'ordre des donneurs suit l'ordre d'arrivée dans le salon
+    P.gj = S.gens.slice(0, 6).map(g => ({ id: g.cle, nom: g.nom }));
+    P.scores = {}; P.gj.forEach(j => { P.scores[j.id] = 0; });
+    P.manches = P.tours * P.gj.length;
+  }
   P.pioche = melange(P.toutes.slice()); P.pid++; P.n = 0; P.score = 0; P.histo = [];
   sons.clic(); preparerManche();
 }
@@ -428,11 +484,13 @@ function passe(titre, texte, bouton, suite) {
 function preparerManche() {
   if (!P.pioche.length) P.pioche = melange(P.toutes.slice());
   const carte = P.pioche.pop();
-  if (enLigne()) envoyer({ t: "manche", pid: P.pid, n: P.n, carte, score: P.score, manches: P.manches, joueurs: P.joueurs }, true);
+  if (groupe()) envoyer({ t: "g-manche", pid: P.pid, n: P.n, carte, scores: P.scores, manches: P.manches, gj: P.gj }, true);
+  else if (enLigne()) envoyer({ t: "manche", pid: P.pid, n: P.n, carte, score: P.score, manches: P.manches, joueurs: P.joueurs, ids: P.ids }, true);
   debutManche(carte);
 }
 function debutManche(carte) {
-  P.carte = carte; P.indice = ""; P.angle = 90; aigDistante = null;
+  P.carte = carte; P.indice = ""; P.angle = 90; aigDistante = null; P.valides = {};
+  $("aig-autres").innerHTML = ""; if (groupe()) P.score = P.scores[S.id] || 0;
   if (enLigne()) {
     if (jeDonne()) { P.cible = tirerCible(); phaseIndice(); } else { P.cible = null; phaseAttenteIndice(); }
   } else {
@@ -476,7 +534,7 @@ function angleDepuis(e) {
 // En ligne, la position de l'aiguille part au plus 10 fois par seconde, et seulement si elle a bougé.
 let dernierEnvoiAig = 0, angleEnvoye = null, envoiPrevu = null;
 function diffuserAiguille(force) {
-  if (!enLigne() || P.phase !== "devine") return;
+  if (!enLigne() || groupe() || P.phase !== "devine") return; // en groupe, les aiguilles restent secrètes
   const maintenant = Date.now(), a = Math.round(P.angle * 10) / 10;
   if (a === angleEnvoye) return;
   if (force || maintenant - dernierEnvoiAig >= 100) {
@@ -511,10 +569,12 @@ function viserAiguille(a) {
 /* ---------- Phases ---------- */
 function enTete() {
   $("score").textContent = P.score;
+  $("lbl-score").textContent = groupe() ? "Ton score" : "Score commun";
+  majStatut();
   $("num").textContent = (P.n + 1) + (P.manches ? " / " + P.manches : "");
   $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
 }
-const BLOCS = ["ph-indice", "voir", "ph-devine", "bulle", "zone-reglage", "resultat", "valider", "suivante", "arreter"];
+const BLOCS = ["ph-indice", "voir", "ph-devine", "bulle", "zone-reglage", "resultat", "valider", "reveler-mnt", "passer", "suivante", "arreter"];
 function montrer(ids) { BLOCS.forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
 function role(texte) { $("role").textContent = texte; }
 
@@ -524,7 +584,7 @@ function phaseIndice() {
   $("aiguille").style.display = "none"; svg.classList.remove("reglable");
   $("indice").value = ""; alerte("err-indice");
   if (enLigne()) { // seul sur son appareil : la cible reste visible
-    volet(true, true); role("Voici la cible. Donne à " + devineur() + " un indice qui correspond à cet endroit.");
+    volet(true, true); role(groupe() ? "Voici la cible. Donne un indice : tu marques si certains trouvent, mais pas tous !" : "Voici la cible. Donne à " + devineur() + " un indice qui correspond à cet endroit.");
     montrer(["ph-indice"]);
   } else {
     volet(false, true); role(donneur() + " : regarde la cible, puis donne un indice qui correspond à cet endroit.");
@@ -545,7 +605,7 @@ function envoyerIndice() {
   const t = $("indice").value.trim();
   if (!t) { alerte("err-indice", "Écris un indice avant d'envoyer."); return; }
   P.indice = t; sons.clic();
-  if (enLigne()) { envoyer({ t: "indice", pid: P.pid, n: P.n, texte: t }, true); phaseRegarde(); }
+  if (enLigne()) { envoyer({ t: "indice", pid: P.pid, n: P.n, texte: t }, true); if (groupe()) phaseAttenteValid(); else phaseRegarde(); }
   else {
     P.phase = "attente"; volet(false, true);
     passe("Passe l'appareil à " + devineur() + " !", "L'indice est enregistré et la cible est cachée. Elle ne peut plus être montrée avant la révélation.", "JE SUIS " + devineur().toUpperCase(), phaseDevine);
@@ -559,7 +619,7 @@ function phaseAttenteIndice() { // en ligne, côté devineur
   P.phase = "attente-indice"; enTete(); dessinerCible(null); volet(false, true);
   $("aiguille").style.display = ""; poserAiguille(90, true); svg.classList.remove("reglable");
   role(donneur() + " regarde la cible et prépare son indice…");
-  montrer([]); ecran("manche");
+  montrer([]); if (groupe()) rafraichirBoutons(); ecran("manche");
 }
 function phaseRegarde() { // en ligne, côté donneur : la cible reste visible, l'aiguille de l'autre bouge en direct
   P.phase = "regarde"; enTete(); volet(true, true);
@@ -570,14 +630,33 @@ function phaseRegarde() { // en ligne, côté donneur : la cible reste visible, 
 function phaseDevine() {
   P.phase = "devine"; enTete(); volet(false, true);
   $("aiguille").style.display = ""; dernierCran = 90; angleEnvoye = null; poserAiguille(90, true); svg.classList.add("reglable");
-  role(devineur() + " : place l'aiguille là où tu penses que la cible se trouve.");
+  role(groupe() ? "À toi : place ton aiguille en secret. Personne ne la voit avant la révélation." : devineur() + " : place l'aiguille là où tu penses que la cible se trouve.");
   afficherIndice(); $("valider").disabled = false; $("valider").textContent = "VALIDER L'AIGUILLE";
-  montrer(["ph-devine", "bulle", "zone-reglage", "valider"]); ecran("manche");
+  montrer(["ph-devine", "bulle", "zone-reglage", "valider"].concat(boutonPasser())); ecran("manche");
+}
+// Groupe, côté donneur : il garde la cible sous les yeux et attend que tout le monde valide.
+function phaseAttenteValid() {
+  P.phase = "attente-valid"; enTete(); volet(true, true);
+  $("aiguille").style.display = "none"; svg.classList.remove("reglable");
+  afficherIndice(); majAttente(); ecran("manche");
+}
+function majAttente() {
+  if (P.phase !== "attente-valid") return;
+  const attendus = devineursPresents(), faits = attendus.filter(id => id in P.valides).length;
+  role("Les autres placent leur aiguille en secret : " + faits + " / " + attendus.length + " ont validé.");
+  montrer(["ph-devine", "bulle"].concat(faits > 0 ? ["reveler-mnt"] : []).concat(boutonPasser()));
 }
 const pointsPour = ecart => ecart <= 4 ? 4 : ecart <= 12 ? 3 : ecart <= 20 ? 2 : 0;
 $("valider").onclick = () => {
   if (P.phase !== "devine") return;
   sons.clic(); svg.classList.remove("reglable");
+  if (groupe()) {
+    P.phase = "attente-reveal"; P.valides[S.id] = Math.round(P.angle * 10) / 10;
+    $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…";
+    role("Aiguille envoyée ! On attend les autres…"); majStatut(); rafraichirBoutons();
+    envoyer({ t: "g-valide", pid: P.pid, n: P.n, id: S.id, a: P.valides[S.id] }, true);
+    return;
+  }
   if (enLigne()) { // seul le donneur connaît la cible : c'est lui qui compte les points
     diffuserAiguille(true); P.phase = "attente-reveal";
     $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…";
@@ -607,6 +686,89 @@ function reveler(angle, cible, pts) {
     });
   }, 800);
 }
+/* ---------- Mode à plusieurs ---------- */
+const presents = () => new Set(S.gens.map(g => g.cle));
+const devineursPresents = () => { const ici = presents(), d = donneurG().id; return P.gj.map(j => j.id).filter(id => id !== d && ici.has(id)); };
+function rafraichirBoutons() {
+  const pa = boutonPasser();
+  if (P.phase === "attente-indice") montrer(pa.length ? ["ph-devine"].concat(pa) : []);
+  else if (P.phase === "devine") montrer(["ph-devine", "bulle", "zone-reglage", "valider"].concat(pa));
+  else if (P.phase === "attente-reveal") montrer(["ph-devine", "bulle"].concat(pa));
+  else if (P.phase === "attente-valid") majAttente();
+}
+function boutonPasser() { // l'hôte peut passer la manche si celui qui donne l'indice est parti
+  return groupe() && P.moi === 0 && P.phase !== "reveal" && !presents().has(donneurG().id) ? ["passer"] : [];
+}
+// Le donneur révèle dès que tous les joueurs présents ont validé.
+function verifierComplet() {
+  if (!groupe() || P.phase !== "attente-valid") return;
+  majAttente();
+  const attendus = devineursPresents();
+  if (attendus.length && attendus.every(id => id in P.valides)) revelerMaintenant();
+}
+function revelerMaintenant() {
+  if (P.phase !== "attente-valid") return;
+  const pts = {};
+  Object.keys(P.valides).forEach(id => { pts[id] = pointsPour(Math.abs(P.valides[id] - P.cible)); });
+  const nb = Object.keys(pts).length, trouves = Object.values(pts).filter(x => x > 0).length;
+  const dp = trouves === 0 || trouves === nb ? 0 : 2 * trouves;
+  const m = { t: "g-reveal", pid: P.pid, n: P.n, cible: P.cible, aig: P.valides, pts, donneur: donneurG().id, dp };
+  envoyer(m, true); revelerG(m);
+}
+function dessinerAiguilles(aig) {
+  $("aig-autres").innerHTML = Object.keys(aig).map(id => {
+    const a = aig[id], c = couleurDe(id), moi = id === S.id, [lx, ly] = pt(a, 170), j = P.gj.find(x => x.id === id);
+    const ini = (j ? j.nom : "?").trim().charAt(0).toUpperCase().replace(/[<>&"]/g, "");
+    return `<g transform="rotate(${(a - 90).toFixed(1)} 170 175)"><polygon points="${moi ? "164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" : "166,175 174,175 172,60 177,60 170,40 163,60 168,60"}" fill="${c}" stroke="#111" stroke-width="${moi ? 4 : 3}" stroke-linejoin="round"/></g>` +
+      `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="10" fill="${c}" stroke="#111" stroke-width="3"/><text x="${lx.toFixed(1)}" y="${(ly + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="15" text-anchor="middle" fill="#111">${ini}</text>`;
+  }).join("");
+}
+function revelerG(m) {
+  P.phase = "reveal"; P.cible = m.cible; dessinerCible(m.cible); svg.classList.remove("reglable");
+  $("aiguille").style.display = "none"; dessinerAiguilles(m.aig || {});
+  Object.keys(m.pts || {}).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
+  P.scores[m.donneur] = (P.scores[m.donneur] || 0) + m.dp;
+  P.derniers = Object.assign({}, m.pts, { [m.donneur]: m.dp });
+  const jeDonnais = m.donneur === S.id, mes = jeDonnais ? m.dp : (m.pts[S.id] || 0), avant = P.score;
+  P.score = P.scores[S.id] || 0;
+  P.histo.push({ carte: P.carte, indice: P.indice, pts: mes, qui: donneur() });
+  afficherIndice(); montrer(["ph-devine", "bulle"]); role("Révélation…"); volet(true, false);
+  const nAuMoment = P.n, pidAuMoment = P.pid;
+  const garde = () => P.phase === "reveal" && P.n === nAuMoment && P.pid === pidAuMoment;
+  const nb = Object.keys(m.pts || {}).length, trouves = Object.values(m.pts || {}).filter(x => x > 0).length;
+  setTimeout(() => {
+    if (!garde()) return;
+    role(jeDonnais ? (trouves === 0 ? "Personne n'a trouvé ta cible." : trouves === nb ? "Tout le monde a trouvé : trop facile !" : trouves + " joueur" + (trouves > 1 ? "s ont" : " a") + " trouvé ta cible.") : "Toutes les aiguilles sont révélées.");
+    majStatut(); montrer(["ph-devine", "bulle", "resultat"]);
+    tournerPoints(mes, garde, () => {
+      $("res-mot").textContent = jeDonnais ? (m.dp > 0 ? "BON INDICE ! " : trouves === 0 ? "PERSONNE ! " : "TROP FACILE ! ")
+        : mes === 4 ? "DANS LE MILLE ! " : mes === 3 ? "PRESQUE ! " : mes === 2 ? "PAS LOIN ! " : "RATÉ ! ";
+      rejouerAnim($("resultat-texte"), "pop"); rejouerAnim(boomSvg, "boom");
+      sons.points(Math.min(mes, 4));
+      roulerScore(avant, P.score);
+      const derniere = P.manches && P.n + 1 >= P.manches;
+      $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE CLASSEMENT" : "MANCHE SUIVANTE";
+      montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    });
+  }, 800);
+}
+// Bandeau des joueurs pendant une partie à plusieurs : rôle, validation, score.
+function majStatut() {
+  if (!groupe() || !P.gj.length || !["manche"].includes(ecranActuel) && P.phase === "") return;
+  const ul = $("gens-jeu"), ici = presents(), d = donneurG().id; ul.textContent = ""; ul.style.display = "";
+  P.gj.forEach(j => {
+    const li = document.createElement("li"), sm = document.createElement("small"), sw = document.createElement("i"), em = document.createElement("em");
+    sw.style.background = couleurDe(j.id);
+    sm.textContent = !ici.has(j.id) ? "Déconnecté" : j.id === d ? "Donne l'indice" : P.phase === "reveal" ? "+" + ((P.derniers || {})[j.id] || 0) : (j.id in P.valides ? "A validé" : "Réfléchit…");
+    if (j.id === d) li.className = "donne"; else if (j.id in P.valides && P.phase !== "reveal") li.className = "ok";
+    em.textContent = P.scores[j.id] || 0;
+    li.append(sm, sw, document.createTextNode(j.nom + (j.id === S.id ? " (toi)" : "")), em);
+    ul.append(li);
+  });
+}
+$("reveler-mnt").onclick = () => { sons.clic(); revelerMaintenant(); };
+$("passer").onclick = () => { if (groupe() && P.moi === 0 && P.phase !== "reveal") { sons.clic(); avancer(); } };
+
 /* ---------- Animations des points ---------- */
 const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const boomSvg = document.querySelector("#resultat svg");
@@ -656,20 +818,39 @@ $("arreter").onclick = () => {
 };
 
 /* ---------- Fin ---------- */
+function finirGroupe() {
+  const classement = P.gj.map(j => ({ nom: j.nom, id: j.id, s: P.scores[j.id] || 0 })).sort((a, b) => b.s - a.s);
+  const rangDe = sc => 1 + classement.filter(c => c.s > sc).length; // ex æquo : même place
+  const moi = classement.find(c => c.id === S.id), rang = moi ? rangDe(moi.s) : 0, meilleur = classement.length ? classement[0].s : 0;
+  const exaequo = moi && classement.filter(c => c.s === moi.s).length > 1;
+  const gagnants = classement.filter(c => c.s === meilleur).map(c => c.nom);
+  $("fin-score").textContent = P.scores[S.id] || 0;
+  $("fin-detail").textContent = rang ? (rang === 1 ? "Tu finis 1er" : "Tu finis " + rang + "e") + (exaequo ? " ex æquo" : "") + " sur " + classement.length : "";
+  $("fin-record").textContent = (gagnants.length > 1 ? "Égalité en tête : " : "Victoire de ") + gagnants.join(", ") + " !";
+  $("fin-record").style.display = "";
+  const ul = $("recap"); ul.textContent = "";
+  classement.forEach((c, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
+    t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (c.id === S.id ? " (toi)" : "")));
+    b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
+  });
+}
 function finir() {
   P.phase = "fin";
   const jouees = P.histo.length, max = jouees * 4;
   $("fin-score").textContent = P.score;
   $("fin-detail").textContent = "sur " + max + " possibles, en " + jouees + " manche" + (jouees > 1 ? "s" : "");
+  document.querySelector("#s-fin .case.jaune .petit").textContent = groupe() ? "TON SCORE" : "SCORE COMMUN";
   let msg = "";
-  if (P.manches && jouees === P.manches) {
+  if (!groupe() && P.manches && jouees === P.manches) {
     const cle = "cadran-record-" + P.manches, ancien = +memo.lire(cle, "-1");
     if (P.score > ancien) { memo.ecrire(cle, String(P.score)); msg = ancien < 0 ? "Premier record en " + P.manches + " manches : " + P.score : "Nouveau record ! L'ancien était de " + ancien; }
     else msg = "Record à battre en " + P.manches + " manches : " + ancien;
   } else if (jouees) msg = "Moyenne : " + (P.score / jouees).toFixed(1).replace(".", ",") + " point par manche";
   $("fin-record").textContent = msg; $("fin-record").style.display = msg ? "" : "none";
   const ul = $("recap"); ul.textContent = "";
-  P.histo.forEach((h, i) => {
+  if (groupe()) finirGroupe(); else P.histo.forEach((h, i) => {
     const li = document.createElement("li"), t = document.createElement("span"), em = document.createElement("em"), b = document.createElement("b");
     t.textContent = (i + 1) + ". « " + h.indice + " » "; em.textContent = "(" + h.carte[0] + " ↔ " + h.carte[1] + ", par " + h.qui + ")"; t.append(em);
     b.textContent = "+" + h.pts; li.append(t, b); ul.append(li);
@@ -681,7 +862,8 @@ function finir() {
 }
 $("rejouer").onclick = () => {
   if (enLigne() && P.moi !== 0) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; envoyer({ t: "rejouer?" }); }
-  else if (enLigne() && !S.autre) { $("fin-record").style.display = ""; $("fin-record").textContent = "L'autre joueur a quitté le salon."; }
+  else if (groupe() && S.gens.length < 3) { $("fin-record").style.display = ""; $("fin-record").textContent = "Il faut au moins 3 joueurs dans le salon pour rejouer."; }
+  else if (enLigne() && !groupe() && !S.autre) { $("fin-record").style.display = ""; $("fin-record").textContent = "L'autre joueur a quitté le salon."; }
   else nouvellePartie();
 };
 $("accueil").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) { envoyer({ t: "salon" }, true); majSalonHote(); } ouvrirReglages(); };
@@ -693,7 +875,10 @@ $("quitter-fin").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil")
    La cible n'existe que sur l'appareil de celui qui donne l'indice,
    et n'est envoyée à l'autre qu'au moment de la révélation.
    ===================================================================== */
-const S = { client: null, canal: null, code: "", nom: "", role: "", id: Math.random().toString(36).slice(2, 10), t: 0, autre: null, dernier: null, minuteur: null };
+// id gardé pendant la session de l'onglet : après un rechargement, on retrouve sa place dans la partie.
+const idSession = (() => { try { let v = sessionStorage.getItem("cadran-id"); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("cadran-id", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
+const S = { client: null, canal: null, code: "", nom: "", role: "", id: idSession, t: 0, autre: null, gens: [], cles: new Set(), dernier: {}, minuteur: null };
+const MAX_JOUEURS = 6;
 const LETTRES = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const nouveauCode = () => Array.from({ length: 4 }, () => LETTRES[Math.floor(Math.random() * LETTRES.length)]).join("");
 
@@ -740,7 +925,7 @@ $("quitter-invite").onclick = () => { sons.clic(); quitterSalon(); ecran("accuei
 function ouvrirSalon(code, role, nom) {
   quitterSalon(true);
   P.mode = "ligne";
-  S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.dernier = null;
+  S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   S.client = S.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
   const canal = S.client.channel("cadran-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
   S.canal = canal;
@@ -759,7 +944,7 @@ function ouvrirSalon(code, role, nom) {
 function quitterSalon(silencieux) {
   clearTimeout(S.minuteur);
   if (S.canal && S.client) { const c = S.canal, client = S.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!S.canal && client.getChannels().length === 0) client.disconnect(); }); }
-  S.canal = null; S.autre = null; S.dernier = null;
+  S.canal = null; S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
   if (!silencieux) { P.mode = "local"; P.phase = ""; }
   alerte("deco"); majGens();
 }
@@ -769,7 +954,10 @@ addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.
 function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
 function envoyer(message, important) {
   if (!S.canal) return;
-  if (important) S.dernier = message; // renvoyé si l'autre joueur revient après une coupure
+  if (important) { // gardé pour être renvoyé à quelqu'un qui arrive ou revient après une coupure
+    if (message.t === "salon" || message.t === "manche" || message.t === "g-manche") S.dernier = {};
+    S.dernier[message.t] = message;
+  }
   try { S.canal.send({ type: "broadcast", event: "m", payload: message }); } catch (e) {}
 }
 
@@ -778,6 +966,9 @@ function majPresence() {
   Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: m.nom, role: m.role, t: m.t })));
   const tri = r => gens.filter(g => g.role === r).sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
   const hotes = tri("hote"), invites = tri("invite");
+  S.gens = (hotes.length ? [hotes[0]] : []).concat(invites.slice(0, MAX_JOUEURS - 1));
+  const nouveaux = S.gens.filter(g => g.cle !== S.id && !S.cles.has(g.cle));
+  S.cles = new Set(S.gens.map(g => g.cle));
   let autre = null;
   if (S.role === "hote") {
     if (hotes.length && hotes[0].cle !== S.id) { // code déjà pris par un autre salon : on en tire un nouveau
@@ -785,30 +976,45 @@ function majPresence() {
     }
     autre = invites[0] || null;
   } else {
-    if (invites.length && invites[0].cle !== S.id) { echecConnexion("Ce salon est complet : il y a déjà 2 joueurs."); return; }
+    const place = invites.findIndex(g => g.cle === S.id);
+    if (place >= MAX_JOUEURS - 1) { echecConnexion("Ce salon est complet : " + MAX_JOUEURS + " joueurs maximum."); return; }
     autre = hotes[0] || null;
   }
   const arrive = autre && !S.autre, parti = !autre && S.autre;
-  if (autre && autre.nom.toLowerCase() === S.nom.toLowerCase() && S.role === "invite") { S.nom = S.nom + " (2)"; S.canal.track({ nom: S.nom, role: S.role, t: S.t }); }
+  if (S.role === "invite" && S.gens.some(g => g.cle !== S.id && g.nom.toLowerCase() === S.nom.toLowerCase())) { S.nom = S.nom + " (" + (S.gens.length) + ")"; S.canal.track({ nom: S.nom, role: S.role, t: S.t }); }
   S.autre = autre;
   if (arrive) {
-    clearTimeout(S.minuteur); sons.arrivee(); alerte("deco");
+    clearTimeout(S.minuteur); alerte("deco");
     if (S.role === "invite" && ecranActuel === "ligne") { alerte("err-ligne"); $("code-invite").textContent = S.code; $("resume-invite").textContent = autre.nom + " règle la partie…"; $("i-info").textContent = ""; ecran("invite"); }
-    if (S.role === "hote") envoyerReglages();
-    if (S.dernier) envoyer(S.dernier); // rattrapage après une coupure
   }
-  if (parti) {
+  if (nouveaux.length) { // quelqu'un arrive (ou revient) : on lui renvoie de quoi se mettre à jour
+    sons.arrivee();
+    if (S.role === "hote") envoyerReglages();
+    ["salon", "manche", "g-manche", "indice", "valide", "g-valide", "reveal", "g-reveal", "fin"].forEach(t => { if (S.dernier[t]) envoyer(S.dernier[t]); });
+  }
+  if (groupe() && P.phase) { // en partie à plusieurs : bandeau, attente et bouton « passer »
+    majStatut(); if (P.phase === "attente-valid") verifierComplet();
+    if (P.phase === "devine" || P.phase === "attente-indice" || P.phase === "attente-reveal" || P.phase === "attente-valid") {
+      const dPart = !presents().has(donneurG().id);
+      alerte("deco", dPart ? donneur() + " (qui donne l'indice) est déconnecté." + (P.moi === 0 ? " Tu peux passer la manche." : " L'hôte peut passer la manche.") : "");
+      rafraichirBoutons();
+    }
+    if (S.role === "hote") majSalonHote();
+    return;
+  }
+  if (parti && !groupe()) {
     if (["manche", "passe"].includes(ecranActuel)) alerte("deco", "L'autre joueur est déconnecté. La partie attend son retour.");
     if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon.";
   }
   if (S.role === "hote") majSalonHote(); else majGens();
 }
-// Qui est dans le salon : l'hôte d'abord, puis l'invité (ou une place vide).
+// Qui est dans le salon : l'hôte d'abord, puis les invités dans l'ordre d'arrivée.
 function majGens() {
   const ligne = enLigne() && !!S.canal;
-  const moi = { nom: S.nom, hote: S.role === "hote", moi: true }, autre = S.autre ? { nom: S.autre.nom, hote: S.autre.role === "hote" } : null;
-  const places = S.role === "hote" ? [moi, autre] : [autre, moi];
+  const liste = S.gens.length ? S.gens.map(g => ({ nom: g.cle === S.id ? S.nom : g.nom, hote: g.role === "hote", moi: g.cle === S.id })) : [{ nom: S.nom, hote: S.role === "hote", moi: true }];
+  const places = liste.length >= 2 ? liste : (S.role === "hote" ? [liste[0], null] : [null, liste[0]]);
   ["gens-hote", "gens-invite", "gens-jeu"].forEach(id => {
+    if (id === "gens-jeu" && groupe() && P.phase) { majStatut(); return; }
     const ul = $(id); ul.textContent = ""; ul.style.display = ligne ? "" : "none";
     if (!ligne) return;
     places.forEach((g, i) => {
@@ -821,11 +1027,13 @@ function majGens() {
 }
 function majSalonHote() {
   majGens();
-  $("etat-salon").textContent = S.autre ? S.autre.nom + " est dans le salon. Vous pouvez lancer !" : "En attente de l'autre joueur…";
+  const nb = S.gens.length || 1;
+  $("etat-salon").textContent = nb < 2 ? "En attente des autres joueurs…" : nb + " joueurs dans le salon (6 maximum).";
+  if (ecranActuel === "reglages") majFormat();
 }
 function envoyerReglages() {
   if (S.role !== "hote" || !S.canal || P.phase) return;
-  envoyer({ t: "reglages", hote: S.nom, manches: manchesChoisies(), cartes: compteCartes(), persos: persos.length });
+  envoyer({ t: "reglages", hote: S.nom, format: formatChoisi(), tours: toursChoisis(), manches: manchesChoisies(), cartes: compteCartes(), persos: persos.length });
 }
 $("i-ajout").onclick = () => {
   const g = $("ig").value.trim(), d = $("id").value.trim();
@@ -833,26 +1041,55 @@ $("i-ajout").onclick = () => {
   envoyer({ t: "perso", g, d }); $("ig").value = ""; $("id").value = ""; $("i-info").textContent = "Carte envoyée : " + g + " ↔ " + d;
 };
 
+// Arrivé pendant une partie déjà lancée : on attend la suivante.
+function spectateur() {
+  if (ecranActuel === "invite" && P.phase === "spectateur") return;
+  P.phase = "spectateur"; $("code-invite").textContent = S.code;
+  $("resume-invite").textContent = "Une partie est en cours. Tu joueras à la prochaine !"; ecran("invite");
+}
 function recevoir(m) {
   if (!m || typeof m.t !== "string") return;
   const hote = P.moi === 0, memeManche = m.pid === P.pid && m.n === P.n;
   switch (m.t) {
     case "reglages": // invité, en salle d'attente
-      if (!hote && !P.phase) $("resume-invite").textContent = m.hote + " règle la partie : " + (m.manches ? m.manches + " manches" : "sans fin") + ", " + m.cartes + " cartes" + (m.persos ? " dont " + m.persos + " perso" : "") + ".";
+      if (!hote && !P.phase) $("resume-invite").textContent = m.hote + " règle la partie : " + (m.format === "groupe" ? "à plusieurs, chacun donne l'indice " + m.tours + " fois" : "à deux, " + (m.manches ? m.manches + " manches" : "sans fin")) + ", " + m.cartes + " cartes" + (m.persos ? " dont " + m.persos + " perso" : "") + ".";
       break;
     case "perso": // hôte : carte proposée par l'invité
       if (hote && !P.phase && typeof m.g === "string" && typeof m.d === "string") { persos.push([m.g.slice(0, 40), m.d.slice(0, 40)]); majPersos(); }
       break;
     case "manche": // invité : nouvelle manche décidée par l'hôte
       if (hote || !Array.isArray(m.carte)) break;
+      if (Array.isArray(m.ids) && !m.ids.includes(S.id)) { spectateur(); break; }
+      P.format = "duo";
       if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && !P.phase)) {
         if (m.pid !== P.pid || m.n === 0) { P.histo = []; }
         P.pid = m.pid; P.n = m.n; P.score = m.score; P.manches = m.manches; P.joueurs = m.joueurs;
         sons.clic(); debutManche(m.carte);
       }
       break;
+    case "g-manche": // groupe : nouvelle manche décidée par l'hôte
+      if (hote || !Array.isArray(m.carte) || !Array.isArray(m.gj)) break;
+      if (!m.gj.some(j => j.id === S.id)) { spectateur(); break; }
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin"))) {
+        if (m.pid !== P.pid || m.n === 0) P.histo = [];
+        P.format = "groupe"; P.gj = m.gj; P.scores = m.scores || {}; P.pid = m.pid; P.n = m.n; P.manches = m.manches;
+        sons.clic(); debutManche(m.carte);
+        if (!jeDonne()) envoyer({ t: "g-indice?", pid: P.pid, n: P.n });
+      }
+      break;
+    case "g-indice?": // quelqu'un (re)arrive : le donneur renvoie son indice
+      if (groupe() && memeManche && jeDonne() && P.indice && P.phase === "attente-valid") envoyer({ t: "indice", pid: P.pid, n: P.n, texte: P.indice });
+      break;
+    case "g-valide": // groupe : un joueur a validé (tout le monde le note, le donneur compte)
+      if (groupe() && memeManche && typeof m.a === "number" && P.gj.some(j => j.id === m.id) && P.phase !== "reveal") {
+        P.valides[m.id] = Math.max(3, Math.min(177, m.a)); majStatut(); verifierComplet();
+      }
+      break;
+    case "g-reveal":
+      if (groupe() && memeManche && P.phase !== "reveal" && typeof m.cible === "number") revelerG(m);
+      break;
     case "indice": // devineur
-      if (memeManche && P.phase === "attente-indice") { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); phaseDevine(); }
+      if (memeManche && P.phase === "attente-indice") { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); if (groupe() && P.valides[S.id] !== undefined) { P.phase = "attente-reveal"; enTete(); afficherIndice(); role("Aiguille envoyée ! On attend les autres…"); montrer(["ph-devine", "bulle"]); } else phaseDevine(); }
       break;
     case "aig": // donneur : aiguille de l'autre en direct
       if (memeManche && P.phase === "regarde" && typeof m.a === "number") viserAiguille(Math.max(3, Math.min(177, m.a)));
@@ -868,11 +1105,12 @@ function recevoir(m) {
       if (memeManche && (P.phase === "attente-reveal" || P.phase === "devine")) reveler(m.a, m.cible, m.pts);
       break;
     case "suivante?": if (hote && memeManche && P.phase === "reveal") avancer(); break;
+    case "g-passer": break;
     case "fin?": if (hote && m.pid === P.pid && P.phase === "reveal") terminer(); break;
     case "fin": if (!hote && m.pid === P.pid && P.phase && P.phase !== "fin") finir(); break;
     case "rejouer?": if (hote && P.phase === "fin") nouvellePartie(); break;
     case "salon": // l'hôte retourne aux réglages
-      if (!hote) { P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = (S.autre ? S.autre.nom : "L'hôte") + " règle la partie…"; ecran("invite"); }
+      if (!hote) { P.format = "duo"; P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = (S.autre ? S.autre.nom : "L'hôte") + " règle la partie…"; ecran("invite"); }
       break;
   }
 }
