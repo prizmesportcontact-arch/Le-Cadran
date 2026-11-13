@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L'Imposteur</title>
+<meta name="description" content="Tout le monde a le même mot, sauf un. Donnez un indice chacun votre tour, puis démasquez l'imposteur.">
+<meta name="theme-color" content="#19B5F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 24c8-6 18-6 26 0 8-6 18-6 26 0 0 14-7 22-14 22-5 0-7-4-12-4s-7 4-12 4C13 46 6 38 6 24z' fill='%23FFE600' stroke='%23111' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../commun/commun.css?v=1">
+<style>
+.mot-carte{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:18px 14px}
+.mot-carte .mot{font-family:var(--titre);font-size:48px;letter-spacing:2px;line-height:1;min-height:52px;overflow-wrap:anywhere}
+.mot-carte .mot.cache-mot{color:transparent;text-shadow:0 0 0 transparent;background:repeating-linear-gradient(-45deg,#111 0 8px,#333 8px 16px);min-width:70%;border:3px solid #111}
+.indices{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.indices li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;background:#fff;border:3px solid #111;padding:6px 10px}
+.indices li b{font-family:var(--titre);font-weight:400;font-size:24px;letter-spacing:1px;overflow-wrap:anywhere}
+.indices li small{font-size:13px;white-space:nowrap}
+.indices li.actif{background:var(--jaune);border-style:dashed}
+.indices li.passe{opacity:.6}
+body.tele .indices li b{font-size:40px}
+body.tele .indices li small{font-size:18px}
+.revelation{font-family:var(--titre);font-size:36px;letter-spacing:1px;line-height:1.05;text-align:center;text-wrap:balance}
+body.tele .revelation{font-size:60px}
+.duo-mots{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.duo-mots .case{text-align:center}
+.duo-mots b{display:block;font-family:var(--titre);font-weight:400;font-size:28px;letter-spacing:1px}
+.decompte{font-family:var(--titre);font-size:64px;text-align:center;line-height:1}
+#local-noms{display:flex;flex-direction:column;gap:10px}
+.nom-ligne{display:flex;gap:10px}
+.nom-ligne input{flex:1}
+.nom-ligne .btn{flex:none;width:50px}
+.resultats li{padding:6px 0;border-bottom:2px dashed rgba(0,0,0,.25)}
+.resultats li:last-child{border-bottom:0}
+.tag{display:inline-block;font-size:12px;background:var(--rouge);color:#fff;padding:1px 6px;margin-left:6px;border:2px solid #111}
+.boum div.texte-seul{font-size:30px;max-width:240px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="reglages-jeu" style="display:flex;flex-direction:column;gap:14px">
+    <div>
+      <label id="l-manches">Nombre de manches</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
+    </div>
+    <div>
+      <label id="l-tours">Indices par joueur à chaque manche</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div>
+    </div>
+  </div>
+
+  <section class="screen" id="s-local">
+    <h2>Sur cet appareil</h2>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Les joueurs (3 à 8)</label>
+      <div id="local-noms"></div>
+      <button class="btn plat" id="ajout-joueur" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter un joueur</button>
+    </div>
+    <div id="place-local"></div>
+    <p class="bandeau alerte" id="err-local" role="alert" style="display:none"></p>
+    <div class="bas">
+      <button class="btn" id="lancer-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
+      <button class="btn plat" id="retour-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
+    </div>
+  </section>
+
+  <section class="screen" id="s-passe">
+    <h2 id="passe-titre"></h2>
+    <div class="case"><p id="passe-texte"></p></div>
+    <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
+  </section>
+
+  <!-- Local : chacun découvre son mot -->
+  <section class="screen" id="s-mot">
+    <h2 id="mot-titre"></h2>
+    <div class="case jaune mot-carte">
+      <div class="petit">Ton mot secret</div>
+      <div class="mot cache-mot" id="mot-local">MOT</div>
+    </div>
+    <p class="petit">Retiens-le bien. Attention : tu ne sais pas si tu es l'imposteur !</p>
+    <div class="bas">
+      <button class="btn jaune" id="voir-mot-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-oeil"/></svg>MAINTIENS POUR VOIR</button>
+      <button class="btn" id="mot-vu" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>J'AI MON MOT</button>
+    </div>
+  </section>
+
+  <!-- PARTIE -->
+  <section class="screen" id="s-jeu">
+    <div class="plaques">
+      <div class="case jaune"><small id="lbl-score">Ton score</small><b id="score">0</b></div>
+      <div class="case"><small>Manche</small><b id="num"></b></div>
+    </div>
+    <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
+    <div class="grandecran">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <button class="btn jaune" id="voir-mon-mot" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-oeil"/></svg><span id="mon-mot-txt">MAINTIENS POUR VOIR TON MOT</span></button>
+        <p class="bandeau" id="role" aria-live="polite"></p>
+        <!-- indices -->
+        <div class="case" id="bloc-indices"><ol class="indices" id="indices"></ol></div>
+        <div id="zone-indice" style="display:none;flex-direction:column;gap:12px">
+          <div><label for="indice">Ton indice (un seul mot de préférence)</label><input type="text" id="indice" maxlength="30" autocomplete="off" placeholder="Un mot qui fait penser au tien…"></div>
+          <button class="btn" id="envoyer-indice" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>ENVOYER</button>
+          <p class="bandeau alerte" id="err-indice" role="alert" style="display:none"></p>
+        </div>
+        <button class="btn" id="parle-local" type="button" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>C'EST FAIT, AU SUIVANT</button>
+        <!-- vote -->
+        <div id="zone-vote" style="display:none;flex-direction:column;gap:12px">
+          <p class="decompte" id="decompte" style="display:none"></p>
+          <div class="choix" id="choix"></div>
+          <button class="btn" id="voter" type="button"><svg class="ico" aria-hidden="true"><use href="#i-vote"/></svg>VOTER</button>
+        </div>
+        <!-- résultat -->
+        <div id="zone-resultat" style="display:none;flex-direction:column;gap:14px">
+          <p class="revelation" id="revelation"></p>
+          <div class="duo-mots" id="duo-mots" style="display:none">
+            <div class="case"><span class="petit">Mot des autres</span><b id="mot-civil"></b></div>
+            <div class="case jaune"><span class="petit">Mot de l'imposteur</span><b id="mot-imp"></b></div>
+          </div>
+        </div>
+        <div class="boum" id="resultat" style="display:none">
+          <svg aria-hidden="true" viewBox="0 0 240 110"><polygon points="120,2 138,26 168,8 170,36 206,26 194,52 236,58 198,72 216,100 176,88 168,108 142,88 120,108 100,88 70,106 68,84 26,96 46,70 4,58 44,46 30,20 68,34 74,8 100,26" fill="#FFE600" stroke="#111" stroke-width="4" stroke-linejoin="round"/></svg>
+          <div id="resultat-texte"><span id="res-mot"></span><span class="reel" id="res-reel">+<b id="res-num">0</b></span></div>
+        </div>
+        <!-- devinette de l'imposteur démasqué -->
+        <div id="zone-devine" style="display:none;flex-direction:column;gap:12px">
+          <div><label for="devine">Dernière chance : devine le mot des autres</label><input type="text" id="devine" maxlength="30" autocomplete="off"></div>
+          <button class="btn" id="envoyer-devine" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>TENTER MA CHANCE</button>
+        </div>
+        <div class="rang-btn" id="zone-devine-local" style="display:none">
+          <button class="btn" id="trouve-oui" type="button">IL A TROUVÉ</button>
+          <button class="btn plat" id="trouve-non" type="button">Raté</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <ul class="gens" id="gens-jeu" style="display:none"></ul>
+        <div class="case" id="bloc-bilan" style="display:none"><ul class="liste resultats" id="bilan"></ul></div>
+        <div class="bas" style="margin-top:0">
+          <button class="btn jaune" id="passer-tour" type="button" style="display:none">PASSER SON TOUR</button>
+          <button class="btn jaune" id="clore-vote" type="button" style="display:none">CLORE LE VOTE</button>
+          <button class="btn" id="suivante" type="button" style="display:none">MANCHE SUIVANTE</button>
+          <button class="btn plat" id="arreter" type="button" style="display:none">Terminer la partie ici</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-fin">
+    <h2>Partie terminée !</h2>
+    <div class="case jaune centre">
+      <div class="petit" id="fin-lbl">TON SCORE</div>
+      <div class="grand" id="fin-score"></div>
+      <div class="petit" id="fin-detail"></div>
+    </div>
+    <p class="bandeau centre" id="fin-gagnant"></p>
+    <div class="case"><ul class="liste" id="classement"></ul></div>
+    <div class="bas">
+      <button class="btn" id="rejouer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rejouer"/></svg>REJOUER</button>
+      <button class="btn plat" id="changer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
+    </div>
+  </section>
+</div>
+
+<script src="../commun/commun.js?v=1"></script>
+<script>
+"use strict";
+/* ---------- Paires de mots proches ---------- */
+const MOTS = [["Pizza", "Tarte flambée"], ["Chat", "Tigre"], ["Plage", "Piscine"], ["Café", "Thé"], ["Chien", "Loup"], ["Avion", "Hélicoptère"], ["Guitare", "Violon"], ["Football", "Rugby"], ["Pomme", "Poire"], ["Lion", "Tigre"], ["Neige", "Glace"], ["Croissant", "Pain au chocolat"], ["Vélo", "Trottinette"], ["Ketchup", "Mayonnaise"], ["Montagne", "Colline"], ["Hiver", "Automne"], ["Lunettes", "Lentilles"], ["Train", "Métro"], ["Château", "Palais"], ["Fromage", "Yaourt"], ["Sorcière", "Fée"], ["Vampire", "Zombie"], ["Pirate", "Corsaire"], ["Requin", "Dauphin"], ["Abeille", "Guêpe"], ["Crocodile", "Alligator"], ["Fourchette", "Cuillère"], ["Parapluie", "Imperméable"], ["Chaussette", "Chausson"], ["Basket", "Volley"], ["Tennis", "Badminton"], ["Ski", "Snowboard"], ["Cinéma", "Théâtre"], ["Livre", "Magazine"], ["Crayon", "Stylo"], ["Gomme", "Correcteur"], ["Ordinateur", "Tablette"], ["Téléphone", "Talkie-walkie"], ["Télévision", "Cinéma"], ["Hamburger", "Sandwich"], ["Frites", "Chips"], ["Chocolat", "Caramel"], ["Glace", "Sorbet"], ["Gâteau", "Tarte"], ["Crêpe", "Gaufre"], ["Sushi", "Maki"], ["Pâtes", "Riz"], ["Soupe", "Purée"], ["Orange", "Mandarine"], ["Fraise", "Framboise"], ["Banane", "Ananas"], ["Citron", "Pamplemousse"], ["Carotte", "Navet"], ["Tomate", "Poivron"], ["Fleur", "Plante"], ["Rose", "Tulipe"], ["Arbre", "Buisson"], ["Forêt", "Jungle"], ["Désert", "Savane"], ["Océan", "Mer"], ["Rivière", "Lac"], ["Volcan", "Geyser"], ["Soleil", "Lune"], ["Étoile", "Planète"], ["Astronaute", "Pilote"], ["Médecin", "Infirmier"], ["Pompier", "Policier"], ["Boulanger", "Pâtissier"], ["Professeur", "Directeur"], ["Cuisinier", "Serveur"], ["Chanteur", "Rappeur"], ["Magicien", "Clown"], ["Roi", "Président"], ["Princesse", "Reine"], ["Chevalier", "Soldat"], ["Dragon", "Dinosaure"], ["Robot", "Cyborg"], ["Fantôme", "Esprit"], ["Licorne", "Cheval"], ["Hibou", "Chouette"], ["Poule", "Canard"], ["Vache", "Chèvre"], ["Mouton", "Lama"], ["Lapin", "Hamster"], ["Souris", "Rat"], ["Serpent", "Lézard"], ["Tortue", "Escargot"], ["Papillon", "Libellule"], ["Araignée", "Fourmi"], ["Baleine", "Requin"], ["Pingouin", "Manchot"], ["Girafe", "Zèbre"], ["Éléphant", "Hippopotame"], ["Singe", "Gorille"], ["Ours", "Panda"], ["Renard", "Loup"], ["Noël", "Nouvel An"], ["Anniversaire", "Mariage"], ["Halloween", "Carnaval"], ["Vacances", "Week-end"], ["Camping", "Hôtel"], ["Valise", "Sac à dos"], ["Bateau", "Sous-marin"], ["Voiture", "Camion"], ["Moto", "Scooter"], ["Bus", "Car"], ["Fusée", "Avion"], ["Douche", "Bain"], ["Lit", "Canapé"], ["Oreiller", "Couverture"], ["Fenêtre", "Porte"], ["Escalier", "Ascenseur"], ["Cuisine", "Salle de bain"], ["Jardin", "Parc"], ["Zoo", "Ferme"], ["École", "Collège"], ["Bibliothèque", "Librairie"], ["Supermarché", "Marché"], ["Restaurant", "Cantine"], ["Hôpital", "Pharmacie"], ["Musée", "Galerie"], ["Stade", "Gymnase"], ["Piano", "Synthétiseur"], ["Batterie", "Tambour"], ["Trompette", "Saxophone"], ["Chanson", "Poème"], ["Dessin", "Peinture"], ["Photo", "Selfie"], ["Jeu vidéo", "Jeu de société"], ["Cartes", "Dés"], ["Échecs", "Dames"], ["Ballon", "Bulle"], ["Toboggan", "Balançoire"], ["Cerf-volant", "Ballon de baudruche"], ["Sable", "Boue"], ["Pluie", "Orage"], ["Vent", "Tempête"], ["Arc-en-ciel", "Aurore boréale"], ["Bougie", "Lampe"], ["Feu", "Barbecue"], ["Montre", "Réveil"], ["Bague", "Bracelet"], ["Casquette", "Bonnet"], ["Écharpe", "Cravate"], ["Jean", "Jogging"], ["Basket", "Tong"], ["Pyjama", "Peignoir"], ["Dentifrice", "Savon"], ["Brosse à dents", "Peigne"], ["Miroir", "Vitre"], ["Clé", "Cadenas"], ["Trésor", "Coffre-fort"], ["Carte au trésor", "GPS"], ["Boussole", "Montre"], ["Tente", "Cabane"], ["Igloo", "Chalet"], ["Paris", "Londres"], ["Tour Eiffel", "Arc de triomphe"], ["Espagne", "Portugal"], ["Italie", "Grèce"], ["Mario", "Sonic"], ["YouTube", "TikTok"], ["Instagram", "Snapchat"], ["Netflix", "Disney+"], ["Minecraft", "Roblox"], ["Fortnite", "Valorant"], ["Superman", "Batman"], ["Spider-Man", "Iron Man"]];
+$("manches").innerHTML = [3, 5, 8].map(n => `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 5 ? "checked" : ""}><span>${n} manches</span></label>`).join("");
+$("tours").innerHTML = [1, 2].map(n => `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 2 ? "checked" : ""}><span>${n} indice${n > 1 ? "s" : ""}</span></label>`).join("");
+const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
+const toursChoisis = () => +document.querySelector("#tours input:checked").value;
+$("manches").onchange = $("tours").onchange = () => Lobby.envoyerReglages();
+
+// État : mots par joueur, ordre de parole, indices donnés, votes.
+const P = { mode: "local", joueurs: [], scores: {}, total: 5, tours: 2, n: 0, pid: 0, mots: {}, ordre: [], indices: [], votes: {}, choix: null, res: null, phase: "", vu: 0, dernierImp: null, pioche: [] };
+const enLigne = () => P.mode === "ligne";
+const chef = () => !enLigne() || Salon.autorite();
+const moi = () => enLigne() ? Salon.id : null;
+const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
+const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
+const couleurDe = id => COULEURS[Math.max(0, P.joueurs.findIndex(j => j.id === id)) % COULEURS.length];
+const nbIndices = () => P.tours * P.ordre.length;
+const parleur = () => P.ordre[P.indices.length % P.ordre.length];
+const imposteurDe = mots => { const c = {}; Object.values(mots).forEach(m => { c[m] = (c[m] || 0) + 1; }); const ids = Object.keys(mots); return ids.find(id => c[mots[id]] === 1) || null; };
+
+Lobby.monter({
+  jeu: "imposteur", titre: "L'IMPOSTEUR", min: 3, max: 8,
+  texteLocal: "On se passe le téléphone pour découvrir son mot.",
+  couverture: `<svg viewBox="0 0 200 110" aria-hidden="true" style="max-width:280px">
+      <path d="M22 40c24-17 52-17 78 0 26-17 54-17 78 0 0 40-22 60-42 60-14 0-22-10-36-10s-22 10-36 10c-20 0-42-20-42-60z" fill="#111" transform="translate(6 6)"/>
+      <path d="M22 40c24-17 52-17 78 0 26-17 54-17 78 0 0 40-22 60-42 60-14 0-22-10-36-10s-22 10-36 10c-20 0-42-20-42-60z" fill="#FF2D2D" stroke="#111" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M46 56c9 9 19 9 28 0M126 56c9 9 19 9 28 0" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+      <text x="100" y="30" font-family="Bangers,Impact,sans-serif" font-size="36" text-anchor="middle" fill="#fff" stroke="#111" stroke-width="5" paint-order="stroke">?!</text>
+    </svg>
+    <p class="accroche">Tout le monde a le même mot… sauf un. Qui est l'imposteur ?</p>`,
+  regles: `<ol>
+      <li>Chacun reçoit un mot secret. Tout le monde a le même, sauf l'imposteur qui a un mot proche (« pizza » contre « tarte flambée »).</li>
+      <li>Attention : l'imposteur ne sait pas qu'il est l'imposteur !</li>
+      <li>Chacun son tour, on donne un indice sur son mot. Pas trop précis, sinon l'imposteur devine ; pas trop flou, sinon on vous soupçonne.</li>
+      <li>Puis tout le monde vote pour démasquer l'imposteur.</li>
+    </ol>
+    <h4>Les points</h4>
+    <p class="petit">Imposteur pas démasqué (ou égalité au vote) : +3 pour lui. Démasqué : +1 pour chaque joueur qui a voté contre lui, et il peut sauver l'honneur en devinant le mot des autres (+2).</p>
+    <h4>Sur un appareil</h4><p class="petit">On se passe le téléphone pour voir son mot, on parle à voix haute, puis on vote en montrant du doigt.</p>`,
+  ecransJeu: ["jeu", "passe", "mot", "fin"],
+  ordre: ["i-manche", "i-resultat", "i-devine", "i-bilan", "i-fin"],
+  remise: ["i-manche"],
+  resume: () => (Salon.role === "ecran" ? "L'écran du salon" : Salon.nom) + " prépare une partie de " + manchesChoisies() + " manches, " + toursChoisis() + " indice" + (toursChoisis() > 1 ? "s" : "") + " par joueur.",
+  enPartie: () => !!P.phase && P.phase !== "spectateur",
+  surLocal: () => { P.mode = "local"; $("place-local").append($("reglages-jeu")); if (!$("local-noms").children.length) { ajouterNom(pseudo.lire()); ajouterNom(""); ajouterNom(""); } alerte("err-local"); ecran("local"); },
+  surLancer: () => { P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom })); P.total = manchesChoisies(); P.tours = toursChoisis(); nouvellePartie(); },
+  surMessage: m => recevoir(m),
+  surGens: (n, p) => surGens(n, p),
+  surArret: () => { P.phase = ""; P.mode = "local"; },
+  surRetourSalon: () => { P.phase = ""; }
+});
+const ouvrirSalonOrig = Lobby.ouvrirSalon.bind(Lobby);
+Lobby.ouvrirSalon = t => { $("place-reglages").append($("reglages-jeu")); P.mode = "ligne"; ouvrirSalonOrig(t); };
+
+/* ---------- Local : joueurs ---------- */
+function ajouterNom(nom) {
+  if ($("local-noms").children.length >= 8) return;
+  const d = document.createElement("div"), i = document.createElement("input"), b = document.createElement("button"), n = $("local-noms").children.length + 1;
+  d.className = "nom-ligne"; i.type = "text"; i.maxLength = 14; i.placeholder = "Joueur " + n; i.value = nom || ""; i.setAttribute("aria-label", "Joueur " + n);
+  b.className = "btn plat"; b.type = "button"; b.innerHTML = ico("quitter"); b.setAttribute("aria-label", "Retirer ce joueur");
+  b.onclick = () => { if ($("local-noms").children.length > 3) d.remove(); };
+  d.append(i, b); $("local-noms").append(d);
+}
+$("ajout-joueur").onclick = () => { ajouterNom(""); const l = $("local-noms").lastChild; l && l.firstChild.focus(); };
+$("retour-local").onclick = () => { sons.clic(); ecran("modes"); };
+$("lancer-local").onclick = () => {
+  const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
+  if (noms.length < 3) { alerte("err-local", "Il faut au moins 3 joueurs."); return; }
+  if (new Set(noms.map(n => n.toLowerCase())).size !== noms.length) { alerte("err-local", "Deux joueurs ont le même pseudo."); return; }
+  alerte("err-local"); P.mode = "local"; P.joueurs = noms.map((nom, k) => ({ id: "j" + k, nom })); P.total = manchesChoisies(); P.tours = toursChoisis(); nouvellePartie();
+};
+
+/* ---------- Déroulé (local, ou créateur du salon) ---------- */
+function nouvellePartie() {
+  P.pid++; P.n = 0; P.scores = {}; P.joueurs.forEach(j => { P.scores[j.id] = 0; }); P.dernierImp = null;
+  P.pioche = melange(MOTS.map((_, i) => i)); sons.clic(); preparerManche();
+}
+function preparerManche() {
+  if (!P.pioche.length) P.pioche = melange(MOTS.map((_, i) => i));
+  const paire = MOTS[P.pioche.pop()], [civil, imp] = Math.random() < 0.5 ? paire : [paire[1], paire[0]];
+  const candidats = P.joueurs.filter(j => j.id !== P.dernierImp || P.joueurs.length < 2), impId = hasard(candidats).id;
+  P.dernierImp = impId;
+  const mots = {}; P.joueurs.forEach(j => { mots[j.id] = j.id === impId ? imp : civil; });
+  const m = { t: "i-manche", pid: P.pid, n: P.n, total: P.total, tours: P.tours, joueurs: P.joueurs, scores: P.scores, mots, ordre: melange(P.joueurs.map(j => j.id)) };
+  if (enLigne()) Salon.envoyer(m, true);
+  debutManche(m);
+}
+function debutManche(m) {
+  Object.assign(P, { pid: m.pid, n: m.n, total: m.total, tours: m.tours, joueurs: m.joueurs, scores: Object.assign({}, m.scores), mots: m.mots, ordre: m.ordre, indices: [], votes: {}, choix: null, res: null, vu: 0 });
+  ["zone-resultat", "resultat", "bloc-bilan", "zone-devine", "zone-devine-local", "suivante", "arreter", "duo-mots"].forEach(i => { $(i).style.display = "none"; });
+  alerte("deco"); enTete();
+  if (enLigne()) { $("voir-mon-mot").style.display = jeJoue() ? "" : "none"; phaseIndices(); ecran("jeu"); }
+  else distribuer();
+}
+function enTete() {
+  const id = moi(), joue = enLigne() && jeJoue();
+  $("lbl-score").textContent = joue ? "Ton score" : "Meilleur score";
+  $("score").textContent = joue ? (P.scores[id] || 0) : Math.max(0, ...Object.values(P.scores));
+  $("num").textContent = (P.n + 1) + " / " + P.total;
+}
+
+/* ---------- Local : chacun découvre son mot, en secret ---------- */
+function distribuer() {
+  P.phase = "distribution";
+  if (P.vu >= P.joueurs.length) { $("voir-mon-mot").style.display = "none"; phaseIndices(); ecran("jeu"); return; }
+  const j = P.joueurs[P.vu];
+  $("passe-titre").textContent = "Passe le téléphone à " + j.nom + " !";
+  $("passe-texte").textContent = "Les autres ne regardent pas l'écran.";
+  $("passe-ok").innerHTML = ico("oeil") + "JE SUIS " + echapper(j.nom.toUpperCase());
+  $("passe-ok").onclick = () => { sons.clic(); $("mot-titre").textContent = j.nom; $("mot-local").textContent = P.mots[j.id]; $("mot-local").classList.add("cache-mot"); ecran("mot"); };
+  ecran("passe");
+}
+function maintenir(btn, voir) {
+  btn.addEventListener("pointerdown", e => { e.preventDefault(); btn.classList.add("enfonce"); voir(true); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(t => btn.addEventListener(t, () => { btn.classList.remove("enfonce"); voir(false); }));
+  btn.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); voir(true); } });
+  btn.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") voir(false); });
+  btn.addEventListener("contextmenu", e => e.preventDefault());
+}
+maintenir($("voir-mot-local"), oui => $("mot-local").classList.toggle("cache-mot", !oui));
+$("mot-vu").onclick = () => { sons.clic(); $("mot-local").classList.add("cache-mot"); P.vu++; distribuer(); };
+maintenir($("voir-mon-mot"), oui => { $("mon-mot-txt").textContent = oui ? (P.mots[Salon.id] || "?").toUpperCase() : "MAINTIENS POUR VOIR TON MOT"; });
+
+/* ---------- Indices ---------- */
+function role(t) { $("role").textContent = t; }
+function montrer(ids) { ["bloc-indices", "zone-indice", "parle-local", "zone-vote", "passer-tour", "clore-vote"].forEach(i => { $(i).style.display = ids.includes(i) ? (i.startsWith("zone") ? "flex" : "") : "none"; }); }
+function dessinerIndices() {
+  const ol = $("indices"); ol.textContent = "";
+  P.indices.forEach((x, k) => {
+    const li = document.createElement("li"), b = document.createElement("b"), sm = document.createElement("small");
+    b.textContent = x.texte === null ? "—" : enLigne() ? x.texte : "a parlé ✓";
+    sm.textContent = nomDe(x.id) + (P.tours > 1 ? " · tour " + (Math.floor(k / P.ordre.length) + 1) : "");
+    if (x.texte === null) li.className = "passe";
+    li.append(b, sm); ol.append(li);
+  });
+  if (P.phase === "indices" && P.indices.length < nbIndices()) {
+    const li = document.createElement("li"), b = document.createElement("b"), sm = document.createElement("small");
+    li.className = "actif"; b.textContent = "…"; sm.textContent = nomDe(parleur()); li.append(b, sm); ol.append(li);
+  }
+}
+function phaseIndices() {
+  P.phase = "indices";
+  if (P.indices.length >= nbIndices()) { phaseVote(); return; }
+  const qui = parleur(), tour = Math.floor(P.indices.length / P.ordre.length) + 1, tourTxt = P.tours > 1 ? " (tour " + tour + "/" + P.tours + ")" : "";
+  dessinerIndices(); majStatut();
+  if (!enLigne()) { role("À " + nomDe(qui) + " de dire un mot à voix haute" + tourTxt + "."); montrer(["bloc-indices", "parle-local"]); return; }
+  const absent = !Salon.present(qui);
+  if (qui === Salon.id) { role("À toi ! Donne un indice sur ton mot" + tourTxt + "."); montrer(["bloc-indices", "zone-indice"]); $("indice").value = ""; alerte("err-indice"); setTimeout(() => $("indice").focus(), 60); }
+  else { role((absent ? nomDe(qui) + " est déconnecté…" : "À " + nomDe(qui) + " de donner un indice" + tourTxt + ".")); montrer(["bloc-indices"].concat(Salon.autorite() && absent ? ["passer-tour"] : [])); }
+}
+function envoyerIndice() {
+  if (P.phase !== "indices" || parleur() !== Salon.id) return;
+  const t = $("indice").value.trim();
+  if (!t) { alerte("err-indice", "Écris un indice avant d'envoyer."); return; }
+  if (normaliser(t) && normaliser(t) === normaliser(P.mots[Salon.id])) { alerte("err-indice", "Tu ne peux pas donner ton mot lui-même !"); return; }
+  sons.clic(); ajouterIndice({ id: Salon.id, texte: t }, true);
+}
+$("envoyer-indice").onclick = envoyerIndice;
+$("indice").addEventListener("keydown", e => { if (e.key === "Enter") envoyerIndice(); });
+$("parle-local").onclick = () => { if (P.phase !== "indices") return; sons.clic(); ajouterIndice({ id: parleur(), texte: "" }, false); };
+$("passer-tour").onclick = () => { if (P.phase === "indices" && Salon.autorite()) { sons.clic(); ajouterIndice({ id: parleur(), texte: null }, true); } };
+function ajouterIndice(x, diffuser) {
+  const k = P.indices.length;
+  P.indices.push(x);
+  if (diffuser && enLigne()) Salon.envoyer({ t: "i-indice", pid: P.pid, n: P.n, k, id: x.id, texte: x.texte }, true);
+  phaseIndices();
+}
+
+/* ---------- Vote ---------- */
+function phaseVote() {
+  P.phase = "vote"; P.choix = null; dessinerIndices();
+  if (!enLigne()) {
+    role("Discutez, puis désignez l'imposteur !"); montrer(["bloc-indices", "zone-vote"]);
+    $("decompte").style.display = ""; $("voter").style.display = "none";
+    let c = 3; $("decompte").textContent = c; sons.tic(0);
+    const pas = () => { c--; if (P.phase !== "vote") return; if (c > 0) { $("decompte").textContent = c; rejouerAnim($("decompte"), "pop"); sons.tic(c); setTimeout(pas, 700); } else { $("decompte").textContent = "MONTREZ DU DOIGT !"; sons.arrivee(); } };
+    setTimeout(pas, 700);
+    dessinerChoix(P.joueurs.map(j => j.id).concat(["egalite"]), id => { if (P.phase === "vote") { sons.clic(); tallyLocal(id); } });
+    return;
+  }
+  $("decompte").style.display = "none";
+  if (jeJoue()) {
+    role("Qui est l'imposteur ? Vote en secret."); montrer(["bloc-indices", "zone-vote"]); $("voter").style.display = ""; $("voter").disabled = true;
+    dessinerChoix(P.joueurs.map(j => j.id).filter(id => id !== Salon.id), id => { P.choix = id; $("voter").disabled = false; marquerChoix(); });
+  } else { role("Tout le monde vote sur son téléphone…"); montrer(["bloc-indices"]); }
+  majStatut(); majClore();
+}
+function dessinerChoix(ids, surClic) {
+  const d = $("choix"); d.textContent = "";
+  ids.forEach(id => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "btn plat"; b.dataset.id = id; b.setAttribute("aria-pressed", "false");
+    b.textContent = id === "egalite" ? "Égalité / pas d'accord" : nomDe(id);
+    b.onclick = () => surClic(id); d.append(b);
+  });
+}
+function marquerChoix() { $("choix").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === P.choix ? "true" : "false")); }
+$("voter").onclick = () => {
+  if (P.phase !== "vote" || !P.choix) return;
+  sons.clic(); P.votes[Salon.id] = P.choix; P.phase = "a-vote";
+  role("Vote envoyé ! On attend les autres…"); montrer(["bloc-indices"]); majStatut();
+  Salon.envoyer({ t: "i-vote", pid: P.pid, n: P.n, id: Salon.id, pour: P.choix }, true);
+  verifierVotes();
+};
+const votants = () => P.joueurs.map(j => j.id).filter(id => Salon.present(id));
+function majClore() { $("clore-vote").style.display = enLigne() && Salon.autorite() && (P.phase === "vote" || P.phase === "a-vote") && Object.keys(P.votes).length ? "" : "none"; }
+function verifierVotes() {
+  majClore();
+  if (!enLigne() || !Salon.autorite() || !(P.phase === "vote" || P.phase === "a-vote")) return;
+  const v = votants();
+  if (v.length && v.every(id => id in P.votes)) depouiller();
+}
+$("clore-vote").onclick = () => { sons.clic(); depouiller(); };
+function depouiller() { // le créateur du salon compte les voix
+  const c = {}; Object.values(P.votes).forEach(id => { c[id] = (c[id] || 0) + 1; });
+  const max = Math.max(0, ...Object.values(c)), tete = Object.keys(c).filter(id => c[id] === max);
+  annoncer({ t: "i-resultat", pid: P.pid, n: P.n, votes: P.votes, designe: tete.length === 1 ? tete[0] : null });
+}
+function tallyLocal(id) { annoncer({ t: "i-resultat", pid: P.pid, n: P.n, votes: {}, designe: id === "egalite" ? null : id }); }
+
+/* ---------- Résultat ---------- */
+function annoncer(m) {
+  if (enLigne()) Salon.envoyer(m, true);
+  afficherResultat(m);
+}
+function afficherResultat(m) {
+  P.phase = "resultat"; P.res = m;
+  const imp = imposteurDe(P.mots), civil = P.mots[P.ordre.find(id => id !== imp)], attrape = m.designe === imp;
+  montrer(["bloc-indices"]); $("zone-vote").style.display = "none"; majStatut();
+  $("zone-resultat").style.display = "flex"; $("duo-mots").style.display = "none";
+  $("revelation").textContent = m.designe ? "Vous avez désigné " + nomDe(m.designe) + "…" : "Égalité au vote…";
+  role("Roulement de tambour…"); sons.tambour();
+  const pid = P.pid, n = P.n, garde = () => P.phase === "resultat" && P.pid === pid && P.n === n;
+  setTimeout(() => {
+    if (!garde()) return;
+    $("revelation").textContent = attrape ? nomDe(imp) + " ÉTAIT L'IMPOSTEUR !" : (m.designe ? nomDe(m.designe) + " était innocent ! " : "Personne n'est désigné ! ") + "L'imposteur, c'était " + nomDe(imp) + ".";
+    rejouerAnim($("revelation"), "pop");
+    $("mot-civil").textContent = civil; $("mot-imp").textContent = P.mots[imp]; $("duo-mots").style.display = "";
+    (attrape ? sons.bon : sons.rate)();
+    if (!attrape) { if (chef()) conclure(false, ""); return; }
+    // démasqué : dernière chance pour l'imposteur
+    P.phase = "devinette";
+    if (!enLigne()) { role(nomDe(imp) + ", dis à voix haute le mot des autres !"); $("zone-devine-local").style.display = "flex"; return; }
+    if (imp === Salon.id) { role("Tu étais l'imposteur ! Devine le mot des autres pour sauver l'honneur."); $("zone-devine").style.display = "flex"; $("devine").value = ""; setTimeout(() => $("devine").focus(), 60); }
+    else role(nomDe(imp) + " tente de deviner votre mot…");
+  }, 1600);
+}
+$("envoyer-devine").onclick = () => {
+  if (P.phase !== "devinette") return;
+  const t = $("devine").value.trim(); if (!t) return;
+  sons.clic(); $("zone-devine").style.display = "none"; role("Réponse envoyée…");
+  const m = { t: "i-devine", pid: P.pid, n: P.n, texte: t };
+  Salon.envoyer(m, true);
+  if (Salon.autorite()) recevoir(m);
+};
+$("devine").addEventListener("keydown", e => { if (e.key === "Enter") $("envoyer-devine").onclick(); });
+$("trouve-oui").onclick = () => { if (P.phase === "devinette") { sons.clic(); conclure(true, ""); } };
+$("trouve-non").onclick = () => { if (P.phase === "devinette") { sons.clic(); conclure(false, ""); } };
+const memeMot = (a, b) => { const x = normaliser(a).replace(/s$/, ""), y = normaliser(b).replace(/s$/, ""); return !!x && x === y; };
+function conclure(trouve, devine) { // calcul des points, par le créateur du salon (ou l'appareil local)
+  const imp = imposteurDe(P.mots), attrape = P.res.designe === imp, pts = {};
+  P.joueurs.forEach(j => { pts[j.id] = 0; });
+  if (!attrape) pts[imp] = 3;
+  else {
+    P.joueurs.forEach(j => { if (j.id !== imp && (!enLigne() || P.res.votes[j.id] === imp)) pts[j.id] = 1; });
+    if (trouve) pts[imp] = 2;
+  }
+  const m = { t: "i-bilan", pid: P.pid, n: P.n, pts, trouve, devine };
+  if (enLigne()) Salon.envoyer(m, true);
+  afficherBilan(m);
+}
+function afficherBilan(m) {
+  P.phase = "bilan";
+  const imp = imposteurDe(P.mots), avant = enLigne() ? (P.scores[Salon.id] || 0) : 0;
+  Object.keys(m.pts).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
+  $("zone-devine").style.display = "none"; $("zone-devine-local").style.display = "none";
+  if (P.res && P.res.designe === imp) role(m.trouve ? nomDe(imp) + " a trouvé votre mot" + (m.devine ? " (« " + m.devine + " »)" : "") + " : il sauve l'honneur !" : nomDe(imp) + " n'a pas trouvé" + (m.devine ? " (il a dit « " + m.devine + " »)" : "") + ".");
+  else role("L'imposteur s'en sort : +3 pour " + nomDe(imp) + ".");
+  // mes points (téléphone d'un joueur en ligne)
+  if (enLigne() && jeJoue()) {
+    const mes = m.pts[Salon.id] || 0;
+    $("resultat").style.display = ""; $("res-reel").style.display = ""; $("res-mot").textContent = "";
+    const pid = P.pid, n = P.n;
+    rouleau($("res-num"), [3, 2, 1, 0], mes, () => P.phase === "bilan" && P.pid === pid && P.n === n, () => {
+      $("res-mot").textContent = mes > 0 ? (imp === Salon.id ? "BIEN JOUÉ ! " : "BIEN VU ! ") : "DOMMAGE ! ";
+      rejouerAnim($("resultat-texte"), "pop"); compteur($("score"), avant, P.scores[Salon.id] || 0);
+    });
+  } else enTete();
+  // tableau des points
+  const ul = $("bilan"); ul.textContent = "";
+  P.joueurs.slice().sort((a, b) => (P.scores[b.id] || 0) - (P.scores[a.id] || 0)).forEach(j => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(j.id);
+    t.append(sw, document.createTextNode(j.nom + " · " + (P.scores[j.id] || 0) + " pt" + ((P.scores[j.id] || 0) > 1 ? "s" : "")));
+    if (j.id === imp) { const tg = document.createElement("span"); tg.className = "tag"; tg.textContent = "IMPOSTEUR"; t.append(tg); }
+    if (enLigne() && P.res && P.res.votes[j.id]) { const v = document.createElement("em"); v.textContent = " a voté " + nomDe(P.res.votes[j.id]); t.append(v); }
+    b.textContent = "+" + (m.pts[j.id] || 0); li.append(t, b); ul.append(li);
+  });
+  $("bloc-bilan").style.display = ""; majStatut();
+  const derniere = P.n + 1 >= P.total;
+  $("suivante").innerHTML = ico("suite") + (derniere ? "VOIR LE CLASSEMENT" : "MANCHE SUIVANTE");
+  $("suivante").disabled = false; $("suivante").style.display = ""; $("arreter").style.display = derniere ? "none" : "";
+}
+
+/* ---------- Bandeau des joueurs (en ligne) ---------- */
+function majStatut() {
+  if (!enLigne()) { $("gens-jeu").style.display = "none"; return; }
+  $("gens-jeu").style.display = "";
+  dessinerGens($("gens-jeu"), P.joueurs.map(j => ({ cle: j.id, nom: j.nom })), {
+    couleur: g => couleurDe(g.cle),
+    etiquette: g => !Salon.present(g.cle) ? "Déconnecté" : (P.phase === "vote" || P.phase === "a-vote") ? (g.cle in P.votes ? "A voté ✓" : "Vote…") : P.phase === "indices" && parleur() === g.cle ? "Parle" : (g.cle === Salon.id ? "Toi" : "Joueur"),
+    classe: g => (P.phase === "indices" && parleur() === g.cle) ? "donne" : (g.cle in P.votes && P.phase !== "bilan") ? "ok" : "",
+    score: g => P.scores[g.cle] || 0
+  });
+}
+
+/* ---------- Suite et fin ---------- */
+function avancer() { P.n++; if (P.n >= P.total) terminer(); else { sons.clic(); preparerManche(); } }
+function terminer() { if (enLigne()) Salon.envoyer({ t: "i-fin", pid: P.pid, scores: P.scores }, true); finir(); }
+$("suivante").onclick = () => {
+  if (P.phase !== "bilan") return;
+  if (chef()) avancer(); else { $("suivante").disabled = true; $("suivante").textContent = "EN ATTENTE…"; Salon.envoyer({ t: "suivante?", pid: P.pid, n: P.n }); }
+};
+$("arreter").onclick = () => { if (P.phase !== "bilan") return; if (chef()) terminer(); else Salon.envoyer({ t: "fin?", pid: P.pid }); };
+function finir() {
+  P.phase = "fin";
+  const cl = P.joueurs.map(j => ({ id: j.id, nom: j.nom, s: P.scores[j.id] || 0 })).sort((a, b) => b.s - a.s), rangDe = sc => 1 + cl.filter(c => c.s > sc).length;
+  const me = enLigne() ? cl.find(c => c.id === Salon.id) : null;
+  $("fin-lbl").textContent = me ? "TON SCORE" : "MEILLEUR SCORE";
+  $("fin-score").textContent = me ? me.s : (cl[0] ? cl[0].s : 0);
+  $("fin-detail").textContent = me ? (rangDe(me.s) === 1 ? "Tu finis 1er" : "Tu finis " + rangDe(me.s) + "e") + " sur " + cl.length : "";
+  const best = cl.length ? cl[0].s : 0, g = cl.filter(c => c.s === best).map(c => c.nom);
+  $("fin-gagnant").textContent = (g.length > 1 ? "Égalité en tête : " : "Victoire de ") + g.join(", ") + " !";
+  const ul = $("classement"); ul.textContent = "";
+  cl.forEach(c => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
+    t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (me && c.id === Salon.id ? " (toi)" : "")));
+    b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
+  });
+  $("rejouer").disabled = false; $("rejouer").innerHTML = ico("rejouer") + "REJOUER";
+  $("changer").style.display = chef() ? "" : "none";
+  sons.fin(); ecran("fin");
+}
+$("rejouer").onclick = () => {
+  if (!chef()) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; Salon.envoyer({ t: "rejouer?" }); return; }
+  if (enLigne()) { P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom })); if (P.joueurs.length < 3) { $("fin-gagnant").textContent = "Il faut au moins 3 joueurs dans le salon pour rejouer."; return; } }
+  nouvellePartie();
+};
+$("changer").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) Lobby.retourSalon(); else ecran("local"); };
+
+/* ---------- Messages ---------- */
+function recevoir(m) {
+  const meme = m.pid === P.pid && m.n === P.n;
+  switch (m.t) {
+    case "i-manche":
+      if (Salon.autorite() || !Array.isArray(m.joueurs) || !m.mots) break;
+      if (!m.joueurs.some(j => j.id === Salon.id)) { if (!P.phase || P.phase === "spectateur") { P.phase = "spectateur"; Lobby.spectateur(); } break; }
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin" || P.phase === "spectateur"))) { P.mode = "ligne"; sons.arrivee(); debutManche(m); }
+      break;
+    case "i-etat": // rattrapage des indices et des votes pour qui revient
+      if (meme && Array.isArray(m.indices) && m.indices.length > P.indices.length && P.phase === "indices") { P.indices = m.indices; phaseIndices(); }
+      break;
+    case "i-indice":
+      if (meme && P.phase === "indices" && m.k === P.indices.length && m.id === parleur()) { P.indices.push({ id: m.id, texte: m.texte === null ? null : String(m.texte).slice(0, 30) }); sons.clic(); phaseIndices(); }
+      break;
+    case "i-vote":
+      if (meme && (P.phase === "vote" || P.phase === "a-vote") && P.joueurs.some(j => j.id === m.id)) { P.votes[m.id] = m.pour; majStatut(); verifierVotes(); }
+      break;
+    case "i-resultat":
+      if (meme && P.phase !== "resultat" && P.phase !== "devinette" && P.phase !== "bilan") { P.votes = m.votes || {}; afficherResultat(m); }
+      break;
+    case "i-devine":
+      if (meme && Salon.autorite() && P.phase === "devinette") conclure(memeMot(m.texte, P.mots[P.ordre.find(id => id !== imposteurDe(P.mots))]), String(m.texte).slice(0, 30));
+      break;
+    case "i-bilan":
+      if (meme && P.phase !== "bilan" && m.pts) { if (P.phase !== "devinette" && P.phase !== "resultat") break; afficherBilan(m); }
+      break;
+    case "suivante?": if (Salon.autorite() && meme && P.phase === "bilan") avancer(); break;
+    case "fin?": if (Salon.autorite() && m.pid === P.pid && P.phase === "bilan") terminer(); break;
+    case "i-fin": if (!Salon.autorite() && m.pid === P.pid && P.phase && P.phase !== "fin") { if (m.scores) P.scores = m.scores; finir(); } break;
+    case "rejouer?": if (Salon.autorite() && P.phase === "fin") $("rejouer").onclick(); break;
+  }
+}
+function surGens(nouveaux, partis) {
+  if (!enLigne() || !P.phase || P.phase === "spectateur") return;
+  if (Salon.autorite() && nouveaux.length && (P.phase === "indices" || P.phase === "vote" || P.phase === "a-vote")) Salon.envoyer({ t: "i-etat", pid: P.pid, n: P.n, indices: P.indices });
+  if (P.phase === "indices") phaseIndices(); else { majStatut(); verifierVotes(); }
+  if (Salon.autorite() && P.phase === "devinette" && !Salon.present(imposteurDe(P.mots))) conclure(false, ""); // l'imposteur est parti
+  alerte("deco", Salon.gens.some(g => g.role !== "invite") ? "" : "Celui qui a créé le salon est parti. La partie est en pause.");
+}
+</script>
+</body>
+</html>

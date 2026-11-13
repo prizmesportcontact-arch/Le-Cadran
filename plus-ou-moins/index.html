@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plus ou moins</title>
+<meta name="description" content="Combien de marches a la tour Eiffel ? Chacun donne son estimation, le plus proche gagne.">
+<meta name="theme-color" content="#19B5F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='34' width='56' height='16' fill='%23fff' stroke='%23111' stroke-width='4'/%3E%3Cpath d='M22 32V10l16 6-16 6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../commun/commun.css?v=1">
+<style>
+.question{font-family:var(--titre);font-size:30px;letter-spacing:1px;line-height:1.1;text-wrap:balance}
+body.tele .question{font-size:52px}
+.saisie{display:flex;align-items:stretch;gap:10px}
+.saisie input{flex:1;min-width:0;font-family:var(--titre);font-size:32px!important;letter-spacing:1px;text-align:right}
+.saisie .unite{display:flex;align-items:center;font-size:18px;max-width:45%}
+.regle-boite{padding:12px 8px 8px}
+#regle{width:100%;height:auto;display:block;overflow:visible}
+.marque{animation:tombe .45s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes tombe{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
+.vraie{animation:tombe .5s cubic-bezier(.3,1.8,.5,1) both}
+.vrai-txt{text-align:center;font-family:var(--titre);font-size:26px;letter-spacing:1px}
+body.tele .vrai-txt{font-size:44px}
+.resultats li{padding:6px 0;border-bottom:2px dashed rgba(0,0,0,.25)}
+.resultats li:last-child{border-bottom:0}
+.resultats .pastille{display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px}
+.etoile{color:var(--orange)}
+#local-noms{display:flex;flex-direction:column;gap:10px}
+.nom-ligne{display:flex;gap:10px}
+.nom-ligne input{flex:1}
+.nom-ligne .btn{flex:none;width:50px}
+@media (prefers-reduced-motion:reduce){.marque,.vraie{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Réglages : déplacés dans le salon ou dans l'écran local -->
+  <div id="reglages-jeu">
+    <label id="l-nbq">Nombre de questions</label>
+    <div class="jetons" role="radiogroup" aria-labelledby="l-nbq" id="nbq"></div>
+  </div>
+
+  <!-- LOCAL : les joueurs -->
+  <section class="screen" id="s-local">
+    <h2>Sur cet appareil</h2>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Les joueurs (seul, ou jusqu'à 8)</label>
+      <div id="local-noms"></div>
+      <button class="btn plat" id="ajout-joueur" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter un joueur</button>
+    </div>
+    <div id="place-local"></div>
+    <p class="bandeau alerte" id="err-local" role="alert" style="display:none"></p>
+    <div class="bas">
+      <button class="btn" id="lancer-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>LANCER LA PARTIE</button>
+      <button class="btn plat" id="retour-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
+    </div>
+  </section>
+
+  <!-- LOCAL : passer l'appareil -->
+  <section class="screen" id="s-passe">
+    <h2 id="passe-titre"></h2>
+    <div class="case"><p id="passe-texte">Les autres ne doivent pas regarder l'écran.</p></div>
+    <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
+  </section>
+
+  <!-- PARTIE -->
+  <section class="screen" id="s-jeu">
+    <div class="plaques">
+      <div class="case jaune"><small id="lbl-score">Ton score</small><b id="score">0</b></div>
+      <div class="case"><small>Question</small><b id="num"></b></div>
+    </div>
+    <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
+    <div class="grandecran">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="case">
+          <p class="petit" id="qui-repond"></p>
+          <p class="question" id="question"></p>
+        </div>
+        <!-- répondre -->
+        <div id="bloc-reponse" style="display:flex;flex-direction:column;gap:14px">
+          <div class="saisie">
+            <input type="text" id="valeur" inputmode="decimal" autocomplete="off" placeholder="?" aria-label="Ta réponse">
+            <span class="unite" id="unite"></span>
+          </div>
+          <button class="btn" id="valider" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>VALIDER</button>
+          <p class="bandeau alerte" id="err-valeur" role="alert" style="display:none"></p>
+        </div>
+        <p class="bandeau" id="attente" style="display:none"></p>
+        <!-- révélation -->
+        <div class="case regle-boite" id="bloc-regle" style="display:none">
+          <svg id="regle" viewBox="0 0 360 160" role="img" aria-label="Réponses placées sur une règle"></svg>
+          <p class="vrai-txt" id="vrai-txt"></p>
+        </div>
+        <div class="boum" id="resultat" style="display:none">
+          <svg aria-hidden="true" viewBox="0 0 240 110"><polygon points="120,2 138,26 168,8 170,36 206,26 194,52 236,58 198,72 216,100 176,88 168,108 142,88 120,108 100,88 70,106 68,84 26,96 46,70 4,58 44,46 30,20 68,34 74,8 100,26" fill="#FFE600" stroke="#111" stroke-width="4" stroke-linejoin="round"/></svg>
+          <div id="resultat-texte"><span id="res-mot"></span><span class="reel">+<b id="res-num">0</b></span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <ul class="gens" id="gens-jeu" style="display:none"></ul>
+        <div class="case" id="bloc-resultats" style="display:none"><ul class="liste resultats" id="resultats"></ul></div>
+        <div class="bas" style="margin-top:0">
+          <button class="btn jaune" id="reveler-mnt" type="button" style="display:none">RÉVÉLER SANS ATTENDRE</button>
+          <button class="btn" id="suivante" type="button" style="display:none">QUESTION SUIVANTE</button>
+          <button class="btn plat" id="arreter" type="button" style="display:none">Terminer la partie ici</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIN -->
+  <section class="screen" id="s-fin">
+    <h2>Partie terminée !</h2>
+    <div class="case jaune centre">
+      <div class="petit" id="fin-lbl">TON SCORE</div>
+      <div class="grand" id="fin-score"></div>
+      <div class="petit" id="fin-detail"></div>
+    </div>
+    <p class="bandeau centre" id="fin-gagnant"></p>
+    <div class="case"><ul class="liste" id="classement"></ul></div>
+    <div class="bas">
+      <button class="btn" id="rejouer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rejouer"/></svg>REJOUER</button>
+      <button class="btn plat" id="changer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
+    </div>
+  </section>
+</div>
+
+<script src="../commun/commun.js?v=1"></script>
+<script>
+"use strict";
+/* ---------- Questions : [question, réponse, unité, "a" si c'est une année] ---------- */
+const QUESTIONS = [["En quelle année a eu lieu la prise de la Bastille ?", 1789, "", "a"], ["Combien d'os compte le squelette d'un adulte ?", 206, "os", ""], ["Quelle est la distance moyenne entre la Terre et la Lune ?", 384400, "km", ""], ["Quelle est la hauteur du mont Everest ?", 8849, "m", ""], ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", 1969, "", "a"], ["Combien de pays sont membres de l'ONU ?", 193, "pays", ""], ["Combien de touches compte un piano classique ?", 88, "touches", ""], ["Combien de cases compte un échiquier ?", 64, "cases", ""], ["Quelle est la vitesse de la lumière ?", 299792, "km/s", ""], ["Combien y a-t-il de départements en France (outre-mer compris) ?", 101, "départements", ""], ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", 1889, "", "a"], ["Combien de cartes compte un jeu de tarot ?", 78, "cartes", ""], ["Combien de dents a un adulte (dents de sagesse comprises) ?", 32, "dents", ""], ["En quelle année le mur de Berlin est-il tombé ?", 1989, "", "a"], ["Combien de minutes y a-t-il dans une semaine ?", 10080, "minutes", ""], ["Combien de secondes y a-t-il dans une journée ?", 86400, "secondes", ""], ["Quelle est la profondeur de la fosse des Mariannes, environ ?", 10994, "m", ""], ["En quelle année est né Napoléon Bonaparte ?", 1769, "", "a"], ["En quelle année est sorti le premier iPhone ?", 2007, "", "a"], ["Combien de cœurs a une pieuvre ?", 3, "cœurs", ""], ["Quelle vitesse peut atteindre un guépard en pointe, environ ?", 110, "km/h", ""], ["En quelle année a eu lieu la toute première Coupe du monde de football ?", 1930, "", "a"], ["Quel est le diamètre de la Terre, environ ?", 12742, "km", ""], ["Quelle est la distance moyenne entre la Terre et le Soleil ?", 150, "millions de km", ""], ["Combien de litres de sang contient le corps d'un adulte, environ ?", 5, "litres", ""], ["Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?", 1665, "marches", ""], ["Quelle est la hauteur de la tour Eiffel, antennes comprises ?", 330, "m", ""], ["En quelle année le tunnel sous la Manche a-t-il été inauguré ?", 1994, "", "a"], ["Quelle est la longueur officielle d'un marathon ?", 42.195, "km", ""], ["Combien y a-t-il d'États aux États-Unis ?", 50, "États", ""], ["Combien d'habitants compte Paris intra-muros, environ ?", 2.1, "millions", ""], ["En quelle année la peine de mort a-t-elle été abolie en France ?", 1981, "", "a"], ["En quelle année les Françaises ont-elles obtenu le droit de vote ?", 1944, "", "a"], ["Combien de pièces y a-t-il au total au début d'une partie d'échecs ?", 32, "pièces", ""], ["Combien de langues officielles a la Suisse ?", 4, "langues", ""], ["Quelle est la hauteur de la statue de la Liberté, sans son socle ?", 46, "m", ""], ["En quelle année a eu lieu la révolution russe ?", 1917, "", "a"], ["Combien de pays font partie de l'Union européenne ?", 27, "pays", ""], ["Combien d'étoiles y a-t-il sur le drapeau européen ?", 12, "étoiles", ""], ["Quelle est la longueur de la Seine, environ ?", 777, "km", ""], ["Combien de vertèbres compte la colonne vertébrale humaine, environ ?", 33, "vertèbres", ""], ["Quelle est la température à la surface du Soleil, environ ?", 5500, "°C", ""], ["Quel est l'âge de l'Univers, environ ?", 13.8, "milliards d'années", ""], ["En quelle année est sorti le premier livre Harry Potter ?", 1997, "", "a"], ["En quelle année est sorti le tout premier film Star Wars ?", 1977, "", "a"], ["En quelle année Google a-t-il été créé ?", 1998, "", "a"], ["En quelle année YouTube a-t-il été créé ?", 2005, "", "a"], ["En quelle année Facebook a-t-il été créé ?", 2004, "", "a"], ["En quelle année est sortie la version complète de Minecraft ?", 2011, "", "a"], ["En quelle année le mode Battle Royale de Fortnite est-il sorti ?", 2017, "", "a"], ["Combien de Pokémon compte la toute première génération ?", 151, "Pokémon", ""], ["Quelle est la vitesse du son dans l'air, environ ?", 343, "m/s", ""], ["Combien de ponts traversent la Seine à Paris, environ ?", 37, "ponts", ""], ["Combien de fois bat le cœur d'un adulte au repos, en moyenne, par minute ?", 70, "battements", ""], ["Combien de pays compte l'Afrique ?", 54, "pays", ""], ["Quelle est la hauteur du Burj Khalifa, la plus haute tour du monde ?", 828, "m", ""], ["Combien de neurones compte le cerveau humain, environ ?", 86, "milliards", ""], ["Combien d'œufs pond une poule pondeuse par an, environ ?", 300, "œufs", ""], ["Jusqu'à quel âge a vécu Jeanne Calment, la doyenne de l'humanité ?", 122, "ans", ""], ["Combien de pays le Danube traverse-t-il ?", 10, "pays", ""], ["Quelle part de la surface de la Terre est couverte d'eau ?", 71, "%", ""], ["Quelle part du corps humain est faite d'eau, environ ?", 60, "%", ""], ["Combien d'éléments compte le tableau périodique ?", 118, "éléments", ""], ["Quel est le numéro atomique de l'or ?", 79, "", ""], ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?", 1492, "", "a"], ["En quelle année a eu lieu la bataille de Marignan ?", 1515, "", "a"], ["En quelle année la Seconde Guerre mondiale s'est-elle terminée ?", 1945, "", "a"], ["En quelle année la Première Guerre mondiale a-t-elle commencé ?", 1914, "", "a"], ["Quelle est la hauteur d'un panier de basket ?", 305, "cm", ""], ["Quelle est la longueur d'une piscine olympique ?", 50, "m", ""], ["Combien de lettres compte l'alphabet français ?", 26, "lettres", ""], ["Combien de cases compte le plateau du Monopoly ?", 40, "cases", ""], ["Combien de dominos compte un jeu classique ?", 28, "dominos", ""], ["Combien de joueurs s'affrontent au début d'une partie de Fortnite Battle Royale ?", 100, "joueurs", ""], ["Combien de trous compte un parcours de golf classique ?", 18, "trous", ""], ["Quelle distance sépare Paris de Marseille par la route, environ ?", 775, "km", ""], ["Quelle distance sépare Paris de New York à vol d'oiseau, environ ?", 5840, "km", ""], ["Combien d'habitants compte la Chine, environ ?", 1.4, "milliard", ""], ["Quel est le record de vitesse d'un TGV, établi en 2007 ?", 575, "km/h", ""], ["À quelle température l'eau gèle-t-elle, en degrés Fahrenheit ?", 32, "°F", ""], ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", 7, "couleurs", ""], ["Combien de planètes compte le système solaire ?", 8, "planètes", ""], ["Combien de pattes a une araignée ?", 8, "pattes", ""], ["Combien de semaines y a-t-il dans une année ?", 52, "semaines", ""], ["Combien de cordes a une guitare classique ?", 6, "cordes", ""], ["Quelle est la hauteur du mont Blanc, environ ?", 4806, "m", ""], ["Combien d'habitants compte la France, environ ?", 68, "millions", ""], ["Combien d'humains vivent sur Terre, environ ?", 8, "milliards", ""], ["En quelle année Gutenberg a-t-il mis au point l'imprimerie, environ ?", 1450, "", "a"], ["Quelle est la profondeur moyenne des océans, environ ?", 3700, "m", ""], ["Combien de kilomètres sépare la Terre de Mars au plus près, environ ?", 55, "millions de km", ""], ["Quelle est la hauteur d'un filet de volley-ball masculin ?", 243, "cm", ""], ["Quelle est la longueur d'un court de tennis ?", 23.77, "m", ""], ["Combien de petits cubes visibles a un Rubik's Cube classique ?", 26, "cubes", ""], ["Combien d'étoiles y a-t-il sur le drapeau des États-Unis ?", 50, "étoiles", ""]];
+const NB = [5, 10, 15];
+const nbChoisi = () => +document.querySelector("#nbq input:checked").value;
+$("nbq").innerHTML = NB.map(n => `<label class="jeton"><input type="radio" name="nbq" value="${n}" ${n === 10 ? "checked" : ""}><span>${n} questions</span></label>`).join("");
+$("nbq").onchange = () => Lobby.envoyerReglages();
+
+const fmt = v => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 3 }).format(v);
+const court = v => new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 }).format(v);
+const lireNombre = t => { const s = String(t).replace(/[\s  ]/g, "").replace(",", "."); return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN; };
+
+// mode : "local" ou "ligne" ; joueurs [{id, nom}] ; reps = réponses de la question en cours
+const P = { mode: "local", joueurs: [], scores: {}, total: 10, n: 0, pid: 0, pioche: [], q: null, reps: {}, phase: "", tour: 0 };
+const enLigne = () => P.mode === "ligne";
+const chef = () => !enLigne() || Salon.autorite();
+const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
+const couleurDe = id => COULEURS[Math.max(0, P.joueurs.findIndex(j => j.id === id)) % COULEURS.length];
+const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
+
+/* ---------- Points ---------- */
+function pointsPour(q, v) {
+  const r = q[1];
+  if (q[3] === "a") { const d = Math.abs(v - r); return d <= 1 ? 4 : d <= 5 ? 3 : d <= 15 ? 2 : d <= 40 ? 1 : 0; }
+  const e = r === 0 ? Math.abs(v) : Math.abs(v - r) / Math.abs(r);
+  return e <= 0.02 ? 4 : e <= 0.1 ? 3 : e <= 0.25 ? 2 : e <= 0.5 ? 1 : 0;
+}
+function calculer(q, reps) {
+  const ids = Object.keys(reps), pts = {}, ecart = id => Math.abs(reps[id] - q[1]);
+  ids.forEach(id => { pts[id] = pointsPour(q, reps[id]); });
+  let proches = [];
+  if (ids.length > 1) { const min = Math.min(...ids.map(ecart)); proches = ids.filter(id => ecart(id) === min); proches.forEach(id => { pts[id] += 1; }); }
+  return { pts, proches };
+}
+
+/* ---------- Mise en route ---------- */
+Lobby.monter({
+  jeu: "plus-ou-moins", titre: "PLUS OU MOINS", min: 1, max: 8,
+  texteLocal: "Seul, ou en se passant le téléphone.",
+  couverture: `<svg viewBox="0 0 220 120" aria-hidden="true" style="max-width:300px">
+      <rect x="10" y="66" width="200" height="34" fill="#111" transform="translate(5 5)"/>
+      <rect x="10" y="66" width="200" height="34" fill="#fff" stroke="#111" stroke-width="4"/>
+      <path d="M30 66v12M50 66v7M70 66v12M90 66v7M110 66v12M130 66v7M150 66v12M170 66v7M190 66v12" stroke="#111" stroke-width="3"/>
+      <path d="M78 62V18l30 11-30 11" fill="#FF2D2D" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M150 62V30l24 9-24 9" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M42 62V38l22 8-22 8" fill="#00C46A" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+    </svg>
+    <p class="accroche">Combien de marches a la tour Eiffel ? Le plus proche gagne !</p>`,
+  regles: `<ol>
+      <li>Une question tombe, la réponse est un nombre : une année, une distance, une quantité…</li>
+      <li>Chacun donne son estimation en secret.</li>
+      <li>Toutes les réponses apparaissent sur une règle, puis la vraie réponse tombe.</li>
+      <li>Points : 4 si tu es pile-poil (à 2 % près, ou à 1 an près), 3 si tu es très proche, 2 si tu es proche, 1 si tu n'es pas trop loin. +1 pour le plus proche de la manche.</li>
+    </ol>
+    <h4>Sur un appareil</h4><p class="petit">Joue seul, ou passez-vous le téléphone : chacun répond à son tour sans que les autres voient.</p>
+    <h4>En ligne ou en salon</h4><p class="petit">Chacun répond sur son téléphone. En salon, la télé affiche la question, la règle et le classement.</p>`,
+  ecransJeu: ["jeu", "passe", "fin"],
+  ordre: ["p-question", "p-reponse", "p-reveal", "p-fin"],
+  remise: ["p-question"],
+  resume: () => (Salon.role === "ecran" ? "L'écran du salon" : Salon.nom) + " prépare une partie de " + nbChoisi() + " questions.",
+  enPartie: () => !!P.phase,
+  surLocal: () => { P.mode = "local"; $("place-local").append($("reglages-jeu")); if (!$("local-noms").children.length) { ajouterNom(pseudo.lire()); ajouterNom(""); } alerte("err-local"); ecran("local"); },
+  surLancer: () => { P.mode = "ligne"; P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom })); P.total = nbChoisi(); nouvellePartie(); },
+  surMessage: m => recevoir(m),
+  surGens: (nouveaux, partis) => surGens(nouveaux, partis),
+  surArret: () => { P.phase = ""; P.mode = "local"; },
+  surRetourSalon: () => { P.phase = ""; }
+});
+const ouvrirSalonOrig = Lobby.ouvrirSalon.bind(Lobby);
+Lobby.ouvrirSalon = t => { $("place-reglages").append($("reglages-jeu")); P.mode = "ligne"; ouvrirSalonOrig(t); };
+
+/* ---------- Local : liste des joueurs ---------- */
+function ajouterNom(nom) {
+  if ($("local-noms").children.length >= 8) return;
+  const d = document.createElement("div"), i = document.createElement("input"), b = document.createElement("button");
+  const n = $("local-noms").children.length + 1;
+  d.className = "nom-ligne"; i.type = "text"; i.maxLength = 14; i.placeholder = "Joueur " + n; i.value = nom || ""; i.setAttribute("aria-label", "Joueur " + n);
+  b.className = "btn plat"; b.type = "button"; b.innerHTML = ico("quitter"); b.setAttribute("aria-label", "Retirer ce joueur");
+  b.onclick = () => { if ($("local-noms").children.length > 1) d.remove(); };
+  d.append(i, b); $("local-noms").append(d);
+}
+$("ajout-joueur").onclick = () => { ajouterNom(""); const l = $("local-noms").lastChild; l && l.firstChild.focus(); };
+$("retour-local").onclick = () => { sons.clic(); ecran("modes"); };
+$("lancer-local").onclick = () => {
+  const noms = [...$("local-noms").querySelectorAll("input")].map((i, k) => i.value.trim() || "Joueur " + (k + 1));
+  if (new Set(noms.map(n => n.toLowerCase())).size !== noms.length) { alerte("err-local", "Deux joueurs ont le même pseudo."); return; }
+  alerte("err-local"); P.mode = "local"; P.joueurs = noms.map((nom, k) => ({ id: "j" + k, nom })); P.total = nbChoisi(); nouvellePartie();
+};
+
+/* ---------- Déroulé (local, ou celui qui a créé le salon) ---------- */
+function nouvellePartie() {
+  P.pid++; P.n = 0; P.scores = {}; P.joueurs.forEach(j => { P.scores[j.id] = 0; });
+  P.pioche = melange(QUESTIONS.map((_, i) => i)); sons.clic(); poserQuestion();
+}
+function poserQuestion() {
+  if (!P.pioche.length) P.pioche = melange(QUESTIONS.map((_, i) => i));
+  const m = { t: "p-question", pid: P.pid, n: P.n, total: P.total, qi: P.pioche.pop(), joueurs: P.joueurs, scores: P.scores };
+  if (enLigne()) Salon.envoyer(m, true);
+  debutQuestion(m);
+}
+function debutQuestion(m) {
+  P.pid = m.pid; P.n = m.n; P.total = m.total; P.q = QUESTIONS[m.qi]; P.joueurs = m.joueurs; P.scores = Object.assign({}, m.scores); P.reps = {}; P.tour = 0;
+  enTete(); $("question").textContent = P.q[0]; $("unite").textContent = P.q[2];
+  ["bloc-regle", "resultat", "bloc-resultats", "suivante", "arreter", "reveler-mnt"].forEach(i => { $(i).style.display = "none"; });
+  alerte("deco");
+  if (!enLigne()) { tourLocal(); return; }
+  if (jeJoue()) phaseRepondre(); else phaseAttente();
+  majStatut(); ecran("jeu");
+}
+function enTete() {
+  const moi = enLigne() ? Salon.id : null;
+  $("lbl-score").textContent = moi && jeJoue() ? "Ton score" : P.joueurs.length === 1 ? "Score" : "Meilleur score";
+  $("score").textContent = moi && jeJoue() ? (P.scores[moi] || 0) : (P.joueurs.length === 1 ? P.scores[P.joueurs[0].id] || 0 : Math.max(0, ...Object.values(P.scores)));
+  $("num").textContent = (P.n + 1) + " / " + P.total;
+}
+function tourLocal() { // chacun répond à son tour, sans voir les autres
+  const j = P.joueurs[P.tour];
+  const suite = () => { phaseRepondre(); $("qui-repond").textContent = P.joueurs.length > 1 ? "À " + j.nom + " de répondre" : ""; ecran("jeu"); setTimeout(() => $("valeur").focus(), 60); };
+  if (P.joueurs.length === 1) { suite(); return; }
+  $("passe-titre").textContent = "À " + j.nom + " de répondre !";
+  $("passe-texte").textContent = "Les autres ne regardent pas l'écran.";
+  $("passe-ok").innerHTML = ico("oeil") + "JE SUIS " + echapper(j.nom.toUpperCase());
+  $("passe-ok").onclick = () => { sons.clic(); suite(); };
+  ecran("passe");
+}
+function phaseRepondre() {
+  P.phase = "repondre"; $("valeur").value = ""; alerte("err-valeur");
+  $("bloc-reponse").style.display = "flex"; $("attente").style.display = "none";
+  $("qui-repond").textContent = "";
+}
+function phaseAttente(envoye) {
+  P.phase = "attente"; $("bloc-reponse").style.display = "none"; $("attente").style.display = "";
+  $("attente").textContent = envoye ? "Réponse envoyée ! On attend les autres…" : Salon.role === "ecran" ? "Tout le monde répond sur son téléphone…" : "Les joueurs répondent…";
+  $("qui-repond").textContent = Salon.role === "ecran" ? "Répondez sur vos téléphones !" : "";
+  majBoutonReveler();
+}
+function valider() {
+  if (P.phase !== "repondre") return;
+  const v = lireNombre($("valeur").value);
+  if (!isFinite(v)) { alerte("err-valeur", "Écris un nombre (par exemple 1789 ou 42,5)."); return; }
+  if (Math.abs(v) > 1e15) { alerte("err-valeur", "Ce nombre est trop grand."); return; }
+  sons.clic();
+  if (!enLigne()) {
+    P.reps[P.joueurs[P.tour].id] = v; P.tour++;
+    if (P.tour < P.joueurs.length) tourLocal(); else reveler();
+    return;
+  }
+  P.reps[Salon.id] = v; phaseAttente(true); majStatut();
+  Salon.envoyer({ t: "p-reponse", pid: P.pid, n: P.n, id: Salon.id, v }, true);
+  verifierComplet();
+}
+$("valider").onclick = valider;
+$("valeur").addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
+
+/* ---------- En ligne : qui a répondu ---------- */
+const attendus = () => P.joueurs.map(j => j.id).filter(id => Salon.present(id));
+function majStatut() {
+  if (!enLigne()) { $("gens-jeu").style.display = "none"; return; }
+  $("gens-jeu").style.display = "";
+  const revele = P.phase === "revele";
+  dessinerGens($("gens-jeu"), P.joueurs.map(j => ({ cle: j.id, nom: j.nom })), {
+    couleur: g => couleurDe(g.cle),
+    etiquette: g => !Salon.present(g.cle) ? "Déconnecté" : revele ? "Total" : (g.cle in P.reps ? "A répondu ✓" : "Réfléchit…") + (g.cle === Salon.id ? " · toi" : ""),
+    classe: g => !revele && g.cle in P.reps ? "ok" : "",
+    score: g => P.scores[g.cle] || 0
+  });
+}
+function majBoutonReveler() {
+  const ok = enLigne() && Salon.autorite() && P.phase !== "revele" && Object.keys(P.reps).length > 0;
+  $("reveler-mnt").style.display = ok ? "" : "none";
+}
+function verifierComplet() {
+  majBoutonReveler();
+  if (!enLigne() || !Salon.autorite() || P.phase === "revele") return;
+  const a = attendus();
+  if (a.length && a.every(id => id in P.reps)) reveler();
+}
+$("reveler-mnt").onclick = () => { sons.clic(); reveler(); };
+
+/* ---------- Révélation ---------- */
+function reveler() {
+  if (P.phase === "revele") return;
+  const { pts, proches } = calculer(P.q, P.reps);
+  const m = { t: "p-reveal", pid: P.pid, n: P.n, reps: P.reps, pts, proches };
+  if (enLigne()) Salon.envoyer(m, true);
+  afficherReveal(m);
+}
+function afficherReveal(m) {
+  P.phase = "revele"; P.reps = m.reps;
+  const avant = enLigne() ? (P.scores[Salon.id] || 0) : 0;
+  Object.keys(m.pts).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
+  $("bloc-reponse").style.display = "none"; $("attente").style.display = "none"; $("reveler-mnt").style.display = "none";
+  $("qui-repond").textContent = ""; enTete(); majStatut();
+  $("bloc-regle").style.display = ""; $("vrai-txt").textContent = ""; $("resultat").style.display = "none";
+  ecran("jeu");
+  dessinerRegle(m);
+  sons.tambour();
+  const pid = P.pid, n = P.n, garde = () => P.phase === "revele" && P.pid === pid && P.n === n;
+  setTimeout(() => {
+    if (!garde()) return;
+    $("vrai-txt").textContent = "RÉPONSE : " + fmt(P.q[1]) + (P.q[2] ? " " + P.q[2] : "");
+    rejouerAnim($("vrai-txt"), "pop");
+    // les points : les miens sur mon téléphone, ceux du joueur seul, ou le meilleur sur l'écran du salon
+    let mes = null, mot = "";
+    if (enLigne() && jeJoue()) mes = m.pts[Salon.id];
+    else if (P.joueurs.length === 1) mes = m.pts[P.joueurs[0].id];
+    if (mes === undefined) { mes = 0; mot = "PAS RÉPONDU ! "; }
+    if (mes !== null) {
+      $("resultat").style.display = "";
+      const base = mes - ((m.proches || []).includes(enLigne() ? Salon.id : P.joueurs[0].id) && Object.keys(m.reps).length > 1 ? 1 : 0);
+      rouleau($("res-num"), [4, 3, 2, 1, 0], mes, garde, () => {
+        $("res-mot").textContent = mot || (base >= 4 ? "PILE-POIL ! " : base === 3 ? "TOUT PRÈS ! " : base === 2 ? "PAS MAL ! " : base === 1 ? "BOF… " : "À CÔTÉ ! ");
+        rejouerAnim($("resultat-texte"), "pop");
+        (base >= 4 ? sons.bon : base >= 2 ? sons.moyen : sons.rate)();
+        if (enLigne()) compteur($("score"), avant, P.scores[Salon.id] || 0); else enTete();
+      });
+    } else { (Object.values(m.pts).some(p => p >= 4) ? sons.bon : sons.moyen)(); enTete(); }
+    afficherResultats(m);
+    const derniere = P.n + 1 >= P.total;
+    $("suivante").innerHTML = ico("suite") + (derniere ? "VOIR LE CLASSEMENT" : "QUESTION SUIVANTE");
+    $("suivante").disabled = false; $("suivante").style.display = ""; $("arreter").style.display = derniere ? "none" : "";
+  }, 1100);
+}
+function afficherResultats(m) {
+  const ids = P.joueurs.map(j => j.id).sort((a, b) => (m.pts[b] ?? -1) - (m.pts[a] ?? -1));
+  const ul = $("resultats"); ul.textContent = "";
+  ids.forEach(id => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.className = "pastille"; sw.style.background = couleurDe(id);
+    const v = m.reps[id];
+    t.append(sw, document.createTextNode(nomDe(id) + " : " + (v === undefined ? "pas de réponse" : fmt(v))));
+    if ((m.proches || []).includes(id)) { const e = document.createElement("span"); e.className = "etoile"; e.textContent = " ★ le plus proche"; t.append(e); }
+    b.textContent = "+" + (m.pts[id] || 0); li.append(t, b); ul.append(li);
+  });
+  $("bloc-resultats").style.display = "";
+}
+// La règle graduée : réponses en drapeaux de couleur, vraie réponse en flèche rouge.
+function dessinerRegle(m) {
+  const ids = Object.keys(m.reps), vrai = P.q[1], vals = ids.map(id => m.reps[id]).concat([vrai]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const log = lo > 0 && hi / lo > 30, f = log ? Math.log10 : x => x;
+  let a = f(lo), b = f(hi);
+  if (a === b) { const d = log ? 0.5 : Math.max(1, Math.abs(a) * 0.2); a -= d; b += d; }
+  const pad = (b - a) * 0.08; a -= pad; b += pad;
+  const X0 = 22, X1 = 338, x = v => X0 + (f(v) - a) / (b - a) * (X1 - X0);
+  // drapeaux rangés en lignes pour ne pas se chevaucher
+  const tries = ids.slice().sort((p, q) => m.reps[p] - m.reps[q]), lignes = [];
+  const rang = {};
+  tries.forEach(id => { const px = x(m.reps[id]); let r = 0; while (lignes[r] !== undefined && px - lignes[r] < 26) r++; lignes[r] = px; rang[id] = r; });
+  const nl = Math.max(1, lignes.length), Y = 26 + nl * 28, H = Y + 64;
+  // graduations
+  let ticks = [];
+  if (log) { for (let e = Math.ceil(a); e <= Math.floor(b); e++) ticks.push(Math.pow(10, e)); }
+  else { const pas0 = Math.pow(10, Math.floor(Math.log10((b - a) / 4))), pas = [1, 2, 5, 10].map(k => k * pas0).find(p => (b - a) / p <= 6); for (let v = Math.ceil(a / pas) * pas; v <= b; v += pas) ticks.push(+v.toFixed(10)); }
+  let s = `<rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#111" transform="translate(4 4)"/><rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#fff" stroke="#111" stroke-width="3"/>`;
+  ticks.forEach(v => { const px = x(v); if (px < X0 - 4 || px > X1 + 4) return; s += `<path d="M${px.toFixed(1)} ${Y}v10" stroke="#111" stroke-width="2.5"/><text x="${px.toFixed(1)}" y="${Y + 19}" font-size="9" text-anchor="middle" font-family="Comic Neue,sans-serif" font-weight="700">${echapper(court(v))}</text>`; });
+  tries.forEach((id, k) => {
+    const px = x(m.reps[id]).toFixed(1), py = Y - 16 - rang[id] * 28, c = couleurDe(id), ini = echapper(nomDe(id).trim().charAt(0).toUpperCase() || "?");
+    s += `<g class="marque" style="animation-delay:${(k * 0.12).toFixed(2)}s"><path d="M${px} ${Y}V${py}" stroke="#111" stroke-width="3"/><circle cx="${px}" cy="${py}" r="12" fill="${c}" stroke="#111" stroke-width="3"/><text x="${px}" y="${py + 5}" font-size="15" text-anchor="middle" font-family="Bangers,Impact,sans-serif" fill="#111">${ini}</text></g>`;
+  });
+  const vx = x(vrai).toFixed(1);
+  s += `<g class="vraie" style="animation-delay:1.05s"><path d="M${vx} ${Y + 24}l-12 22h24z" fill="#FF2D2D" stroke="#111" stroke-width="3" stroke-linejoin="round"/><path d="M${vx} ${Y - 4}V${Y + 26}" stroke="#FF2D2D" stroke-width="4"/></g>`;
+  if (log) s += `<text x="${X1 + 10}" y="${H - 4}" font-size="9" text-anchor="end" font-family="Comic Neue,sans-serif" font-weight="700">échelle ×10</text>`;
+  $("regle").setAttribute("viewBox", `0 0 360 ${H}`); $("regle").innerHTML = s;
+}
+
+/* ---------- Suite, fin ---------- */
+function avancer() { P.n++; if (P.n >= P.total) terminer(); else { sons.clic(); poserQuestion(); } }
+function terminer() { if (enLigne()) Salon.envoyer({ t: "p-fin", pid: P.pid, scores: P.scores }, true); finir(); }
+$("suivante").onclick = () => {
+  if (P.phase !== "revele") return;
+  if (chef()) avancer(); else { $("suivante").disabled = true; $("suivante").textContent = "EN ATTENTE…"; Salon.envoyer({ t: "suivante?", pid: P.pid, n: P.n }); }
+};
+$("arreter").onclick = () => { if (P.phase !== "revele") return; if (chef()) terminer(); else Salon.envoyer({ t: "fin?", pid: P.pid }); };
+function finir() {
+  P.phase = "fin";
+  const cl = P.joueurs.map(j => ({ id: j.id, nom: j.nom, s: P.scores[j.id] || 0 })).sort((a, b) => b.s - a.s);
+  const rangDe = sc => 1 + cl.filter(c => c.s > sc).length, max = P.total * 5;
+  const moi = enLigne() ? cl.find(c => c.id === Salon.id) : (cl.length === 1 ? cl[0] : null);
+  $("fin-lbl").textContent = moi ? (enLigne() ? "TON SCORE" : "SCORE") : "MEILLEUR SCORE";
+  $("fin-score").textContent = moi ? moi.s : (cl[0] ? cl[0].s : 0);
+  $("fin-detail").textContent = moi && cl.length > 1 ? (rangDe(moi.s) === 1 ? "Tu finis 1er" : "Tu finis " + rangDe(moi.s) + "e") + " sur " + cl.length : "sur " + max + " possibles";
+  const best = cl.length ? cl[0].s : 0, gagnants = cl.filter(c => c.s === best).map(c => c.nom);
+  $("fin-gagnant").textContent = cl.length > 1 ? (gagnants.length > 1 ? "Égalité en tête : " : "Victoire de ") + gagnants.join(", ") + " !" : (best >= max * 0.6 ? "Impressionnant !" : best >= max * 0.35 ? "Pas mal du tout !" : "Il y a de la marge…");
+  const ul = $("classement"); ul.textContent = "";
+  cl.forEach(c => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
+    t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (enLigne() && c.id === Salon.id ? " (toi)" : "")));
+    b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
+  });
+  $("rejouer").disabled = false; $("rejouer").innerHTML = ico("rejouer") + "REJOUER";
+  $("changer").style.display = chef() ? "" : "none";
+  sons.fin(); ecran("fin");
+}
+$("rejouer").onclick = () => {
+  if (!chef()) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; Salon.envoyer({ t: "rejouer?" }); return; }
+  if (enLigne()) P.joueurs = Salon.joueurs().map(g => ({ id: g.cle, nom: g.nom }));
+  if (!P.joueurs.length) return;
+  nouvellePartie();
+};
+$("changer").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) Lobby.retourSalon(); else ecran("local"); };
+
+/* ---------- Messages reçus ---------- */
+function recevoir(m) {
+  const meme = m.pid === P.pid && m.n === P.n;
+  switch (m.t) {
+    case "p-question":
+      if (Salon.autorite() || !Array.isArray(m.joueurs) || !QUESTIONS[m.qi]) break;
+      if (!m.joueurs.some(j => j.id === Salon.id)) { if (!P.phase || P.phase === "spectateur") { P.phase = "spectateur"; Lobby.spectateur(); } break; }
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin" || P.phase === "spectateur"))) { P.mode = "ligne"; sons.clic(); debutQuestion(m); }
+      break;
+    case "p-reponse":
+      if (meme && P.phase !== "revele" && typeof m.v === "number" && P.joueurs.some(j => j.id === m.id)) { P.reps[m.id] = m.v; majStatut(); verifierComplet(); }
+      break;
+    case "p-reveal":
+      if (meme && P.phase !== "revele" && m.reps && m.pts) afficherReveal(m);
+      break;
+    case "suivante?": if (Salon.autorite() && meme && P.phase === "revele") avancer(); break;
+    case "fin?": if (Salon.autorite() && m.pid === P.pid && P.phase === "revele") terminer(); break;
+    case "p-fin": if (!Salon.autorite() && m.pid === P.pid && P.phase && P.phase !== "fin") { if (m.scores) P.scores = m.scores; finir(); } break;
+    case "rejouer?": if (Salon.autorite() && P.phase === "fin") $("rejouer").onclick(); break;
+  }
+}
+function surGens(nouveaux, partis) {
+  if (!enLigne() || !P.phase) return;
+  majStatut(); verifierComplet();
+  const chefLa = Salon.gens.some(g => g.role !== "invite");
+  alerte("deco", chefLa ? "" : "Celui qui a créé le salon est parti. La partie est en pause.");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Cadran</title>
+<meta name="description" content="Un jeu à deux : l'un donne un indice, l'autre place l'aiguille sur le cadran. En ligne ou sur un seul appareil.">
+<meta name="theme-color" content="#19B5F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 50a28 28 0 0 1 56 0z' fill='%23FFE600' stroke='%23111' stroke-width='5'/%3E%3Cpath d='M32 50 44 22' stroke='%23111' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='50' r='6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preload" href="../fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Bangers';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/bangers.woff2) format('woff2')}
+@font-face{font-family:'Comic Neue';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/comic-neue-700.woff2) format('woff2')}
+:root{
+  /* Planche de BD : aplats vifs, contours noirs épais, ombres dures décalées, trame de points. */
+  --bleu:#19B5F0; --jaune:#FFE600; --rouge:#FF2D2D; --orange:#FF8A00; --noir:#111111; --blanc:#FFFFFF;
+  --titre:'Bangers',Impact,'Arial Narrow Bold',sans-serif; --texte:'Comic Neue','Comic Sans MS','Trebuchet MS',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bleu);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:17px;line-height:1.35;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:var(--bleu);
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.28),rgba(255,255,255,0) 60%),
+   repeating-conic-gradient(from 0deg at 50% -6%,rgba(255,255,255,.09) 0deg 5deg,rgba(255,255,255,0) 5deg 11deg),
+   radial-gradient(rgba(0,0,0,.2) 2.2px,rgba(0,0,0,0) 2.6px);
+  background-size:100% 100%,100% 100%,14px 14px}
+/* Textures de planche : grain de papier sur les cases, trame de points dans l'angle */
+:root{--grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")}
+#app{max-width:440px;min-height:100%;margin:0 auto;padding:20px 22px 30px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-family:var(--titre);font-weight:400;font-size:32px;letter-spacing:2px;line-height:1;margin:0;white-space:nowrap;color:var(--blanc);background:var(--noir);padding:4px 16px 6px;transform:rotate(-3deg);box-shadow:5px 5px 0 var(--rouge)}
+h2{font-family:var(--titre);font-weight:400;font-size:30px;letter-spacing:1px;line-height:1.1;margin:0;text-wrap:balance;color:var(--blanc);-webkit-text-stroke:5px var(--noir);paint-order:stroke fill;text-shadow:3px 3px 0 var(--noir)}
+p{margin:0}
+.screen{display:none;flex-direction:column;gap:16px;flex:1}
+.screen.on{display:flex}
+.case{position:relative;isolation:isolate;background:var(--grain),var(--blanc);border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);padding:12px 14px}
+.case::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(rgba(0,0,0,.14) 1.4px,rgba(0,0,0,0) 1.8px) 0 0/7px 7px;-webkit-mask-image:linear-gradient(135deg,transparent 58%,#000);mask-image:linear-gradient(135deg,transparent 58%,#000)}
+.case.jaune{background:var(--grain),var(--jaune)}
+.case.jaune::before{background-image:radial-gradient(rgba(255,120,0,.55) 1.6px,rgba(0,0,0,0) 2px)}
+.petit{font-size:15px}
+.btn{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--titre);font-size:26px;letter-spacing:2px;color:var(--blanc);background:var(--rouge);min-height:60px;padding:8px 16px;border:4px solid var(--noir);border-radius:0;box-shadow:6px 6px 0 var(--noir);cursor:pointer;transition:transform .08s,box-shadow .08s;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.28) 0 30%,rgba(255,255,255,0) 30%),radial-gradient(rgba(0,0,0,.16) 1.4px,rgba(0,0,0,0) 1.8px) 0 0/6px 6px;-webkit-mask-image:linear-gradient(160deg,#000 40%,transparent 41%,transparent 62%,#000 63%);mask-image:linear-gradient(160deg,#000 40%,transparent 41%,transparent 62%,#000 63%)}
+@media (hover:hover){.btn:not(:disabled):hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--noir)}.btn.plat:not(:disabled):hover{box-shadow:5px 5px 0 var(--noir)}}
+.ico{width:26px;height:26px;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.btn .ico{margin-top:-2px}
+.btn.plat .ico{width:20px;height:20px}
+.btn.icone{width:50px;min-height:50px;padding:0;background:var(--blanc);color:var(--noir);border-width:3px;box-shadow:4px 4px 0 var(--noir)}
+.btn.icone::before{display:none}
+.btn.icone .ico{width:26px;height:26px;margin:0}
+.btn.icone:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--noir)}
+.btn.icone[aria-pressed="false"]{background:#D9D9D9}
+.nav{display:flex;gap:10px}
+@media (max-width:380px){h1{font-size:26px;padding:4px 12px 6px}.nav{gap:7px}.btn.icone{width:44px;min-height:44px}.btn.icone .ico{width:22px;height:22px}}
+.btn:active,.btn.enfonce{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--noir)}
+.btn:disabled{background:#B9B9B9;color:#3A3A3A;cursor:not-allowed}
+.btn.jaune{background:var(--jaune);color:var(--noir)}
+.btn.plat{font-family:var(--texte);font-weight:700;font-size:15px;letter-spacing:0;min-height:44px;padding:6px 12px;background:var(--blanc);color:var(--noir);border-width:3px;box-shadow:3px 3px 0 var(--noir)}
+.btn.plat{white-space:nowrap}
+.btn.plat::before{display:none}
+.btn.plat:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--noir)}
+:focus-visible{outline:4px solid var(--noir);outline-offset:3px}
+.bas{margin-top:auto;display:flex;flex-direction:column;gap:18px;padding-bottom:8px}
+label{font-size:15px;display:block;margin-bottom:6px}
+input[type=text]{width:100%;min-height:50px;padding:8px 12px;border:3px solid var(--noir);border-radius:0;background:var(--blanc);color:var(--noir);font-family:var(--texte);font-weight:700;font-size:18px}
+.rang{display:flex;gap:14px;flex-wrap:wrap}
+.rang>*{flex:1;min-width:0}
+.jetons{display:flex;flex-wrap:wrap;gap:10px}
+.jeton{position:relative}
+.jeton input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.jeton span{display:block;padding:8px 12px;min-height:44px;font-size:15px;background:var(--blanc);border:3px solid var(--noir);opacity:.72}
+.jeton input:checked+span{background:var(--jaune);opacity:1;box-shadow:3px 3px 0 var(--noir)}
+.jeton input:checked+span::before{content:"✓ "}
+.jeton input:focus-visible+span{outline:4px solid var(--noir);outline-offset:3px}
+.plaques{display:flex;gap:14px}
+.plaques .case{flex:1;padding:6px 14px 8px}
+.plaques small{display:block;font-size:14px;text-transform:uppercase}
+.plaques b{font-family:var(--titre);font-weight:400;font-size:42px;line-height:1;letter-spacing:1px}
+.bandeau{background:var(--noir);color:var(--blanc);padding:8px 12px;font-size:15px}
+.bandeau.alerte{background:var(--rouge);border:3px solid var(--noir)}
+.poste{padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#cadran{width:100%;max-width:360px;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#cadran.reglable{cursor:grab}
+#volet{transform-origin:170px 175px;transition:transform .7s cubic-bezier(.5,0,.2,1)}
+#volet.vite{transition-duration:.28s}
+#aiguille{transform-origin:170px 175px}
+.carte{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.carte span{font-family:var(--titre);font-size:20px;letter-spacing:1px;line-height:1.15;background:var(--noir);color:var(--blanc);padding:4px 10px 6px;max-width:48%;text-wrap:balance}
+.carte span:first-child{transform:rotate(-2deg)}
+.carte span:last-child{transform:rotate(2deg);text-align:right}
+.bulle{position:relative;background:var(--blanc);border:4px solid var(--noir);border-radius:26px;padding:10px 18px 14px;box-shadow:6px 6px 0 var(--noir);margin-bottom:22px}
+.bulle::after{content:"";position:absolute;left:36px;bottom:-24px;width:26px;height:26px;background:var(--blanc);border-right:4px solid var(--noir);border-bottom:4px solid var(--noir);transform:skewX(28deg) rotate(8deg);clip-path:polygon(0 38%,100% 0,100% 100%,0 100%)}
+.bulle .indice{font-size:25px;line-height:1.15;overflow-wrap:anywhere}
+.boum{position:relative;height:132px;display:flex;align-items:center;justify-content:center}
+.boum svg{position:absolute;left:50%;top:50%;width:300px;height:138px;transform:translate(-50%,-50%) rotate(-4deg)}
+.boum div{position:relative;font-family:var(--titre);font-size:28px;letter-spacing:1px;line-height:1.05;text-align:center;color:var(--rouge);-webkit-text-stroke:4px var(--noir);paint-order:stroke fill;transform:rotate(-4deg);max-width:190px}
+input[type=range]{width:100%;accent-color:var(--rouge);height:34px}
+.liste{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0}
+.liste li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px}
+.liste li b{font-family:var(--titre);font-weight:400;font-size:22px;color:var(--rouge);white-space:nowrap}
+.liste em{font-style:normal;opacity:.75}
+details summary{cursor:pointer;min-height:28px}
+details ol{margin:10px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:16px}
+.gens{display:flex;gap:10px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.gens li{flex:1;min-width:120px;background:var(--blanc);border:3px solid var(--noir);padding:6px 10px;font-size:17px;overflow-wrap:anywhere}
+.gens li small{display:block;font-size:13px;text-transform:uppercase}
+.gens li.vide{border-style:dashed;background:rgba(255,255,255,.6)}
+.gens li i{display:inline-block;width:14px;height:14px;border:2px solid var(--noir);margin-right:6px;vertical-align:-1px}
+.gens li em{float:right;font-style:normal;font-family:var(--titre);font-size:22px;line-height:1;margin-left:8px}
+#gens-jeu li{flex:1 1 40%;min-width:0;font-size:15px;padding:4px 8px}
+#gens-jeu li.donne{background:var(--jaune)}
+#gens-jeu li.ok small::after{content:" ✓"}
+.grand{font-family:var(--titre);font-size:84px;line-height:1;text-align:center}
+.code{font-family:var(--titre);font-size:54px;letter-spacing:8px;line-height:1;text-align:center}
+#code-saisi{font-family:var(--titre);font-size:30px;letter-spacing:8px;text-align:center;text-transform:uppercase}
+/* animations de la révélation : rouleau de points, explosion, compteur de score */
+.plaques b{display:inline-block}
+#resultat-texte{display:flex;flex-direction:column;align-items:center;max-width:220px}
+#res-mot:empty{display:none}
+.reel{display:inline-block;font-size:50px;line-height:1;white-space:nowrap}
+.reel b{display:inline-block;font-weight:400}
+.tic{animation:tic .1s ease-out}
+@keyframes tic{from{transform:translateY(-75%);opacity:.15}to{transform:none;opacity:1}}
+.boum div.pop{animation:pop .4s cubic-bezier(.3,1.7,.5,1)}
+@keyframes pop{0%{transform:rotate(-4deg) scale(.35)}100%{transform:rotate(-4deg) scale(1)}}
+.boum svg.boom{animation:boom .45s cubic-bezier(.3,1.7,.5,1)}
+@keyframes boom{0%{transform:translate(-50%,-50%) rotate(-14deg) scale(.5)}100%{transform:translate(-50%,-50%) rotate(-4deg) scale(1)}}
+.boum svg.tremble{animation:tremble .12s linear infinite}
+@keyframes tremble{0%,100%{transform:translate(-50%,-50%) rotate(-4deg)}50%{transform:translate(-50%,-50%) rotate(-1deg) scale(1.03)}}
+.roule{animation:roule .18s ease-out}
+@keyframes roule{from{transform:translateY(-65%);opacity:0}to{transform:none;opacity:1}}
+/* Effets : planches qui arrivent, bulle qui gonfle, cartes qui claquent, alertes qui tremblent */
+.screen.on{animation:planche .34s cubic-bezier(.2,1.25,.4,1)}
+@keyframes planche{from{opacity:0;transform:translateY(22px) rotate(-1.4deg)}to{opacity:1;transform:none}}
+.bulle.arrive{animation:gonfle .42s cubic-bezier(.3,1.6,.5,1);transform-origin:40px 100%}
+@keyframes gonfle{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.carte span:first-child{--r:-2deg}.carte span:last-child{--r:2deg}
+.carte span.claque{animation:claque .36s cubic-bezier(.3,1.5,.5,1) both}
+.carte span.claque:last-child{animation-delay:.08s}
+@keyframes claque{0%{transform:rotate(var(--r)) scale(1.7);opacity:0}100%{transform:rotate(var(--r)) scale(1);opacity:1}}
+.secoue{animation:secoue .45s}
+@keyframes secoue{0%,100%{transform:none}20%{transform:translateX(-7px) rotate(-1deg)}40%{transform:translateX(6px) rotate(1deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+h1{cursor:default;transition:transform .15s}
+/* Couverture de l'accueil : petit cadran dont l'aiguille hésite */
+.couverture{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 14px 14px;text-align:center}
+.couverture svg{width:100%;max-width:280px;height:auto}
+#mini-aig{transform-origin:100px 100px;animation:hesite 3.6s ease-in-out infinite}
+@keyframes hesite{0%,100%{transform:rotate(-48deg)}30%{transform:rotate(26deg)}48%{transform:rotate(8deg)}70%{transform:rotate(40deg)}85%{transform:rotate(-12deg)}}
+.accroche{font-family:var(--titre);font-size:30px;letter-spacing:1px;line-height:1.05;text-wrap:balance}
+/* Fenêtres (règles, confirmation) */
+.modale{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(17,17,17,.55)}
+.modale[hidden]{display:none}
+.modale>.case{width:100%;max-width:400px;max-height:calc(100% - 20px);overflow:auto;display:flex;flex-direction:column;gap:14px;animation:gonfle .35s cubic-bezier(.3,1.6,.5,1)}
+.modale h3{font-family:var(--titre);font-weight:400;font-size:30px;letter-spacing:1px;margin:0}
+.modale ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:7px;font-size:16px}
+.modale h4{font-family:var(--titre);font-weight:400;font-size:21px;letter-spacing:1px;margin:4px 0 0}
+.rang-btn{display:flex;gap:12px;flex-wrap:wrap}.rang-btn>*{flex:1}
+/* Salon grand écran (télé, ordi) */
+.qr{background:#fff;border:4px solid var(--noir);box-shadow:6px 6px 0 var(--noir);padding:10px;width:200px;max-width:100%}
+.qr svg{display:block;width:100%;height:auto}
+.salon-tele{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin-bottom:6px}
+.salon-tele .code{font-size:80px;text-align:left}
+.adresse{font-size:18px;overflow-wrap:anywhere}
+@media (max-width:600px){.salon-tele{grid-template-columns:1fr}}
+body.tele #app{max-width:1180px;padding:26px 40px 36px}
+body.tele h1{font-size:44px}
+body.tele #s-manche.on{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:30px;row-gap:16px;align-content:start}
+body.tele #s-manche > *{grid-column:2}
+body.tele #s-manche > .poste{grid-column:1;grid-row:1 / span 8;align-self:start}
+body.tele #cadran{max-width:none}
+body.tele .carte span{font-size:30px}
+body.tele .bulle .indice{font-size:40px}
+body.tele .bandeau{font-size:21px}
+body.tele .plaques b{font-size:54px}
+body.tele #ph-devine{margin-top:0}
+@media (max-width:820px){body.tele #s-manche.on{display:flex}}
+.btn.salon{min-height:60px;font-size:16px;white-space:normal;text-align:left;justify-content:flex-start}
+@media (prefers-reduced-motion:reduce){.screen.on,.bulle.arrive,.carte span.claque,.secoue,#mini-aig,.modale>.case{animation:none}
+#volet,.btn{transition:none}.tic,.boum div.pop,.boum svg.boom,.boum svg.tremble,.roule{animation:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-son" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+  <symbol id="i-muet" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></symbol>
+  <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.9 2.9 0 1 1 4 2.7c-.8.4-1.2 1-1.2 1.9v.6"/><path d="M12 17.6v.1"/></symbol>
+  <symbol id="i-quitter" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-retour" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7"/></symbol>
+  <symbol id="i-gens" viewBox="0 0 24 24"><circle cx="8.5" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.7-6 6-6s6 2.4 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.4c3.3-.6 6 1.6 6 5.6"/></symbol>
+  <symbol id="i-tel" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M10.5 18.2h3"/></symbol>
+  <symbol id="i-copier" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="1.5"/><path d="M15.5 8.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h3.5"/></symbol>
+  <symbol id="i-lien" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-envoyer" viewBox="0 0 24 24"><path d="M3.5 11.5 20.5 4l-5.5 16-3.5-6.5z"/><path d="M11.5 13.5 20.5 4"/></symbol>
+  <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-rejouer" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20.5 3.5v5h-5"/></symbol>
+  <symbol id="i-reglages" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></symbol>
+  <symbol id="i-maison" viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></symbol>
+  <symbol id="i-tele" viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="12.5" rx="1.5"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-suite" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7"/></symbol>
+</svg>
+<div id="app">
+  <header>
+    <h1 id="logo">LE CADRAN !</h1>
+    <nav class="nav" aria-label="Menu">
+      <a class="btn icone" id="maison" href="../" aria-label="Tous les jeux"><svg class="ico" aria-hidden="true"><use href="#i-maison"/></svg></a>
+      <button class="btn icone" id="aide" type="button" aria-label="Règles du jeu"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg></button>
+      <button class="btn icone" id="son" type="button" aria-pressed="true" aria-label="Son activé"><svg class="ico" aria-hidden="true"><use href="#i-son"/></svg></button>
+      <button class="btn icone" id="sortir" type="button" aria-label="Quitter la partie" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg></button>
+    </nav>
+  </header>
+
+  <!-- ACCUEIL -->
+  <section class="screen on" id="s-accueil">
+    <div class="case jaune couverture">
+      <svg viewBox="0 0 200 118" aria-hidden="true">
+        <path d="M6 104a94 94 0 0 1 188 0v10H6z" fill="#111" transform="translate(5 4)"/>
+        <path d="M6 104a94 94 0 0 1 188 0v10H6z" fill="#111"/>
+        <path d="M12 104a88 88 0 0 1 176 0z" fill="#fff"/>
+        <path d="M100 100 82 15A88 88 0 0 1 118 15z" fill="#FFE600" stroke="#111" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M100 100 92 13A88 88 0 0 1 108 13z" fill="#FF8A00" stroke="#111" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M100 100 97.5 12.5A88 88 0 0 1 102.5 12.5z" fill="#FF2D2D" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+        <g id="mini-aig"><polygon points="96,100 104,100 102,34 107,34 100,18 93,34 98,34" fill="#19B5F0" stroke="#111" stroke-width="3" stroke-linejoin="round"/></g>
+        <circle cx="100" cy="100" r="13" fill="#111"/><circle cx="100" cy="100" r="6.5" fill="#FF2D2D"/>
+      </svg>
+      <p class="accroche">Un indice. Une aiguille. Êtes-vous sur la même longueur ?</p>
+      <p class="petit">À deux ensemble, ou de 3 à 6 en ligne, chacun pour soi. Avec ou sans grand écran.</p>
+    </div>
+    <button class="btn plat" id="voir-regles" type="button"><svg class="ico" aria-hidden="true"><use href="#i-aide"/></svg>Les règles en 30 secondes</button>
+    <div class="bas">
+      <button class="btn" id="go-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>JOUER EN LIGNE</button>
+      <button class="btn jaune" id="go-local" type="button"><svg class="ico" aria-hidden="true"><use href="#i-tel"/></svg>JOUER SUR CET APPAREIL</button>
+      <button class="btn plat salon" id="go-salon" type="button"><svg class="ico" aria-hidden="true"><use href="#i-tele"/></svg><span>SALON GRAND ÉCRAN : cet écran affiche le jeu, tout le monde joue sur son téléphone</span></button>
+    </div>
+  </section>
+
+  <!-- EN LIGNE : créer ou rejoindre -->
+  <section class="screen" id="s-ligne">
+    <h2>Jouer en ligne</h2>
+    <div><label for="pseudo">Ton pseudo</label><input type="text" id="pseudo" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    <button class="btn" id="creer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>CRÉER UN SALON</button>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label for="code-saisi" style="margin:0">Ou entre le code d'un salon</label>
+      <input type="text" id="code-saisi" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
+      <button class="btn jaune" id="rejoindre" type="button"><svg class="ico" aria-hidden="true"><use href="#i-suite"/></svg>REJOINDRE</button>
+    </div>
+    <p class="bandeau" id="err-ligne" role="alert" style="display:none"></p>
+    <div class="bas"><button class="btn plat" id="retour-ligne" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button></div>
+  </section>
+
+  <!-- INVITÉ : salle d'attente -->
+  <section class="screen" id="s-invite">
+    <h2>Salon rejoint !</h2>
+    <div class="case jaune"><div class="petit">Code du salon</div><div class="code" id="code-invite"></div></div>
+    <div><label>Dans le salon</label><ul class="gens" id="gens-invite"></ul></div>
+    <div class="case"><p id="resume-invite">Connexion…</p></div>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Proposer une carte perso</label>
+      <div class="rang">
+        <div><label for="ig" class="petit">Côté gauche</label><input type="text" id="ig" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+        <div><label for="id" class="petit">Côté droit</label><input type="text" id="id" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+      </div>
+      <button class="btn plat" id="i-ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer cette carte</button>
+      <p class="petit" id="i-info" role="status"></p>
+    </div>
+    <div class="bas"><button class="btn plat" id="quitter-invite" type="button"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg>Quitter le salon</button></div>
+  </section>
+
+  <!-- RÉGLAGES (local, ou hôte en ligne) -->
+  <section class="screen" id="s-reglages">
+    <h2>Réglages de la partie</h2>
+    <div class="case jaune" id="bloc-salon">
+      <div class="salon-tele">
+        <div class="qr" id="qr" style="display:none"></div>
+        <div>
+          <div class="petit">Code du salon, à donner aux autres joueurs</div>
+          <div class="code" id="code-hote"></div>
+          <p class="adresse" id="adresse" style="display:none"></p>
+        </div>
+      </div>
+      <div class="rang-btn" style="margin-top:10px">
+        <button class="btn plat" id="copier-code" type="button"><svg class="ico" aria-hidden="true"><use href="#i-copier"/></svg>Copier le code</button>
+        <button class="btn plat" id="copier-lien" type="button"><svg class="ico" aria-hidden="true"><use href="#i-lien"/></svg>Copier le lien</button>
+      </div>
+      <p class="petit" id="etat-salon" role="status" style="text-align:center;margin-top:12px"></p>
+      <div class="petit" style="margin:10px 0 6px">Dans le salon</div>
+      <ul class="gens" id="gens-hote"></ul>
+    </div>
+    <div class="rang" id="bloc-noms">
+      <div><label for="p1">Joueur 1</label><input type="text" id="p1" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+      <div><label for="p2">Joueur 2</label><input type="text" id="p2" maxlength="14" autocomplete="off" placeholder="Pseudo"></div>
+    </div>
+    <div id="bloc-format">
+      <label id="l-format">Mode de jeu</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-format" id="format">
+        <label class="jeton"><input type="radio" name="format" value="duo" checked><span>À deux, ensemble</span></label>
+        <label class="jeton"><input type="radio" name="format" value="groupe"><span>À plusieurs (3 à 6), chacun pour soi</span></label>
+      </div>
+      <p class="petit" id="format-aide" style="margin-top:8px"></p>
+    </div>
+    <div id="bloc-tours" style="display:none">
+      <label id="l-tours">Combien de fois chacun donne l'indice</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-tours" id="tours"></div>
+    </div>
+    <div id="bloc-manches">
+      <label id="l-manches">Nombre de manches</label>
+      <div class="jetons" role="radiogroup" aria-labelledby="l-manches" id="manches"></div>
+    </div>
+    <div class="case" style="display:flex;flex-direction:column;gap:10px">
+      <label style="margin:0">Cartes perso (pour cette partie seulement)</label>
+      <p class="petit" id="nb-cartes"></p>
+      <div class="rang">
+        <div><label for="cg" class="petit">Côté gauche</label><input type="text" id="cg" maxlength="40" autocomplete="off" placeholder="Nul"></div>
+        <div><label for="cd" class="petit">Côté droit</label><input type="text" id="cd" maxlength="40" autocomplete="off" placeholder="Génial"></div>
+      </div>
+      <button class="btn plat" id="ajout" type="button"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Ajouter cette carte</button>
+      <ul class="liste" id="perso"></ul>
+    </div>
+    <p class="bandeau" id="err-reglages" role="alert" style="display:none"></p>
+    <div class="bas">
+      <button class="btn" id="lancer" type="button">LANCER LA PARTIE</button>
+      <button class="btn plat" id="retour-reglages" type="button"><svg class="ico" aria-hidden="true"><use href="#i-retour"/></svg>Retour</button>
+    </div>
+  </section>
+
+  <!-- PASSAGE DE L'APPAREIL (local) -->
+  <section class="screen" id="s-passe">
+    <h2 id="passe-titre"></h2>
+    <div class="case"><p id="passe-texte"></p></div>
+    <div class="bas"><button class="btn" id="passe-ok" type="button"></button></div>
+  </section>
+
+  <!-- MANCHE -->
+  <section class="screen" id="s-manche">
+    <div class="plaques">
+      <div class="case jaune"><small id="lbl-score">Score commun</small><b id="score">0</b></div>
+      <div class="case"><small>Manche</small><b id="num"></b></div>
+    </div>
+    <ul class="gens" id="gens-jeu"></ul>
+    <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
+    <p class="bandeau" id="role" aria-live="polite"></p>
+    <div class="case poste">
+      <svg id="cadran" viewBox="-12 -8 372 232" role="img" aria-label="Cadran">
+        <defs>
+          <pattern id="trame" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.5" fill="#19B5F0" opacity=".4"/></pattern>
+          <pattern id="trame-volet" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2" fill="#111" opacity=".22"/></pattern>
+          <clipPath id="c-face"><path d="M24,175 A146,146 0 0 1 316,175 Z"/></clipPath>
+        </defs>
+        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111" transform="translate(8 8)"/>
+        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111"/>
+        <path d="M6,175 A164,164 0 0 1 334,175 Z" fill="#FFE600"/>
+        <g id="grad" stroke="#111" stroke-linecap="round"></g>
+        <path d="M18,175 A152,152 0 0 1 322,175 Z" fill="#111"/>
+        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#fff"/>
+        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame)"/>
+        <g clip-path="url(#c-face)">
+          <g id="cible"></g>
+          <g id="volet">
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#FF2D2D"/>
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame-volet)"/>
+            <text x="170" y="132" font-family="Bangers,Impact,sans-serif" font-size="96" text-anchor="middle" fill="#FFE600" stroke="#111" stroke-width="5" paint-order="stroke" stroke-linejoin="round">?</text>
+          </g>
+        </g>
+        <rect x="6" y="178" width="328" height="22" fill="#FFE600"/>
+        <circle cx="20" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="320" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/>
+        <g id="aig-autres"></g>
+        <g id="aiguille">
+          <polygon points="164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+        </g>
+        <circle cx="170" cy="175" r="23" fill="#111"/>
+        <circle cx="170" cy="175" r="12" fill="#FF2D2D"/>
+        <circle cx="165" cy="170" r="4" fill="#fff"/>
+      </svg>
+      <div class="carte"><span id="gauche"></span><span id="droite"></span></div>
+    </div>
+
+    <!-- donner l'indice -->
+    <div id="ph-indice" class="bas">
+      <button class="btn jaune" id="voir" type="button"><svg class="ico" aria-hidden="true"><use href="#i-oeil"/></svg>MAINTIENS POUR VOIR LA CIBLE</button>
+      <div><label for="indice">Ton indice</label><input type="text" id="indice" maxlength="60" autocomplete="off" placeholder="Un mot, une chose, une idée…"></div>
+      <button class="btn" id="envoyer" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>ENVOYER L'INDICE</button>
+      <p class="bandeau" id="err-indice" role="alert" style="display:none"></p>
+    </div>
+
+    <!-- deviner, regarder, révélation -->
+    <div id="ph-devine" class="bas">
+      <div class="bulle" id="bulle"><div class="petit"><span id="de"></span> dit :</div><div class="indice" id="indice-affiche"></div></div>
+      <div id="zone-reglage"><label for="fin">Fais glisser l'aiguille, ou règle ici</label><input type="range" id="fin" min="3" max="177" step="1" value="90"></div>
+      <div class="boum" id="resultat" aria-live="polite">
+        <svg aria-hidden="true" viewBox="0 0 240 110"><polygon points="120,2 138,26 168,8 170,36 206,26 194,52 236,58 198,72 216,100 176,88 168,108 142,88 120,108 100,88 70,106 68,84 26,96 46,70 4,58 44,46 30,20 68,34 74,8 100,26" fill="#FFE600" stroke="#111" stroke-width="4" stroke-linejoin="round"/></svg>
+        <div id="resultat-texte"></div>
+      </div>
+      <button class="btn" id="valider" type="button">VALIDER L'AIGUILLE</button>
+      <button class="btn" id="suivante" type="button">MANCHE SUIVANTE</button>
+      <button class="btn jaune" id="reveler-mnt" type="button">RÉVÉLER SANS ATTENDRE</button>
+      <button class="btn plat" id="passer" type="button">Passer cette manche</button>
+      <button class="btn plat" id="arreter" type="button">Terminer la partie ici</button>
+    </div>
+  </section>
+
+  <!-- FIN -->
+  <section class="screen" id="s-fin">
+    <h2>Partie terminée !</h2>
+    <div class="case jaune" style="text-align:center">
+      <div class="petit">SCORE COMMUN</div>
+      <div class="grand" id="fin-score"></div>
+      <div class="petit" id="fin-detail"></div>
+    </div>
+    <p class="bandeau" id="fin-record" style="text-align:center"></p>
+    <div class="case"><ul class="liste" id="recap"></ul></div>
+    <div class="bas">
+      <button class="btn" id="rejouer" type="button">REJOUER</button>
+      <button class="btn plat" id="accueil" type="button"><svg class="ico" aria-hidden="true"><use href="#i-reglages"/></svg>Changer les réglages</button>
+      <button class="btn plat" id="quitter-fin" type="button"><svg class="ico" aria-hidden="true"><use href="#i-quitter"/></svg>Quitter le salon</button>
+    </div>
+  </section>
+</div>
+
+<div class="modale" id="m-regles" hidden role="dialog" aria-modal="true" aria-labelledby="t-regles">
+  <div class="case">
+    <h3 id="t-regles">Les règles</h3>
+    <ol>
+      <li>Une carte sort avec deux opposés, par exemple « Froid ↔ Chaud ».</li>
+      <li>Celui qui donne l'indice voit où est la cible et tape un indice qui correspond à cet endroit.</li>
+      <li>On place l'aiguille là où on pense que la cible se trouve, puis on valide.</li>
+      <li>La cible se révèle : 4 points au centre, 3 juste à côté, 2 au bord, 0 en dehors.</li>
+      <li>Le rôle de celui qui donne l'indice tourne à chaque manche.</li>
+    </ol>
+    <h4>À deux</h4>
+    <p class="petit">Vous jouez ensemble et additionnez vos points. Battez votre record !</p>
+    <h4>À plusieurs (3 à 6, en ligne)</h4>
+    <p class="petit">Chacun place son aiguille en secret et garde ses points. Celui qui donne l'indice gagne 2 points par joueur qui trouve la cible, mais 0 si tout le monde trouve ou si personne ne trouve.</p>
+    <button class="btn" id="fermer-regles" type="button">C'EST PARTI !</button>
+  </div>
+</div>
+<div class="modale" id="m-quitter" hidden role="dialog" aria-modal="true" aria-labelledby="t-quitter">
+  <div class="case jaune">
+    <h3 id="t-quitter">Quitter la partie ?</h3>
+    <p id="quitter-texte">La partie en cours sera perdue.</p>
+    <div class="rang-btn">
+      <button class="btn" id="quitter-oui" type="button">OUI</button>
+      <button class="btn plat" id="quitter-non" type="button">Non, je reste</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- Connexion temps réel (Supabase, clé publique faite pour être dans la page) ---------- */
+const SUPA_URL = "wss://cbbnrdfvaaikawszaysu.supabase.co/realtime/v1";
+const SUPA_CLE = "sb_publishable_rfB8KSptjcdTpp8QxvST9A_UlpQ8rW0";
+
+/* ---------- Cartes : des échelles avec un vrai milieu ---------- */
+const CARTES = "Froid|Chaud;Minuscule|Gigantesque;Léger|Lourd;Lent|Rapide;Silencieux|Bruyant;Mou|Dur;Lisse|Rugueux;Sec|Mouillé;Doux|Piquant;Sombre|Lumineux;Calme|Chaotique;Propre|Sale;Fragile|Indestructible;Court|Interminable;Simple|Compliqué;Facile|Difficile;Inutile|Indispensable;Banal|Rare;Ancien|Moderne;Démodé|À la mode;Ringard|Stylé;Moche|Magnifique;Nul|Génial;Ennuyeux|Passionnant;Triste|Joyeux;Rassurant|Effrayant;Sans danger|Dangereux;Bon pour la santé|Mauvais pour la santé;Pas cher|Hors de prix;Sous-coté|Sur-coté;Détesté|Adoré;Normal|Bizarre;Sérieux|Déjanté;Réaliste|Complètement irréaliste;Prudent|Inconscient;Poli|Malpoli;Classe|Beauf;Bon goût|Mauvais goût;Discret|Tape-à-l'œil;Minimaliste|Surchargé;Naturel|Artificiel;Gadget|Invention qui a changé le monde;Pure chance|Vrai talent;Amateur|Professionnel;Faible|Puissant;Lâche|Courageux;Égoïste|Généreux;Naïf|Méfiant;Optimiste|Pessimiste;Bon perdant|Mauvais perdant;Bien rangé|Gros bazar;Organisé|Improvisé;Prévisible|Imprévisible;Logique|Absurde;Possible|Impossible;Très improbable|Sûr et certain;Cliché|Original;Grand public|Pour initiés;Inconnu|Célèbre;Pour les enfants|Pour les adultes;Truc d'ado|Truc de retraité;Pour les débutants|Pour les experts;Accessible à tous|Réservé à une élite;Coloré|Terne;Appétissant|Dégoûtant;Romantique|Pas romantique du tout;Reposant|Épuisant;Motivant|Démotivant;Réconfortant|Déprimant;Rêve|Cauchemar;Paradis|Enfer;Bon présage|Mauvais présage;Normal|Paranormal;Flou|Net;Clair|Mystérieux;Rond|Pointu;Mauvais pour la planète|Bon pour la planète;Fait perdre du temps|Fait gagner du temps;Vieillit mal|Vieillit bien;Était mieux avant|Est mieux maintenant;Va bientôt disparaître|Existera encore dans 100 ans;Vite oublié|Inoubliable;Mode passagère|Classique éternel;Plaisir assumé|Plaisir coupable;Petit plaisir|Bonheur absolu;Un peu agaçant|Insupportable;Petite peur|Terreur absolue;Légèrement gênant|Envie de disparaître;Petit stress|Panique totale;Pas surprenant|Choquant;Petite bêtise|Impardonnable;Pas grave|Catastrophe;Petit mensonge|Énorme mensonge;Mensonge raté|Mensonge parfait;Secret banal|Secret explosif;Rumeur crédible|Rumeur absurde;Jour normal|Jour historique;Un peu de chance|Miracle;Idée nulle|Idée de génie;Bonne idée à 3 h du matin|Terrible idée à 3 h du matin;Mauvais conseil|Conseil en or;Mauvaise habitude|Bonne habitude;Excuse pas crédible|Excuse imparable;Pas drôle du tout|Hilarant;Blague nulle|Blague culte;Blague de papa|Vraie bonne blague;Gênant|Cool;Petite honte|Honte éternelle;Avis banal|Avis qui fâche;Moralement correct|Moralement douteux;Sage|Rebelle;Toléré au lycée|Interdit au lycée;Normal en public|Bizarre en public;Se dit au travail|Ne se dit jamais au travail;Ça se partage|Ça ne se partage pas;Ça se prête|Ça ne se prête jamais;Facile à dessiner|Impossible à dessiner;Facile à expliquer|Impossible à expliquer;Facile à prononcer|Imprononçable;Facile à deviner|Impossible à deviner;Facile à apprendre|Des années pour maîtriser;Dure une seconde|Dure toute une vie;Se fait en 2 minutes|Prend toute la journée;Tient dans une main|Ne rentre pas dans une maison;Ça vaut 1 €|Ça vaut 1 000 €;Arnaque|Bonne affaire;Achat regretté|Meilleur achat de ma vie;Pourboire radin|Pourboire généreux;Truc de radin|Truc de flambeur;Petit budget|Gros budget;Hobby pas cher|Hobby ruineux;Hobby ennuyeux|Hobby passionnant;Compétence inutile|Compétence vitale;Talent inutile|Talent impressionnant;Super-pouvoir nul|Super-pouvoir incroyable;Métier ennuyeux|Métier de rêve;Métier tranquille|Métier stressant;Métier sans risque|Métier dangereux;Métier mal payé|Métier très bien payé;Matière inutile|Matière indispensable;Cours ennuyeux|Cours passionnant;Prof cool|Prof sévère;Question facile|Question impossible;Mauvais professeur|Professeur idéal;Mauvais colocataire|Colocataire idéal;Mauvais coéquipier|Coéquipier idéal;Mauvais voisin|Voisin parfait;Mauvais leader|Leader né;Ami de passage|Ami pour la vie;Mauvais animal de compagnie|Animal de compagnie idéal;Animal mignon|Animal flippant;Animal bête|Animal intelligent;Animal inoffensif|Animal redoutable;Meurt en premier dans un film d'horreur|Survit jusqu'à la fin;Arme nulle contre des zombies|Arme parfaite contre des zombies;Inutile sur une île déserte|Indispensable sur une île déserte;Pire chose à trouver dans sa poche|Meilleure chose à trouver dans sa poche;Pire moment pour éternuer|Moment parfait pour éternuer;Pire endroit pour dormir|Meilleur endroit pour dormir;Pire endroit pour un rendez-vous|Meilleur endroit pour un rendez-vous;Pire cadeau d'anniversaire|Meilleur cadeau d'anniversaire;Pire costume d'Halloween|Meilleur costume d'Halloween;Pire sonnerie de réveil|Meilleure sonnerie de réveil;Pire garniture de pizza|Meilleure garniture de pizza;Pire parfum de glace|Meilleur parfum de glace;Pire bonbon|Meilleur bonbon;Pire début de journée|Meilleur début de journée;Dimanche raté|Dimanche parfait;Vacances ratées|Vacances de rêve;Soirée calme|Soirée mémorable;Mauvais nom de groupe de musique|Super nom de groupe de musique;Mauvais nom de restaurant|Super nom de restaurant;Mauvais nom de bateau|Nom de bateau parfait;Prénom de méchant|Prénom de héros;Prénom démodé|Prénom tendance;Pseudo gênant|Pseudo stylé;Mauvais slogan|Slogan génial;Tatouage regretté|Tatouage stylé;Mot moche|Joli mot;Bruit agréable|Bruit insupportable;Couleur triste|Couleur joyeuse;Plat dégoûtant|Plat délicieux;Repas léger|Repas copieux;Encas sain|Encas pas sain du tout;Facile à cuisiner|Impossible à réussir;Bouffe de cantine|Grande gastronomie;Meilleur en hiver|Meilleur en été;Meilleur le matin|Meilleur le soir;Mieux seul|Mieux à plusieurs;Mieux à la maison|Mieux dehors;À faire une fois dans sa vie|À faire tous les jours;Vaut le coup d'attendre|Pas la peine d'attendre;Film nul|Chef-d'œuvre;Méchant raté|Méchant culte;Héros insupportable|Héros adoré;Personnage oubliable|Personnage iconique;Fin ratée|Fin parfaite;Série à oublier|Série à dévorer d'une traite;Livre ennuyeux|Livre qu'on ne lâche pas;Chanson agaçante|Chanson envoûtante;Musique pour dormir|Musique pour faire la fête;Chanson triste|Chanson joyeuse;Jeu vidéo relaxant|Jeu vidéo qui rend fou;Jeu facile|Jeu impossible;Boss facile|Boss cauchemar;Arme nulle dans un jeu|Arme cheatée;Pire jeu de société|Meilleur jeu de société;Sport facile|Sport exigeant;Sport ennuyeux à regarder|Sport captivant à regarder;Sport de brutes|Sport élégant;Vidéo vite oubliée|Vidéo culte;Info fiable|Grosse intox;Appli inutile|Appli indispensable;Message à envoyer|Message à ne jamais envoyer;Commentaire gentil|Commentaire toxique;Emoji innocent|Emoji douteux;Repas de famille tranquille|Repas de famille explosif;Sujet tranquille|Sujet à éviter à table;Conseil de grand-mère inutile|Conseil de grand-mère précieux;Endroit calme|Endroit bondé;Lieu rassurant|Lieu flippant;Ville où on s'ennuie|Ville où on s'éclate;Pour une journée|Pour y vivre toute sa vie;Destination pas chère|Destination de luxe;Gentil robot|Robot maléfique;Fait avéré|Légende urbaine;Petit événement|Événement historique;Bonne phrase d'accroche|Phrase d'accroche catastrophique;Bon pour le moral|Mauvais pour le moral;Tendu|Détendu;Pas assez épicé|Beaucoup trop épicé;Sent mauvais|Sent très bon".split(";").map(x => x.split("|"));
+
+const MANCHES = [4, 10, 14, 20, 0]; // 0 = sans fin
+const $ = id => document.getElementById(id);
+const memo = {
+  lire(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+function alerte(id, texte) {
+  const e = $(id), avant = e.textContent;
+  e.textContent = texte || ""; e.style.display = texte ? "" : "none";
+  if (texte && texte !== avant) { e.classList.remove("secoue"); void e.offsetWidth; e.classList.add("secoue"); }
+}
+
+/* ---------- Sons légers ---------- */
+let audio = null, sonActif = memo.lire("cadran-son", "1") === "1";
+function note(freq, duree, type, volume, quand) {
+  if (!sonActif) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const t = audio.currentTime + (quand || 0), o = audio.createOscillator(), g = audio.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(volume || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+    o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + duree + 0.02);
+  } catch (e) {}
+}
+const sons = {
+  cran() { note(1500, 0.025, "square", 0.018); },
+  tic(i) { note(700 + (i % 4) * 90, 0.035, "square", 0.03); },
+  clic() { note(520, 0.06, "triangle", 0.05); },
+  volet() { note(220, 0.35, "sawtooth", 0.02); note(330, 0.3, "sawtooth", 0.015, 0.12); },
+  arrivee() { note(660, 0.1, "triangle", 0.06); note(990, 0.2, "triangle", 0.06, 0.1); },
+  points(p) {
+    if (p === 4) { note(659, 0.14, "triangle", 0.07); note(784, 0.14, "triangle", 0.07, 0.12); note(1047, 0.32, "triangle", 0.07, 0.24); }
+    else if (p === 3) { note(659, 0.14, "triangle", 0.07); note(880, 0.28, "triangle", 0.07, 0.13); }
+    else if (p === 2) { note(587, 0.25, "triangle", 0.06); }
+    else { note(196, 0.3, "sine", 0.07); note(165, 0.4, "sine", 0.07, 0.18); }
+  },
+  fin() { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.3, "triangle", 0.06, i * 0.13)); }
+};
+function majSon() {
+  $("son").setAttribute("aria-pressed", sonActif); $("son").setAttribute("aria-label", sonActif ? "Son activé" : "Son coupé");
+  $("son").querySelector("use").setAttribute("href", sonActif ? "#i-son" : "#i-muet");
+}
+$("son").onclick = () => { sonActif = !sonActif; memo.ecrire("cadran-son", sonActif ? "1" : "0"); majSon(); sons.clic(); };
+majSon();
+
+/* ---------- Écrans ---------- */
+let ecranActuel = "accueil";
+function ecran(nom) {
+  ecranActuel = nom;
+  const enJeu = ["manche", "passe"].includes(nom);
+  $("sortir").style.display = enJeu ? "" : "none"; $("maison").style.display = enJeu ? "none" : "";
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + nom));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- État de la partie ---------- */
+// mode : "local" ou "ligne". moi : 0 = hôte, 1 = invité (en ligne seulement).
+// format (en ligne) : "duo" = à deux ensemble, "groupe" = 3 à 6 chacun pour soi.
+// gj = joueurs de la partie en groupe [{ id, nom }], scores = points par id, valides = aiguilles validées par id.
+const P = { mode: "local", format: "duo", gj: [], scores: {}, valides: {}, tours: 1, ids: [], moi: 0, pid: 0, joueurs: ["", ""], manches: 10, pioche: [], toutes: [], n: 0, score: 0, histo: [], carte: null, cible: null, angle: 90, indice: "", phase: "" };
+const melange = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const enLigne = () => P.mode === "ligne";
+const groupe = () => enLigne() && P.format === "groupe";
+const donneurG = () => P.gj[P.n % P.gj.length];
+const donneur = () => groupe() ? donneurG().nom : P.joueurs[P.n % 2];
+const devineur = () => groupe() ? "tout le monde" : P.joueurs[(P.n + 1) % 2];
+const jeDonne = () => !enLigne() || (groupe() ? donneurG().id === S.id : P.n % 2 === P.moi);
+const jeDevine = () => !jeDonne();
+const COULEURS = ["#19B5F0", "#9B5CFF", "#00C46A", "#FF4FB0", "#FF8A00", "#FFFFFF"];
+const couleurDe = id => COULEURS[Math.max(0, P.gj.findIndex(j => j.id === id)) % COULEURS.length];
+
+/* ---------- Réglages ---------- */
+let persos = [];
+$("manches").innerHTML = MANCHES.map(n =>
+  `<label class="jeton"><input type="radio" name="manches" value="${n}" ${n === 10 ? "checked" : ""}><span>${n || "Sans fin"}</span></label>`).join("");
+const manchesChoisies = () => +document.querySelector("#manches input:checked").value;
+$("tours").innerHTML = [1, 2, 3].map(n =>
+  `<label class="jeton"><input type="radio" name="tours" value="${n}" ${n === 1 ? "checked" : ""}><span>${n} fois</span></label>`).join("");
+const toursChoisis = () => +document.querySelector("#tours input:checked").value;
+const formatChoisi = () => document.querySelector("#format input:checked").value;
+function majFormat() {
+  const g = formatChoisi() === "groupe";
+  $("bloc-tours").style.display = g ? "" : "none"; $("bloc-manches").style.display = g ? "none" : "";
+  const nb = S.gens.filter(x => x.role !== "ecran").length || 1;
+  if (P.ecran) { $("format-aide").textContent = "À 2 joueurs, vous jouez ensemble (score commun). De 3 à 6, chacun pour soi."; return; }
+  $("format-aide").textContent = g
+    ? "Chacun place son aiguille en secret et marque ses points. Celui qui donne l'indice gagne 2 points par joueur qui trouve la cible, mais 0 si tout le monde trouve ou si personne ne trouve." + (nb >= 3 ? " Partie de " + toursChoisis() * nb + " manches." : "")
+    : "Vous jouez ensemble et additionnez vos points.";
+}
+$("format").onchange = () => { majFormat(); reglagesChanges(); };
+$("tours").onchange = () => { majFormat(); reglagesChanges(); };
+function compteCartes() {
+  const n = CARTES.length + persos.length;
+  $("nb-cartes").textContent = CARTES.length + " cartes dans le jeu" + (persos.length ? " + " + persos.length + " perso" : "") + ".";
+  return n;
+}
+function reglagesChanges() { compteCartes(); if (enLigne()) envoyerReglages(); }
+$("manches").onchange = reglagesChanges;
+function majPersos() {
+  const ul = $("perso"); ul.textContent = "";
+  persos.forEach((c, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("button");
+    t.textContent = c[0] + " ↔ " + c[1];
+    b.className = "btn plat"; b.type = "button"; b.textContent = "Retirer"; b.setAttribute("aria-label", "Retirer la carte " + c[0] + " / " + c[1]);
+    b.onclick = () => { persos.splice(i, 1); majPersos(); };
+    li.append(t, b); ul.append(li);
+  });
+  reglagesChanges();
+}
+$("ajout").onclick = () => {
+  const g = $("cg").value.trim(), d = $("cd").value.trim();
+  if (!g || !d) { alerte("err-reglages", "Une carte perso a besoin des deux côtés."); return; }
+  alerte("err-reglages"); persos.push([g, d]); $("cg").value = ""; $("cd").value = ""; majPersos(); $("cg").focus();
+};
+function ouvrirReglages() {
+  majGens();
+  const ligne = enLigne();
+  $("bloc-salon").style.display = ligne ? "" : "none";
+  $("bloc-noms").style.display = ligne ? "none" : "";
+  $("bloc-format").style.display = ligne && !P.ecran ? "" : "none";
+  $("qr").style.display = P.ecran ? "" : "none"; $("adresse").style.display = P.ecran ? "" : "none";
+  if (P.ecran) document.querySelector('#format input[value="groupe"]').checked = true;
+  if (!ligne) { document.querySelector('#format input[value="duo"]').checked = true; }
+  majFormat();
+  alerte("err-reglages"); compteCartes(); ecran("reglages");
+}
+$("go-local").onclick = () => {
+  sons.clic(); P.mode = "local";
+  $("p1").value = $("p1").value || memo.lire("cadran-p1", ""); $("p2").value = $("p2").value || memo.lire("cadran-p2", "");
+  ouvrirReglages();
+};
+$("retour-reglages").onclick = () => { sons.clic(); if (enLigne()) quitterSalon(); ecran("accueil"); };
+
+$("lancer").onclick = () => {
+  const cartes = CARTES.concat(persos);
+  if (enLigne()) {
+    P.format = formatChoisi();
+    const nb = S.gens.length;
+    if (P.ecran) { // écran du salon : 2 joueurs ensemble, ou 3 à 6 chacun pour soi
+      const nj = S.gens.filter(g => g.role !== "ecran").length;
+      if (nj < 2) { alerte("err-reglages", "Il faut au moins 2 joueurs (vous êtes " + nj + "). Scannez le QR code ou tapez le code " + S.code + "."); return; }
+      P.format = "groupe"; P.tours = toursChoisis(); alerte("err-reglages"); P.toutes = cartes;
+      nouvellePartie(); return;
+    }
+    if (P.format === "groupe") {
+      if (nb < 3) { alerte("err-reglages", "Il faut au moins 3 joueurs dans le salon (vous êtes " + nb + "). Donne le code " + S.code + " aux autres."); return; }
+      P.tours = toursChoisis(); alerte("err-reglages"); P.toutes = cartes;
+      nouvellePartie(); return;
+    }
+    if (nb !== 2) { alerte("err-reglages", nb < 2 ? "L'autre joueur n'est pas encore dans le salon. Donne-lui le code " + S.code + "." : "En mode à deux, il faut exactement 2 joueurs (vous êtes " + nb + "). Choisis « À plusieurs »."); return; }
+    P.joueurs = [S.nom, S.autre.nom]; P.ids = [S.id, S.autre.cle];
+  } else {
+    const a = $("p1").value.trim() || "Joueur 1", b = $("p2").value.trim() || "Joueur 2";
+    if (a.toLowerCase() === b.toLowerCase()) { alerte("err-reglages", "Choisissez deux pseudos différents."); return; }
+    memo.ecrire("cadran-p1", a); memo.ecrire("cadran-p2", b); P.joueurs = [a, b];
+  }
+  alerte("err-reglages");
+  P.manches = manchesChoisies(); P.toutes = cartes;
+  nouvellePartie();
+};
+function nouvellePartie() {
+  if (groupe()) { // l'ordre des donneurs suit l'ordre d'arrivée dans le salon
+    P.gj = S.gens.filter(g => g.role !== "ecran").slice(0, 6).map(g => ({ id: g.cle, nom: g.nom }));
+    P.coop = P.gj.length === 2; // à deux avec un grand écran : on joue ensemble
+    P.scores = {}; P.gj.forEach(j => { P.scores[j.id] = 0; });
+    P.manches = P.tours * P.gj.length;
+  }
+  P.pioche = melange(P.toutes.slice()); P.pid++; P.n = 0; P.score = 0; P.histo = [];
+  sons.clic(); preparerManche();
+}
+
+/* ---------- Déroulé d'une manche ---------- */
+function passe(titre, texte, bouton, suite) {
+  $("passe-titre").textContent = titre; $("passe-texte").textContent = texte; $("passe-ok").textContent = bouton;
+  $("passe-ok").onclick = () => { sons.clic(); suite(); };
+  ecran("passe");
+}
+// Appelé par celui qui tient la pioche : l'appareil unique en local, l'hôte en ligne.
+function preparerManche() {
+  if (!P.pioche.length) P.pioche = melange(P.toutes.slice());
+  const carte = P.pioche.pop();
+  if (groupe()) envoyer({ t: "g-manche", pid: P.pid, n: P.n, carte, scores: P.scores, manches: P.manches, gj: P.gj, coop: !!P.coop }, true);
+  else if (enLigne()) envoyer({ t: "manche", pid: P.pid, n: P.n, carte, score: P.score, manches: P.manches, joueurs: P.joueurs, ids: P.ids }, true);
+  debutManche(carte);
+}
+function debutManche(carte) {
+  P.carte = carte; P.indice = ""; P.angle = 90; aigDistante = null; P.valides = {};
+  $("aig-autres").innerHTML = "";
+  if (groupe()) P.score = P.ecran ? (P.coop ? P.scores[P.gj[0].id] || 0 : Math.max(0, ...Object.values(P.scores))) : (P.scores[S.id] || 0);
+  if (enLigne()) {
+    if (P.ecran) { P.cible = null; phaseAttenteIndice(); if (!P.coop) $("aiguille").style.display = "none"; }
+    else if (jeDonne()) { P.cible = tirerCible(); phaseIndice(); } else { P.cible = null; phaseAttenteIndice(); }
+  } else {
+    P.cible = tirerCible();
+    passe(donneur() + ", à toi de faire deviner !", devineur() + " ne doit pas regarder l'écran pendant que tu découvres la cible.", "JE SUIS " + donneur().toUpperCase(), phaseIndice);
+  }
+}
+const tirerCible = () => 22 + Math.random() * 136; // la cible reste toujours entière sur le cadran
+
+/* ---------- Cadran ---------- */
+const pt = (a, r) => [170 - r * Math.cos(a * Math.PI / 180), 175 - r * Math.sin(a * Math.PI / 180)];
+$("grad").innerHTML = Array.from({ length: 35 }, (_, i) => { const a = 5 + i * 5, g = a % 15 === 0, [x1, y1] = pt(a, 154), [x2, y2] = pt(a, g ? 163 : 159); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${g ? 3.5 : 2}"/>`; }).join("");
+function dessinerCible(t) {
+  if (t === null) { $("cible").innerHTML = ""; return; }
+  const zones = [[-20, -12, "#FFE600", 2, "#111"], [-12, -4, "#FF8A00", 3, "#111"], [-4, 4, "#FF2D2D", 4, "#fff"], [4, 12, "#FF8A00", 3, "#111"], [12, 20, "#FFE600", 2, "#111"]];
+  $("cible").innerHTML = zones.map(([d1, d2, coul, pts, enc]) => {
+    const [x1, y1] = pt(t + d1, 150), [x2, y2] = pt(t + d2, 150), [tx, ty] = pt(t + (d1 + d2) / 2, 122);
+    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}" stroke="#111" stroke-width="3" stroke-linejoin="round"/>` +
+      `<text x="${tx.toFixed(1)}" y="${(ty + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="16" text-anchor="middle" fill="${enc}">${pts}</text>`;
+  }).join("");
+}
+function volet(ouvert, vite) {
+  const v = $("volet"); v.classList.toggle("vite", !!vite);
+  const voulu = ouvert ? "rotate(180deg)" : "rotate(0deg)";
+  if (v.style.transform !== voulu) { v.style.transform = voulu; sons.volet(); }
+}
+let dernierCran = 90;
+function poserAiguille(a, silencieux) {
+  P.angle = Math.max(3, Math.min(177, a));
+  $("aiguille").style.transform = "rotate(" + (P.angle - 90) + "deg)";
+  $("fin").value = Math.round(P.angle);
+  if (!silencieux && Math.abs(P.angle - dernierCran) >= 4) { dernierCran = P.angle; sons.cran(); }
+}
+const svg = $("cadran");
+function angleDepuis(e) {
+  const r = svg.getBoundingClientRect();
+  const x = -12 + (e.clientX - r.left) / r.width * 372, y = -8 + (e.clientY - r.top) / r.height * 232;
+  const dx = 170 - x, dy = 175 - y;
+  return dy <= 0 ? (dx > 0 ? 3 : 177) : Math.atan2(dy, dx) * 180 / Math.PI;
+}
+// En ligne, la position de l'aiguille part au plus 10 fois par seconde, et seulement si elle a bougé.
+let dernierEnvoiAig = 0, angleEnvoye = null, envoiPrevu = null;
+function diffuserAiguille(force) {
+  if (!enLigne() || (groupe() && !P.coop) || P.phase !== "devine") return; // à plusieurs, les aiguilles restent secrètes
+  const maintenant = Date.now(), a = Math.round(P.angle * 10) / 10;
+  if (a === angleEnvoye) return;
+  if (force || maintenant - dernierEnvoiAig >= 100) {
+    clearTimeout(envoiPrevu); envoiPrevu = null; dernierEnvoiAig = maintenant; angleEnvoye = a;
+    envoyer({ t: "aig", pid: P.pid, n: P.n, a });
+  } else if (!envoiPrevu) envoiPrevu = setTimeout(() => { envoiPrevu = null; diffuserAiguille(true); }, 100 - (maintenant - dernierEnvoiAig));
+}
+function regler(a) { poserAiguille(a); diffuserAiguille(false); }
+let glisse = false;
+svg.addEventListener("pointerdown", e => { if (P.phase !== "devine") return; glisse = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} regler(angleDepuis(e)); e.preventDefault(); });
+svg.addEventListener("pointermove", e => { if (glisse && P.phase === "devine") regler(angleDepuis(e)); });
+["pointerup", "pointercancel"].forEach(t => svg.addEventListener(t, () => { if (glisse) { glisse = false; diffuserAiguille(true); } }));
+$("fin").addEventListener("input", e => { if (P.phase === "devine") regler(+e.target.value); });
+// Aiguille de l'autre joueur : on glisse vers sa dernière position connue pour un mouvement fluide.
+let aigDistante = null, lissage = 0, filet = 0;
+const suitAiguille = () => P.phase === "regarde" || (P.coop && (P.phase === "attente-valid" || P.phase === "tele"));
+function lisser() {
+  lissage = 0;
+  if (!suitAiguille() || aigDistante === null) return;
+  const ecart = aigDistante - P.angle;
+  if (Math.abs(ecart) < 0.05) { poserAiguille(aigDistante); return; }
+  poserAiguille(P.angle + ecart * 0.28);
+  lissage = requestAnimationFrame(lisser);
+}
+function viserAiguille(a) {
+  aigDistante = a;
+  if (document.hidden) { poserAiguille(a, true); return; } // onglet en arrière-plan : pas d'animation, on place directement
+  if (!lissage) lissage = requestAnimationFrame(lisser);
+  // filet de sécurité si le navigateur ralentit les animations : l'aiguille rejoint sa place quoi qu'il arrive
+  clearTimeout(filet); filet = setTimeout(() => { if (suitAiguille() && aigDistante !== null) poserAiguille(aigDistante, true); }, 350);
+}
+
+/* ---------- Phases ---------- */
+function enTete() {
+  $("score").textContent = P.score;
+  $("lbl-score").textContent = groupe() && !P.coop ? (P.ecran ? "Meilleur score" : "Ton score") : "Score commun";
+  majStatut();
+  $("num").textContent = (P.n + 1) + (P.manches ? " / " + P.manches : "");
+  if ($("gauche").textContent !== P.carte[0] || $("droite").textContent !== P.carte[1]) {
+    $("gauche").textContent = P.carte[0]; $("droite").textContent = P.carte[1];
+    ["gauche", "droite"].forEach(id => rejouerAnim($(id), "claque"));
+  }
+}
+const BLOCS = ["ph-indice", "voir", "ph-devine", "bulle", "zone-reglage", "resultat", "valider", "reveler-mnt", "passer", "suivante", "arreter"];
+function montrer(ids) { BLOCS.forEach(i => { $(i).style.display = ids.includes(i) ? "" : "none"; }); }
+function role(texte) { $("role").textContent = texte; }
+
+function phaseIndice() {
+  P.phase = "indice"; enTete();
+  dessinerCible(P.cible);
+  $("aiguille").style.display = "none"; svg.classList.remove("reglable");
+  $("indice").value = ""; alerte("err-indice");
+  if (enLigne()) { // seul sur son appareil : la cible reste visible
+    volet(true, true); role(groupe() && P.coop ? "Voici la cible. Donne à " + (P.gj.find(j => j.id !== S.id) || { nom: "ton coéquipier" }).nom + " un indice qui correspond à cet endroit." : groupe() ? "Voici la cible. Donne un indice : tu marques si certains trouvent, mais pas tous !" : "Voici la cible. Donne à " + devineur() + " un indice qui correspond à cet endroit.");
+    montrer(["ph-indice"]);
+  } else {
+    volet(false, true); role(donneur() + " : regarde la cible, puis donne un indice qui correspond à cet endroit.");
+    montrer(["ph-indice", "voir"]);
+  }
+  ecran("manche");
+}
+const voir = $("voir");
+function regarder(oui) { if (P.phase !== "indice" || enLigne()) return; voir.classList.toggle("enfonce", oui); volet(oui, true); }
+voir.addEventListener("pointerdown", e => { e.preventDefault(); regarder(true); });
+["pointerup", "pointercancel", "pointerleave"].forEach(t => voir.addEventListener(t, () => regarder(false)));
+voir.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); regarder(true); } });
+voir.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") regarder(false); });
+voir.addEventListener("contextmenu", e => e.preventDefault());
+
+function envoyerIndice() {
+  if (P.phase !== "indice") return;
+  const t = $("indice").value.trim();
+  if (!t) { alerte("err-indice", "Écris un indice avant d'envoyer."); return; }
+  P.indice = t; sons.clic();
+  if (enLigne()) { envoyer({ t: "indice", pid: P.pid, n: P.n, texte: t }, true); if (groupe()) phaseAttenteValid(); else phaseRegarde(); }
+  else {
+    P.phase = "attente"; volet(false, true);
+    passe("Passe l'appareil à " + devineur() + " !", "L'indice est enregistré et la cible est cachée. Elle ne peut plus être montrée avant la révélation.", "JE SUIS " + devineur().toUpperCase(), phaseDevine);
+  }
+}
+$("envoyer").onclick = envoyerIndice;
+$("indice").addEventListener("keydown", e => { if (e.key === "Enter") envoyerIndice(); });
+
+function afficherIndice() {
+  const t = "« " + P.indice + " »";
+  $("de").textContent = donneur();
+  if ($("indice-affiche").textContent !== t) { $("indice-affiche").textContent = t; requestAnimationFrame(() => rejouerAnim($("bulle"), "arrive")); }
+}
+function phaseAttenteIndice() { // en ligne, côté devineur
+  P.phase = "attente-indice"; enTete(); dessinerCible(null); volet(false, true);
+  $("aiguille").style.display = ""; poserAiguille(90, true); svg.classList.remove("reglable");
+  role(donneur() + " regarde la cible et prépare son indice…");
+  montrer([]); if (groupe()) rafraichirBoutons(); ecran("manche");
+}
+function phaseRegarde() { // en ligne, côté donneur : la cible reste visible, l'aiguille de l'autre bouge en direct
+  P.phase = "regarde"; enTete(); volet(true, true);
+  $("aiguille").style.display = ""; poserAiguille(90, true); aigDistante = null; svg.classList.remove("reglable");
+  role(devineur() + " place l'aiguille. Tu la vois bouger en direct, sans rien dire !");
+  afficherIndice(); montrer(["ph-devine", "bulle"]); ecran("manche");
+}
+function phaseDevine() {
+  P.phase = "devine"; enTete(); volet(false, true);
+  $("aiguille").style.display = ""; dernierCran = 90; angleEnvoye = null; poserAiguille(90, true); svg.classList.add("reglable");
+  role(groupe() ? "À toi : place ton aiguille en secret. Personne ne la voit avant la révélation." : devineur() + " : place l'aiguille là où tu penses que la cible se trouve.");
+  afficherIndice(); $("valider").disabled = false; $("valider").textContent = "VALIDER L'AIGUILLE";
+  montrer(["ph-devine", "bulle", "zone-reglage", "valider"].concat(boutonPasser())); ecran("manche");
+}
+// Écran du salon : l'indice est donné, les joueurs placent leur aiguille sur leur téléphone.
+function phaseTele() {
+  P.phase = "tele"; enTete(); volet(false, true); svg.classList.remove("reglable");
+  $("aiguille").style.display = P.coop ? "" : "none"; poserAiguille(90, true); aigDistante = null;
+  afficherIndice(); majTele(); ecran("manche");
+}
+function majTele() {
+  if (P.phase !== "tele") return;
+  const att = devineursPresents(), faits = att.filter(id => id in P.valides).length;
+  role(P.coop ? (P.gj.find(j => j.id !== donneurG().id) || { nom: "?" }).nom + " place l'aiguille… regardez-la bouger !" : "Placez votre aiguille en secret sur vos téléphones : " + faits + " / " + att.length + " ont validé.");
+  montrer(["ph-devine", "bulle"].concat(boutonPasser()));
+}
+// Groupe, côté donneur : il garde la cible sous les yeux et attend que tout le monde valide.
+function phaseAttenteValid() {
+  P.phase = "attente-valid"; enTete(); volet(true, true);
+  $("aiguille").style.display = P.coop ? "" : "none"; if (P.coop) poserAiguille(90, true); svg.classList.remove("reglable");
+  afficherIndice(); majAttente(); ecran("manche");
+}
+function majAttente() {
+  if (P.phase !== "attente-valid") return;
+  const attendus = devineursPresents(), faits = attendus.filter(id => id in P.valides).length;
+  role("Les autres placent leur aiguille en secret : " + faits + " / " + attendus.length + " ont validé.");
+  montrer(["ph-devine", "bulle"].concat(faits > 0 ? ["reveler-mnt"] : []).concat(boutonPasser()));
+}
+const pointsPour = ecart => ecart <= 4 ? 4 : ecart <= 12 ? 3 : ecart <= 20 ? 2 : 0;
+$("valider").onclick = () => {
+  if (P.phase !== "devine") return;
+  sons.clic(); svg.classList.remove("reglable");
+  if (groupe()) {
+    P.phase = "attente-reveal"; P.valides[S.id] = Math.round(P.angle * 10) / 10;
+    $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…";
+    role("Aiguille envoyée ! On attend les autres…"); majStatut(); rafraichirBoutons();
+    envoyer({ t: "g-valide", pid: P.pid, n: P.n, id: S.id, a: P.valides[S.id] }, true);
+    return;
+  }
+  if (enLigne()) { // seul le donneur connaît la cible : c'est lui qui compte les points
+    diffuserAiguille(true); P.phase = "attente-reveal";
+    $("valider").disabled = true; $("valider").textContent = "ENVOYÉ…";
+    envoyer({ t: "valide", pid: P.pid, n: P.n, a: P.angle }, true);
+  } else reveler(P.angle, P.cible, pointsPour(Math.abs(P.angle - P.cible)));
+};
+function reveler(angle, cible, pts) {
+  P.phase = "reveal"; P.cible = cible; dessinerCible(cible); poserAiguille(angle, true); svg.classList.remove("reglable");
+  P.score += pts; P.histo.push({ carte: P.carte, indice: P.indice, pts, qui: donneur() });
+  $("aiguille").style.display = ""; afficherIndice();
+  montrer(["ph-devine", "bulle"]); role("Révélation…");
+  volet(true, false);
+  const nAuMoment = P.n, pidAuMoment = P.pid;
+  const garde = () => P.phase === "reveal" && P.n === nAuMoment && P.pid === pidAuMoment;
+  setTimeout(() => {
+    if (!garde()) return;
+    role(enLigne() ? "Cible révélée pour vous deux." : "Les deux joueurs peuvent regarder.");
+    montrer(["ph-devine", "bulle", "resultat"]);
+    tournerPoints(pts, garde, () => {
+      $("res-mot").textContent = pts === 4 ? "DANS LE MILLE ! " : pts === 3 ? "PRESQUE ! " : pts === 2 ? "PAS LOIN ! " : "RATÉ ! ";
+      rejouerAnim($("resultat-texte"), "pop"); rejouerAnim(boomSvg, "boom");
+      sons.points(pts);
+      roulerScore(P.score - pts, P.score);
+      const derniere = P.manches && P.n + 1 >= P.manches;
+      $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE RÉSULTAT" : "MANCHE SUIVANTE";
+      montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    });
+  }, 800);
+}
+/* ---------- Mode à plusieurs ---------- */
+const presents = () => new Set(S.gens.map(g => g.cle));
+const devineursPresents = () => { const ici = presents(), d = donneurG().id; return P.gj.map(j => j.id).filter(id => id !== d && ici.has(id)); };
+function rafraichirBoutons() {
+  const pa = boutonPasser();
+  if (P.phase === "attente-indice") montrer(pa.length ? ["ph-devine"].concat(pa) : []);
+  else if (P.phase === "devine") montrer(["ph-devine", "bulle", "zone-reglage", "valider"].concat(pa));
+  else if (P.phase === "attente-reveal") montrer(["ph-devine", "bulle"].concat(pa));
+  else if (P.phase === "attente-valid") majAttente();
+  else if (P.phase === "tele") majTele();
+}
+function boutonPasser() { // l'hôte peut passer la manche si celui qui donne l'indice est parti
+  return groupe() && chefSalon() && P.phase !== "reveal" && !presents().has(donneurG().id) ? ["passer"] : [];
+}
+// Le donneur révèle dès que tous les joueurs présents ont validé.
+function verifierComplet() {
+  if (!groupe() || P.phase !== "attente-valid") return;
+  majAttente();
+  const attendus = devineursPresents();
+  if (attendus.length && attendus.every(id => id in P.valides)) revelerMaintenant();
+}
+function revelerMaintenant() {
+  if (P.phase !== "attente-valid") return;
+  const pts = {};
+  Object.keys(P.valides).forEach(id => { pts[id] = pointsPour(Math.abs(P.valides[id] - P.cible)); });
+  const nb = Object.keys(pts).length, trouves = Object.values(pts).filter(x => x > 0).length;
+  const dp = P.coop ? (Object.values(pts)[0] || 0) : trouves === 0 || trouves === nb ? 0 : 2 * trouves; // à deux : le même score pour les deux
+  const m = { t: "g-reveal", pid: P.pid, n: P.n, cible: P.cible, aig: P.valides, pts, donneur: donneurG().id, dp };
+  envoyer(m, true); revelerG(m);
+}
+function dessinerAiguilles(aig) {
+  $("aig-autres").innerHTML = Object.keys(aig).map(id => {
+    const a = aig[id], c = couleurDe(id), moi = id === S.id, [lx, ly] = pt(a, 170), j = P.gj.find(x => x.id === id);
+    const ini = (j ? j.nom : "?").trim().charAt(0).toUpperCase().replace(/[<>&"]/g, "");
+    return `<g transform="rotate(${(a - 90).toFixed(1)} 170 175)"><polygon points="${moi ? "164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" : "166,175 174,175 172,60 177,60 170,40 163,60 168,60"}" fill="${c}" stroke="#111" stroke-width="${moi ? 4 : 3}" stroke-linejoin="round"/></g>` +
+      `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="10" fill="${c}" stroke="#111" stroke-width="3"/><text x="${lx.toFixed(1)}" y="${(ly + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="15" text-anchor="middle" fill="#111">${ini}</text>`;
+  }).join("");
+}
+function revelerG(m) {
+  P.phase = "reveal"; P.cible = m.cible; dessinerCible(m.cible); svg.classList.remove("reglable");
+  $("aiguille").style.display = "none"; dessinerAiguilles(m.aig || {});
+  Object.keys(m.pts || {}).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
+  P.scores[m.donneur] = (P.scores[m.donneur] || 0) + m.dp;
+  P.derniers = Object.assign({}, m.pts, { [m.donneur]: m.dp });
+  const jeDonnais = m.donneur === S.id && !P.coop;
+  let mes = m.donneur === S.id ? m.dp : (m.pts[S.id] || 0), avant = P.score, motTele = "";
+  if (P.ecran) { // l'écran montre le meilleur coup de la manche (ou le score de l'équipe à deux)
+    const ids = Object.keys(m.pts || {}), best = ids.length ? Math.max(...ids.map(id => m.pts[id])) : 0;
+    mes = best; avant = P.coop ? (P.scores[P.gj[0].id] || 0) - (P.derniers[P.gj[0].id] || 0) : 0;
+    const qui = ids.filter(id => m.pts[id] === best && best > 0).map(id => (P.gj.find(j => j.id === id) || { nom: "?" }).nom);
+    if (!P.coop) motTele = best === 0 ? "PERSONNE ! " : qui.join(", ").toUpperCase() + " ! ";
+  }
+  P.score = P.ecran ? (P.coop ? P.scores[P.gj[0].id] || 0 : Math.max(0, ...Object.values(P.scores))) : (P.scores[S.id] || 0);
+  P.histo.push({ carte: P.carte, indice: P.indice, pts: mes, qui: donneur() });
+  afficherIndice(); montrer(["ph-devine", "bulle"]); role("Révélation…"); volet(true, false);
+  const nAuMoment = P.n, pidAuMoment = P.pid;
+  const garde = () => P.phase === "reveal" && P.n === nAuMoment && P.pid === pidAuMoment;
+  const nb = Object.keys(m.pts || {}).length, trouves = Object.values(m.pts || {}).filter(x => x > 0).length;
+  setTimeout(() => {
+    if (!garde()) return;
+    role(P.ecran ? (P.coop ? "Cible révélée !" : trouves + " joueur" + (trouves > 1 ? "s ont" : " a") + " trouvé la cible.") : jeDonnais ? (trouves === 0 ? "Personne n'a trouvé ta cible." : trouves === nb ? "Tout le monde a trouvé : trop facile !" : trouves + " joueur" + (trouves > 1 ? "s ont" : " a") + " trouvé ta cible.") : "Toutes les aiguilles sont révélées.");
+    majStatut(); montrer(["ph-devine", "bulle", "resultat"]);
+    tournerPoints(mes, garde, () => {
+      $("res-mot").textContent = motTele ? motTele : jeDonnais ? (m.dp > 0 ? "BON INDICE ! " : trouves === 0 ? "PERSONNE ! " : "TROP FACILE ! ")
+        : mes === 4 ? "DANS LE MILLE ! " : mes === 3 ? "PRESQUE ! " : mes === 2 ? "PAS LOIN ! " : "RATÉ ! ";
+      rejouerAnim($("resultat-texte"), "pop"); rejouerAnim(boomSvg, "boom");
+      sons.points(Math.min(mes, 4));
+      roulerScore(avant, P.score);
+      const derniere = P.manches && P.n + 1 >= P.manches;
+      $("suivante").disabled = false; $("suivante").textContent = derniere ? "VOIR LE CLASSEMENT" : "MANCHE SUIVANTE";
+      montrer(["ph-devine", "bulle", "resultat", "suivante"].concat(derniere ? [] : ["arreter"]));
+    });
+  }, 800);
+}
+// Bandeau des joueurs pendant une partie à plusieurs : rôle, validation, score.
+function majStatut() {
+  if (!groupe() || !P.gj.length || !["manche"].includes(ecranActuel) && P.phase === "") return;
+  const ul = $("gens-jeu"), ici = presents(), d = donneurG().id; ul.textContent = ""; ul.style.display = "";
+  P.gj.forEach(j => {
+    const li = document.createElement("li"), sm = document.createElement("small"), sw = document.createElement("i"), em = document.createElement("em");
+    sw.style.background = couleurDe(j.id);
+    sm.textContent = !ici.has(j.id) ? "Déconnecté" : j.id === d ? "Donne l'indice" : P.phase === "reveal" ? "+" + ((P.derniers || {})[j.id] || 0) : (j.id in P.valides ? "A validé" : "Réfléchit…");
+    if (j.id === d) li.className = "donne"; else if (j.id in P.valides && P.phase !== "reveal") li.className = "ok";
+    em.textContent = P.scores[j.id] || 0;
+    li.append(sm, sw, document.createTextNode(j.nom + (j.id === S.id ? " (toi)" : "")), em);
+    ul.append(li);
+  });
+}
+$("reveler-mnt").onclick = () => { sons.clic(); revelerMaintenant(); };
+$("passer").onclick = () => { if (groupe() && chefSalon() && P.phase !== "reveal") { sons.clic(); avancer(); } };
+
+/* ---------- Navigation : règles, quitter, inviter ---------- */
+let focusAvant = null;
+function ouvrir(id) { focusAvant = document.activeElement; $(id).hidden = false; sons.clic(); const b = $(id).querySelector("button"); if (b) b.focus(); }
+function fermer(id) { $(id).hidden = true; if (focusAvant && focusAvant.focus) focusAvant.focus(); }
+$("aide").onclick = () => ouvrir("m-regles");
+$("voir-regles").onclick = () => ouvrir("m-regles");
+$("fermer-regles").onclick = () => { sons.clic(); fermer("m-regles"); };
+$("sortir").onclick = () => {
+  $("quitter-texte").textContent = enLigne() ? "Tu vas quitter le salon " + S.code + "." + (chefSalon() ? " Comme c'est toi qui l'as créé, la partie s'arrêtera pour tout le monde." : "") : "La partie en cours sera perdue.";
+  ouvrir("m-quitter");
+};
+$("quitter-non").onclick = () => { sons.clic(); fermer("m-quitter"); };
+$("quitter-oui").onclick = () => { sons.clic(); $("m-quitter").hidden = true; P.phase = ""; if (enLigne()) quitterSalon(); else P.mode = "local"; ecran("accueil"); };
+document.querySelectorAll(".modale").forEach(m => m.addEventListener("click", e => { if (e.target === m) fermer(m.id); }));
+addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".modale:not([hidden])").forEach(m => fermer(m.id)); });
+function copier(texte, bouton, ok) {
+  const fini = () => { const lab = bouton.lastChild, avant = lab.textContent; lab.textContent = ok; setTimeout(() => { lab.textContent = avant; }, 1600); sons.clic(); };
+  try { navigator.clipboard.writeText(texte).then(fini, () => fini()); } catch (e) { fini(); }
+}
+$("copier-code").onclick = e => copier(S.code, e.currentTarget, "Copié !");
+$("copier-lien").onclick = e => copier(RACINE + "cadran/#" + S.code, e.currentTarget, "Lien copié !");
+// Ouvert depuis un lien d'invitation (…/#ABCD) : on arrive directement sur « Rejoindre ».
+function lienInvitation() { // …/cadran/#ABCD : on rejoint directement si le pseudo est connu
+  const m = /^#([A-Za-z]{4})$/.exec(location.hash);
+  if (!m) return;
+  $("code-saisi").value = m[1].toUpperCase();
+  $("pseudo").value = memo.lire("jeux-pseudo", memo.lire("cadran-pseudo", ""));
+  chargerTempsReel().catch(() => {}); ecran("ligne");
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  if ($("pseudo").value) rejoindre(); else setTimeout(() => $("pseudo").focus(), 50);
+}
+$("logo").addEventListener("click", () => { const l = $("logo"); l.style.transform = "rotate(-3deg) scale(1.08)"; setTimeout(() => { l.style.transform = ""; }, 150); });
+
+/* ---------- Animations des points ---------- */
+const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const boomSvg = document.querySelector("#resultat svg");
+function rejouerAnim(el, cls) { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
+// Le « +N » défile comme un rouleau (4, 3, 2, 0…), ralentit, puis s'arrête sur les points gagnés.
+function tournerPoints(pts, garde, fini) {
+  $("resultat-texte").innerHTML = '<span id="res-mot"></span><span class="reel">+<b id="res-num"></b></span>';
+  const num = $("res-num");
+  if (reduit) { num.textContent = pts; fini(); return; }
+  const valeurs = [4, 3, 2, 0], delais = [40, 40, 45, 45, 50, 55, 65, 75, 90, 110, 135, 165, 200];
+  let i = Math.floor(Math.random() * 4), etape = 0;
+  boomSvg.classList.remove("boom"); boomSvg.classList.add("tremble");
+  (function suivant() {
+    if (!garde()) { boomSvg.classList.remove("tremble"); return; }
+    if (etape < delais.length) {
+      num.textContent = valeurs[i++ % 4]; rejouerAnim(num, "tic"); sons.tic(etape);
+      setTimeout(suivant, delais[etape++]);
+    } else {
+      boomSvg.classList.remove("tremble");
+      num.textContent = pts; rejouerAnim(num, "tic"); fini();
+    }
+  })();
+}
+// Le score commun monte point par point, chaque chiffre arrive en roulant.
+function roulerScore(de, a) {
+  const el = $("score");
+  if (reduit || de >= a) { el.textContent = a; return; }
+  let v = de;
+  (function pas() {
+    v++; el.textContent = v; rejouerAnim(el, "roule");
+    if (v < a) setTimeout(pas, 150);
+  })();
+}
+function avancer() { // local, ou hôte en ligne
+  P.n++;
+  if (P.manches && P.n >= P.manches) terminer(); else { sons.clic(); preparerManche(); }
+}
+function terminer() { if (enLigne()) envoyer({ t: "fin", pid: P.pid }, true); finir(); }
+$("suivante").onclick = () => {
+  if (P.phase !== "reveal") return;
+  if (enLigne() && P.moi !== 0) { $("suivante").disabled = true; $("suivante").textContent = "EN ATTENTE…"; envoyer({ t: "suivante?", pid: P.pid, n: P.n }); }
+  else avancer();
+};
+$("arreter").onclick = () => {
+  if (P.phase !== "reveal") return;
+  if (enLigne() && P.moi !== 0) envoyer({ t: "fin?", pid: P.pid }); else terminer();
+};
+
+/* ---------- Fin ---------- */
+function finirGroupe() {
+  const classement = P.gj.map(j => ({ nom: j.nom, id: j.id, s: P.scores[j.id] || 0 })).sort((a, b) => b.s - a.s);
+  const rangDe = sc => 1 + classement.filter(c => c.s > sc).length; // ex æquo : même place
+  const moi = classement.find(c => c.id === S.id), rang = moi ? rangDe(moi.s) : 0, meilleur = classement.length ? classement[0].s : 0;
+  const exaequo = moi && classement.filter(c => c.s === moi.s).length > 1;
+  const gagnants = classement.filter(c => c.s === meilleur).map(c => c.nom);
+  $("fin-score").textContent = P.ecran || P.coop ? meilleur : P.scores[S.id] || 0;
+  if (P.coop) {
+    document.querySelector("#s-fin .case.jaune .petit").textContent = "SCORE COMMUN";
+    $("fin-detail").textContent = "sur " + P.histo.length * 4 + " possibles, en " + P.histo.length + " manche" + (P.histo.length > 1 ? "s" : "");
+    $("fin-record").textContent = classement.map(c => c.nom).join(" et ") + ", bien joué !";
+    $("fin-record").style.display = ""; $("recap").textContent = "";
+    return;
+  }
+  if (P.ecran) document.querySelector("#s-fin .case.jaune .petit").textContent = "MEILLEUR SCORE";
+  $("fin-detail").textContent = rang ? (rang === 1 ? "Tu finis 1er" : "Tu finis " + rang + "e") + (exaequo ? " ex æquo" : "") + " sur " + classement.length : "";
+  $("fin-record").textContent = (gagnants.length > 1 ? "Égalité en tête : " : "Victoire de ") + gagnants.join(", ") + " !";
+  $("fin-record").style.display = "";
+  const ul = $("recap"); ul.textContent = "";
+  classement.forEach((c, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), b = document.createElement("b"), sw = document.createElement("i");
+    sw.style.cssText = "display:inline-block;width:14px;height:14px;border:2px solid #111;margin-right:8px;vertical-align:-1px;background:" + couleurDe(c.id);
+    t.append(sw, document.createTextNode(rangDe(c.s) + ". " + c.nom + (c.id === S.id ? " (toi)" : "")));
+    b.textContent = c.s + " pt" + (c.s > 1 ? "s" : ""); li.append(t, b); ul.append(li);
+  });
+}
+function finir() {
+  P.phase = "fin";
+  const jouees = P.histo.length, max = jouees * 4;
+  $("fin-score").textContent = P.score;
+  $("fin-detail").textContent = "sur " + max + " possibles, en " + jouees + " manche" + (jouees > 1 ? "s" : "");
+  document.querySelector("#s-fin .case.jaune .petit").textContent = groupe() ? "TON SCORE" : "SCORE COMMUN";
+  let msg = "";
+  if (!groupe() && P.manches && jouees === P.manches) {
+    const cle = "cadran-record-" + P.manches, ancien = +memo.lire(cle, "-1");
+    if (P.score > ancien) { memo.ecrire(cle, String(P.score)); msg = ancien < 0 ? "Premier record en " + P.manches + " manches : " + P.score : "Nouveau record ! L'ancien était de " + ancien; }
+    else msg = "Record à battre en " + P.manches + " manches : " + ancien;
+  } else if (jouees) msg = "Moyenne : " + (P.score / jouees).toFixed(1).replace(".", ",") + " point par manche";
+  $("fin-record").textContent = msg; $("fin-record").style.display = msg ? "" : "none";
+  const ul = $("recap"); ul.textContent = "";
+  if (groupe()) finirGroupe(); else P.histo.forEach((h, i) => {
+    const li = document.createElement("li"), t = document.createElement("span"), em = document.createElement("em"), b = document.createElement("b");
+    t.textContent = (i + 1) + ". « " + h.indice + " » "; em.textContent = "(" + h.carte[0] + " ↔ " + h.carte[1] + ", par " + h.qui + ")"; t.append(em);
+    b.textContent = "+" + h.pts; li.append(t, b); ul.append(li);
+  });
+  const invite = enLigne() && P.moi !== 0;
+  $("rejouer").disabled = false; $("rejouer").textContent = "REJOUER";
+  $("accueil").style.display = invite ? "none" : ""; $("quitter-fin").style.display = enLigne() ? "" : "none";
+  sons.fin(); ecran("fin");
+}
+$("rejouer").onclick = () => {
+  if (enLigne() && P.moi !== 0) { $("rejouer").disabled = true; $("rejouer").textContent = "DEMANDE ENVOYÉE…"; envoyer({ t: "rejouer?" }); }
+  else if (groupe() && S.gens.length < 3) { $("fin-record").style.display = ""; $("fin-record").textContent = "Il faut au moins 3 joueurs dans le salon pour rejouer."; }
+  else if (enLigne() && !groupe() && !S.autre) { $("fin-record").style.display = ""; $("fin-record").textContent = "L'autre joueur a quitté le salon."; }
+  else nouvellePartie();
+};
+$("accueil").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) { envoyer({ t: "salon" }, true); majSalonHote(); } ouvrirReglages(); };
+$("quitter-fin").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+
+/* =====================================================================
+   MODE EN LIGNE
+   Un canal temps réel par code de salon. Rien n'est stocké.
+   La cible n'existe que sur l'appareil de celui qui donne l'indice,
+   et n'est envoyée à l'autre qu'au moment de la révélation.
+   ===================================================================== */
+// id gardé pendant la session de l'onglet : après un rechargement, on retrouve sa place dans la partie.
+const idSession = (() => { try { let v = sessionStorage.getItem("cadran-id"); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem("cadran-id", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
+const S = { client: null, canal: null, code: "", nom: "", role: "", id: idSession, t: 0, autre: null, gens: [], cles: new Set(), dernier: {}, minuteur: null };
+const MAX_JOUEURS = 6;
+const chefSalon = () => S.role === "hote" || S.role === "ecran"; // celui qui a créé le salon décide du déroulé
+const RACINE = new URL("../", location.href).href;
+let qrCharge = null;
+function dessinerQR() { // QR code pour rejoindre depuis un téléphone (chargé seulement pour l'écran du salon)
+  const lien = RACINE + "cadran/#" + S.code;
+  $("adresse").textContent = RACINE.replace(/^https?:\/\//, "") + " → code " + S.code;
+  if (!qrCharge) qrCharge = new Promise((ok, ko) => { const sc = document.createElement("script"); sc.src = "../qrcode.min.js?v=1"; sc.onload = ok; sc.onerror = ko; document.head.append(sc); });
+  qrCharge.then(() => { const q = window.qrcode(0, "M"); q.addData(lien); q.make(); $("qr").innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }).catch(() => { qrCharge = null; });
+}
+const LETTRES = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+const nouveauCode = () => Array.from({ length: 4 }, () => LETTRES[Math.floor(Math.random() * LETTRES.length)]).join("");
+
+let chargement = null;
+function chargerTempsReel() { // ~17 Ko, téléchargés uniquement si on joue en ligne
+  if (window.RealtimeClient) return Promise.resolve();
+  if (!chargement) chargement = new Promise((ok, ko) => {
+    const sc = document.createElement("script");
+    sc.src = "../realtime.min.js?v=2"; sc.async = true;
+    sc.onload = ok; sc.onerror = () => { chargement = null; sc.remove(); ko(); };
+    document.head.append(sc);
+  });
+  return chargement;
+}
+$("go-ligne").onclick = () => { sons.clic(); chargerTempsReel().catch(() => {}); $("pseudo").value = $("pseudo").value || memo.lire("jeux-pseudo", memo.lire("cadran-pseudo", "")); alerte("err-ligne"); ecran("ligne"); };
+$("go-salon").onclick = async () => {
+  sons.clic();
+  try { await chargerTempsReel(); } catch (e) { ecran("ligne"); alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return; }
+  P.mode = "ligne"; P.moi = 0; P.phase = ""; P.ecran = true; document.body.classList.add("tele");
+  ouvrirSalon(nouveauCode(), "ecran", "Écran");
+  $("code-hote").textContent = S.code; dessinerQR(); majSalonHote(); ouvrirReglages();
+};
+$("retour-ligne").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+function pseudoValide() {
+  const nom = $("pseudo").value.trim();
+  if (!nom) { alerte("err-ligne", "Choisis d'abord un pseudo."); return null; }
+  memo.ecrire("cadran-pseudo", nom); memo.ecrire("jeux-pseudo", nom); return nom;
+}
+async function pret() {
+  try { await chargerTempsReel(); return true; }
+  catch (e) { alerte("err-ligne", "Le mode en ligne n'a pas pu se charger. Vérifie ta connexion et réessaie."); return false; }
+}
+$("creer").onclick = async () => {
+  const nom = pseudoValide(); if (!nom || !(await pret())) return;
+  sons.clic(); P.mode = "ligne"; P.moi = 0; P.phase = "";
+  ouvrirSalon(nouveauCode(), "hote", nom);
+  $("code-hote").textContent = S.code; majSalonHote(); ouvrirReglages();
+};
+async function rejoindre() {
+  const nom = pseudoValide(); if (!nom || !(await pret())) return;
+  const code = $("code-saisi").value.trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { alerte("err-ligne", "Le code d'un salon fait 4 lettres."); return; }
+  sons.clic(); alerte("err-ligne", "Connexion au salon " + code + "…");
+  P.mode = "ligne"; P.moi = 1; P.phase = ""; P.pid = 0;
+  ouvrirSalon(code, "invite", nom);
+}
+$("rejoindre").onclick = rejoindre;
+$("code-saisi").addEventListener("keydown", e => { if (e.key === "Enter") rejoindre(); });
+$("quitter-invite").onclick = () => { sons.clic(); quitterSalon(); ecran("accueil"); };
+
+function ouvrirSalon(code, role, nom) {
+  quitterSalon(true);
+  P.mode = "ligne";
+  S.code = code; S.role = role; S.nom = nom; S.t = Date.now(); S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
+  S.client = S.client || new window.RealtimeClient(SUPA_URL, { params: { apikey: SUPA_CLE, eventsPerSecond: 12 }, accessToken: async () => SUPA_CLE });
+  const canal = S.client.channel("jeux-" + code, { config: { broadcast: { self: false }, presence: { key: S.id } } });
+  S.canal = canal;
+  canal.on("broadcast", { event: "m" }, ({ payload }) => { if (S.canal === canal) recevoir(payload); })
+    .on("presence", { event: "sync" }, () => { if (S.canal === canal) majPresence(); })
+    .subscribe(etat => {
+      if (S.canal !== canal) return;
+      if (etat === "SUBSCRIBED") {
+        canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" }); majGens();
+        if (role === "invite") { clearTimeout(S.minuteur); S.minuteur = setTimeout(() => { if (S.canal === canal && !S.autre) echecConnexion("Aucun salon ouvert avec le code " + code + "."); }, 4000); }
+      } else if (etat === "CHANNEL_ERROR" || etat === "TIMED_OUT") {
+        if (ecranActuel === "ligne") echecConnexion("Connexion impossible pour le moment. Réessaie dans un instant.");
+      }
+    });
+}
+function quitterSalon(silencieux) {
+  clearTimeout(S.minuteur);
+  if (S.canal && S.client) { const c = S.canal, client = S.client; client.removeChannel(c).catch(() => {}).finally(() => { if (!S.canal && client.getChannels().length === 0) client.disconnect(); }); }
+  S.canal = null; S.autre = null; S.gens = []; S.cles = new Set(); S.dernier = {};
+  if (!silencieux) { P.mode = "local"; P.phase = ""; }
+  alerte("deco"); majGens();
+  if (!silencieux) { document.body.classList.remove("tele"); P.ecran = false; }
+}
+// Page fermée ou mise en arrière-plan sur iPhone : on prévient tout de suite le salon.
+addEventListener("pagehide", () => { if (S.canal) { try { S.canal.untrack(); } catch (e) {} } });
+addEventListener("pageshow", e => { if (e.persisted && S.canal) { try { S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" }); } catch (x) {} } });
+function echecConnexion(message) { quitterSalon(); ecran("ligne"); alerte("err-ligne", message); }
+function envoyer(message, important) {
+  if (!S.canal) return;
+  if (important) { // gardé pour être renvoyé à quelqu'un qui arrive ou revient après une coupure
+    if (message.t === "salon" || message.t === "manche" || message.t === "g-manche") S.dernier = {};
+    S.dernier[message.t] = message;
+  }
+  try { S.canal.send({ type: "broadcast", event: "m", payload: message }); } catch (e) {}
+}
+
+function majPresence() {
+  const etat = S.canal.presenceState(), gens = [];
+  Object.keys(etat).forEach(cle => (etat[cle] || []).forEach(m => gens.push({ cle, nom: String(m.nom || "?").slice(0, 14), role: m.role, t: m.t, jeu: m.jeu })));
+  const tri = l => l.sort((a, b) => a.t - b.t || (a.cle < b.cle ? -1 : 1));
+  const hotes = tri(gens.filter(g => g.role === "hote" || g.role === "ecran")), invites = tri(gens.filter(g => g.role === "invite"));
+  if (S.role === "invite" && hotes.length && hotes[0].jeu && hotes[0].jeu !== "cadran") { location.href = RACINE + hotes[0].jeu + "/#" + S.code; return; } // salon d'un autre jeu
+  const places = hotes.length && hotes[0].role === "ecran" ? MAX_JOUEURS : MAX_JOUEURS - 1;
+  S.gens = (hotes.length ? [hotes[0]] : []).concat(invites.slice(0, places));
+  const nouveaux = S.gens.filter(g => g.cle !== S.id && !S.cles.has(g.cle));
+  S.cles = new Set(S.gens.map(g => g.cle));
+  let autre = null;
+  if (chefSalon()) {
+    if (hotes.length && hotes[0].cle !== S.id) { // code déjà pris par un autre salon : on en tire un nouveau
+      ouvrirSalon(nouveauCode(), S.role, S.nom); $("code-hote").textContent = S.code; if (S.role === "ecran") dessinerQR(); majSalonHote(); return;
+    }
+    autre = invites[0] || null;
+  } else {
+    const place = invites.findIndex(g => g.cle === S.id);
+    if (place >= places) { echecConnexion("Ce salon est complet : " + MAX_JOUEURS + " joueurs maximum."); return; }
+    autre = hotes[0] || null;
+  }
+  const arrive = autre && !S.autre, parti = !autre && S.autre;
+  // même pseudo qu'un joueur arrivé avant : seul le dernier arrivé ajoute un numéro (sinon ils se renommeraient en boucle)
+  const avantMoi = g => g.t < S.t || (g.t === S.t && g.cle < S.id);
+  if (S.role === "invite" && gens.some(g => g.cle !== S.id && g.nom.toLowerCase() === S.nom.toLowerCase() && avantMoi(g))) {
+    const pris = new Set(gens.filter(g => g.cle !== S.id).map(g => g.nom.toLowerCase())), base = S.nom.replace(/ \d+$/, "").slice(0, 11);
+    let k = 2; while (pris.has((base + " " + k).toLowerCase())) k++;
+    S.nom = base + " " + k; S.canal.track({ nom: S.nom, role: S.role, t: S.t, jeu: "cadran" });
+  }
+  S.autre = autre;
+  if (arrive) {
+    clearTimeout(S.minuteur); alerte("deco");
+    if (S.role === "invite" && ecranActuel === "ligne") { alerte("err-ligne"); $("code-invite").textContent = S.code; $("resume-invite").textContent = autre.nom + " règle la partie…"; $("i-info").textContent = ""; ecran("invite"); }
+  }
+  if (nouveaux.length) { // quelqu'un arrive (ou revient) : on lui renvoie de quoi se mettre à jour
+    sons.arrivee();
+    if (chefSalon()) envoyerReglages();
+    ["salon", "manche", "g-manche", "indice", "valide", "g-valide", "reveal", "g-reveal", "fin"].forEach(t => { if (S.dernier[t]) envoyer(S.dernier[t]); });
+  }
+  if (groupe() && P.phase) { // en partie à plusieurs : bandeau, attente et bouton « passer »
+    majStatut(); if (P.phase === "attente-valid") verifierComplet();
+    if (P.phase === "devine" || P.phase === "attente-indice" || P.phase === "attente-reveal" || P.phase === "attente-valid" || P.phase === "tele") {
+      const dPart = !presents().has(donneurG().id);
+      alerte("deco", dPart ? donneur() + " (qui donne l'indice) est déconnecté." + (P.moi === 0 ? " Tu peux passer la manche." : " L'hôte peut passer la manche.") : "");
+      rafraichirBoutons();
+    }
+    if (chefSalon()) majSalonHote();
+    return;
+  }
+  if (parti && !groupe()) {
+    if (["manche", "passe"].includes(ecranActuel)) alerte("deco", "L'autre joueur est déconnecté. La partie attend son retour.");
+    if (S.role === "invite" && ecranActuel === "invite") $("resume-invite").textContent = "L'hôte a quitté le salon.";
+  }
+  if (chefSalon()) majSalonHote(); else majGens();
+}
+// Qui est dans le salon : l'hôte d'abord, puis les invités dans l'ordre d'arrivée.
+function majGens() {
+  const ligne = enLigne() && !!S.canal;
+  const liste = S.gens.length ? S.gens.map(g => ({ nom: g.cle === S.id ? S.nom : g.nom, hote: g.role === "hote", ecran: g.role === "ecran", moi: g.cle === S.id })) : [{ nom: S.nom, hote: S.role === "hote", ecran: S.role === "ecran", moi: true }];
+  const places = liste.length >= 2 ? liste : (chefSalon() ? [liste[0], null] : [null, liste[0]]);
+  ["gens-hote", "gens-invite", "gens-jeu"].forEach(id => {
+    if (id === "gens-jeu" && groupe() && P.phase) { majStatut(); return; }
+    const ul = $(id); ul.textContent = ""; ul.style.display = ligne ? "" : "none";
+    if (!ligne) return;
+    places.forEach((g, i) => {
+      const li = document.createElement("li"), sm = document.createElement("small");
+      if (g) { sm.textContent = (g.ecran ? "Écran du salon" : g.hote ? "Hôte" : "Invité") + (g.moi ? " · toi" : " · connecté"); li.append(sm, document.createTextNode(g.nom)); }
+      else { li.className = "vide"; sm.textContent = i === 0 ? "Hôte" : "Invité"; li.append(sm, document.createTextNode(id === "gens-jeu" ? "Déconnecté" : "En attente…")); }
+      ul.append(li);
+    });
+  });
+}
+function majSalonHote() {
+  majGens();
+  const nb = S.gens.length || 1;
+  $("etat-salon").textContent = nb < 2 ? "En attente des autres joueurs…" : nb + " joueurs dans le salon (6 maximum).";
+  if (ecranActuel === "reglages") majFormat();
+}
+function envoyerReglages() {
+  if (S.role !== "hote" || !S.canal || P.phase) return;
+  envoyer({ t: "reglages", hote: S.nom, format: formatChoisi(), tours: toursChoisis(), manches: manchesChoisies(), cartes: compteCartes(), persos: persos.length });
+}
+$("i-ajout").onclick = () => {
+  const g = $("ig").value.trim(), d = $("id").value.trim();
+  if (!g || !d) { $("i-info").textContent = "Une carte perso a besoin des deux côtés."; return; }
+  envoyer({ t: "perso", g, d }); $("ig").value = ""; $("id").value = ""; $("i-info").textContent = "Carte envoyée : " + g + " ↔ " + d;
+};
+
+// Arrivé pendant une partie déjà lancée : on attend la suivante.
+function spectateur() {
+  if (ecranActuel === "invite" && P.phase === "spectateur") return;
+  P.phase = "spectateur"; $("code-invite").textContent = S.code;
+  $("resume-invite").textContent = "Une partie est en cours. Tu joueras à la prochaine !"; ecran("invite");
+}
+function recevoir(m) {
+  if (!m || typeof m.t !== "string") return;
+  const hote = P.moi === 0, memeManche = m.pid === P.pid && m.n === P.n;
+  switch (m.t) {
+    case "reglages": // invité, en salle d'attente
+      if (!hote && !P.phase) $("resume-invite").textContent = m.hote + " règle la partie : " + (m.format === "groupe" ? "à plusieurs, chacun donne l'indice " + m.tours + " fois" : "à deux, " + (m.manches ? m.manches + " manches" : "sans fin")) + ", " + m.cartes + " cartes" + (m.persos ? " dont " + m.persos + " perso" : "") + ".";
+      break;
+    case "perso": // hôte : carte proposée par l'invité
+      if (hote && !P.phase && typeof m.g === "string" && typeof m.d === "string") { persos.push([m.g.slice(0, 40), m.d.slice(0, 40)]); majPersos(); }
+      break;
+    case "manche": // invité : nouvelle manche décidée par l'hôte
+      if (hote || !Array.isArray(m.carte)) break;
+      if (Array.isArray(m.ids) && !m.ids.includes(S.id)) { spectateur(); break; }
+      P.format = "duo";
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && !P.phase)) {
+        if (m.pid !== P.pid || m.n === 0) { P.histo = []; }
+        P.pid = m.pid; P.n = m.n; P.score = m.score; P.manches = m.manches; P.joueurs = m.joueurs;
+        sons.clic(); debutManche(m.carte);
+      }
+      break;
+    case "g-manche": // groupe : nouvelle manche décidée par l'hôte
+      if (hote || !Array.isArray(m.carte) || !Array.isArray(m.gj)) break;
+      if (!m.gj.some(j => j.id === S.id)) { spectateur(); break; }
+      if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin"))) {
+        if (m.pid !== P.pid || m.n === 0) P.histo = [];
+        P.format = "groupe"; P.gj = m.gj; P.coop = !!m.coop; P.scores = m.scores || {}; P.pid = m.pid; P.n = m.n; P.manches = m.manches;
+        sons.clic(); debutManche(m.carte);
+        if (!jeDonne()) envoyer({ t: "g-indice?", pid: P.pid, n: P.n });
+      }
+      break;
+    case "g-indice?": // quelqu'un (re)arrive : le donneur renvoie son indice
+      if (groupe() && memeManche && jeDonne() && P.indice && P.phase === "attente-valid") envoyer({ t: "indice", pid: P.pid, n: P.n, texte: P.indice });
+      break;
+    case "g-valide": // groupe : un joueur a validé (tout le monde le note, le donneur compte)
+      if (groupe() && memeManche && typeof m.a === "number" && P.gj.some(j => j.id === m.id) && P.phase !== "reveal") {
+        P.valides[m.id] = Math.max(3, Math.min(177, m.a)); majStatut(); verifierComplet(); majTele();
+      }
+      break;
+    case "g-reveal":
+      if (groupe() && memeManche && P.phase !== "reveal" && typeof m.cible === "number") revelerG(m);
+      break;
+    case "indice": // devineur
+      if (memeManche && P.phase === "attente-indice" && P.ecran) { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); phaseTele(); break; }
+      if (memeManche && P.phase === "attente-indice") { P.indice = String(m.texte).slice(0, 60); sons.arrivee(); if (groupe() && P.valides[S.id] !== undefined) { P.phase = "attente-reveal"; enTete(); afficherIndice(); role("Aiguille envoyée ! On attend les autres…"); montrer(["ph-devine", "bulle"]); } else phaseDevine(); }
+      break;
+    case "aig": // donneur : aiguille de l'autre en direct
+      if (memeManche && suitAiguille() && typeof m.a === "number") viserAiguille(Math.max(3, Math.min(177, m.a)));
+      break;
+    case "valide": // donneur : il est le seul à connaître la cible, il compte et révèle
+      if (memeManche && P.phase === "regarde" && typeof m.a === "number") {
+        const a = Math.max(3, Math.min(177, m.a)), pts = pointsPour(Math.abs(a - P.cible));
+        envoyer({ t: "reveal", pid: P.pid, n: P.n, a, cible: P.cible, pts }, true);
+        reveler(a, P.cible, pts);
+      }
+      break;
+    case "reveal": // devineur
+      if (memeManche && (P.phase === "attente-reveal" || P.phase === "devine")) reveler(m.a, m.cible, m.pts);
+      break;
+    case "suivante?": if (hote && memeManche && P.phase === "reveal") avancer(); break;
+    case "g-passer": break;
+    case "fin?": if (hote && m.pid === P.pid && P.phase === "reveal") terminer(); break;
+    case "fin": if (!hote && m.pid === P.pid && P.phase && P.phase !== "fin") finir(); break;
+    case "rejouer?": if (hote && P.phase === "fin") nouvellePartie(); break;
+    case "salon": // l'hôte retourne aux réglages
+      if (!hote) { P.format = "duo"; P.phase = ""; $("code-invite").textContent = S.code; $("resume-invite").textContent = (S.autre ? S.autre.nom : "L'hôte") + " règle la partie…"; ecran("invite"); }
+      break;
+  }
+}
+lienInvitation();
+</script>
+</body>
+</html>
