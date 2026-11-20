@@ -33,7 +33,76 @@ body.tele .vrai-txt{font-size:44px}
 .nom-ligne{display:flex;gap:10px}
 .nom-ligne input{flex:1}
 .nom-ligne .btn{flex:none;width:50px}
-@media (prefers-reduced-motion:reduce){.marque,.vraie{animation:none}}
+.carte-q{position:relative;padding-top:22px;margin-top:10px}
+.q-type{position:absolute;top:-16px;left:50%;transform:translateX(-50%) rotate(-2deg);white-space:nowrap;font-family:var(--titre);font-size:15px;color:#FFF4E2;background:linear-gradient(#5DB8FF,#1F8FE0);border:3px solid #120B1F;border-radius:10px;padding:3px 12px;box-shadow:0 4px 0 #120B1F;text-shadow:0 2px 0 #120B1F}
+.q-extra{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:17px}
+.q-extra span{background:rgba(18,11,31,.06);border:2px solid rgba(18,11,31,.15);border-radius:10px;padding:4px 10px}
+body.tele .q-extra{font-size:28px}
+#bloc-reponse>div{display:none}
+#bloc-reponse[data-t="nombre"] #rep-nombre,#bloc-reponse[data-t="jauge"] #rep-curseur,#bloc-reponse[data-t="frise"] #rep-curseur,#bloc-reponse[data-t="qcm"] #rep-qcm,#bloc-reponse[data-t="vf"] #rep-vf,#bloc-reponse[data-t="pm"] #rep-pm,#bloc-reponse[data-t="ordre"] #rep-ordre{display:flex}
+#bloc-reponse[data-t="qcm"] #valider,#bloc-reponse[data-t="vf"] #valider,#bloc-reponse[data-t="pm"] #valider{display:none}
+.rep-curseur{flex-direction:column;align-items:center;gap:10px}
+.compteur{display:flex;align-items:baseline;gap:8px;background:#0F1530;border:3.5px solid #120B1F;border-radius:18px;padding:4px 22px;box-shadow:inset 0 4px 8px rgba(0,0,0,.6),0 5px 0 #120B1F}
+.compteur span{font-family:var(--titre);font-size:52px;line-height:1.1;color:#FFD23A}
+.compteur small{font-weight:900;font-size:15px;color:#C7CDE6}
+.piste{width:100%}
+#curseur{-webkit-appearance:none;appearance:none;width:100%;height:56px;background:transparent;margin:0;cursor:pointer}
+#curseur::-webkit-slider-runnable-track{height:26px;border-radius:999px;background:linear-gradient(#C98A4E,#7A4520);border:3.5px solid #120B1F;box-shadow:inset 0 4px 6px rgba(0,0,0,.35),0 5px 0 #120B1F}
+#curseur::-moz-range-track{height:20px;border-radius:999px;background:linear-gradient(#C98A4E,#7A4520);border:3.5px solid #120B1F;box-shadow:0 5px 0 #120B1F}
+#curseur::-webkit-slider-thumb{-webkit-appearance:none;width:50px;height:50px;margin-top:-16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#FFD23A 40%,#C77800);border:3.5px solid #120B1F;box-shadow:0 5px 0 #120B1F}
+#curseur::-moz-range-thumb{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#FFD23A 40%,#C77800);border:3.5px solid #120B1F;box-shadow:0 5px 0 #120B1F}
+.bornes{display:flex;justify-content:space-between;font-weight:900;font-size:14px;color:#C7CDE6;padding:2px 6px 0}
+.rep-qcm{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#bloc-reponse:not([data-t="qcm"]) .rep-qcm{display:none!important}
+.opt{position:relative;display:flex;align-items:center;gap:10px;min-height:76px;padding:10px 12px;text-align:left;font-family:var(--titre);font-size:19px;line-height:1.1;color:#FFF4E2;text-shadow:0 2px 0 #120B1F;border:3.5px solid #120B1F;border-radius:18px;cursor:pointer;transition:transform .1s;overflow-wrap:anywhere}
+.opt i{flex:none;width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.92);color:#120B1F;border:3px solid #120B1F;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:19px;text-shadow:none}
+.opt.o0{background:linear-gradient(#FF6A7E,#E8344E);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 7px 0 #8E1426,0 7px 0 3.5px #120B1F}
+.opt.o1{background:linear-gradient(#5DB8FF,#1F8FE0);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 7px 0 #11507F,0 7px 0 3.5px #120B1F}
+.opt.o2{background:linear-gradient(#5CF0A0,#2EBF7A);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 7px 0 #167A4A,0 7px 0 3.5px #120B1F}
+.opt.o3{background:linear-gradient(#FFE15A,#FFC21A);color:#120B1F;text-shadow:none;box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 7px 0 #B87A00,0 7px 0 3.5px #120B1F}
+.opt:active{transform:translateY(6px)}
+.rep-vf{justify-content:center;gap:18px}
+.buzz{display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:0;padding:0;cursor:pointer;flex:1;max-width:190px}
+.buzz svg{width:100%;height:auto;overflow:visible}
+.buzz .dome{transition:transform .12s}
+@media (hover:hover){.buzz:hover .dome{transform:translateY(3px)}}
+.buzz:active .dome{transform:translateY(10px)}
+.plaque{margin-top:-6px;font-family:var(--titre);font-size:24px;color:#FFF4E2;padding:4px 24px;border:3.5px solid #120B1F;border-radius:14px;text-shadow:0 2px 0 #120B1F}
+.plaque.vert{background:linear-gradient(#5CF0A0,#1FBF6A);box-shadow:0 5px 0 #0E6B3A,0 5px 0 3.5px #120B1F}
+.plaque.rouge{background:linear-gradient(#FF6A7E,#E0243E);box-shadow:0 5px 0 #7A0F20,0 5px 0 3.5px #120B1F}
+.rep-pm{align-items:center;justify-content:center;gap:12px}
+.pm-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px 12px;font-family:var(--titre);font-size:22px;color:#FFF4E2;text-shadow:0 2px 0 #120B1F;border:3.5px solid #120B1F;border-radius:20px;cursor:pointer}
+.pm-btn svg{width:44px;height:36px}
+.pm-btn.plus{background:linear-gradient(#5CF0A0,#2EBF7A);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 8px 0 #167A4A,0 8px 0 3.5px #120B1F}
+.pm-btn.moins{background:linear-gradient(#FF6A7E,#E8344E);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 8px 0 #8E1426,0 8px 0 3.5px #120B1F}
+.pm-btn:active{transform:translateY(6px)}
+.pm-ref{flex:1.2;text-align:center;background:linear-gradient(#FFFDF6,#F3E6CB);color:#120B1F;border:3.5px solid #120B1F;border-radius:18px;padding:8px 6px;box-shadow:0 6px 0 #C9B48A,0 6px 0 3.5px #120B1F;animation:balance 2.4s ease-in-out infinite}
+.pm-ref small{display:block;font-size:12px;letter-spacing:2px;color:#6B7194}
+.pm-ref b{font-family:var(--titre);font-weight:400;font-size:24px;line-height:1.05;overflow-wrap:anywhere}
+@keyframes balance{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.rep-ordre{flex-direction:column;gap:14px}
+.jetons-ordre{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tok{position:relative;min-height:60px;padding:8px 10px;font-family:var(--titre);font-size:17px;line-height:1.1;color:#120B1F;background:linear-gradient(#FFFDF6,#F3E6CB);border:3.5px solid #120B1F;border-radius:16px;box-shadow:0 6px 0 #C9B48A,0 6px 0 3.5px #120B1F;cursor:pointer;overflow-wrap:anywhere}
+.tok[disabled]{opacity:.5;transform:translateY(5px);box-shadow:0 1px 0 #C9B48A,0 1px 0 3.5px #120B1F;cursor:default}
+.tok em{position:absolute;top:-12px;right:-10px;width:32px;height:32px;border-radius:50%;background:#FFD23A;border:3px solid #120B1F;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px;box-shadow:0 3px 0 #120B1F}
+.rail{display:flex;flex-direction:column;gap:8px;background:linear-gradient(#C98A4E,#A2652F);border:3.5px solid #120B1F;border-radius:18px;padding:10px;box-shadow:0 7px 0 #6B3D1C,0 7px 0 3.5px #120B1F}
+.rail-bout{font-weight:900;font-size:13px;color:#FFF4E2;text-transform:uppercase;letter-spacing:1px}
+.cases-ordre{display:flex;flex-direction:column;gap:6px}
+.case-ordre{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 10px;border:3px dashed rgba(255,244,226,.6);border-radius:12px;color:#F3D9B8;font-weight:900}
+.case-ordre.pleine{border-style:solid;border-color:#120B1F;background:#FFF4E2;color:#120B1F;font-family:var(--titre);font-weight:400}
+.case-ordre b{font-family:var(--titre);font-weight:400;width:24px}
+.rep-ordre .btn.plat{align-self:center}
+.bloc-choix{display:flex;flex-direction:column;gap:10px}
+.ligne-choix{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(#FFFDF6,#F3E6CB);color:#120B1F;border:3.5px solid #120B1F;border-radius:16px;box-shadow:0 5px 0 #120B1F;transition:transform .3s,opacity .3s,background .3s}
+.ligne-choix .lib{flex:1;min-width:0;font-family:var(--titre);font-size:19px;line-height:1.1}
+.ligne-choix .qui{display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end}
+.ligne-choix.juste{background:linear-gradient(#8FF5BE,#3DDC97);transform:scale(1.03)}
+.ligne-choix.terne{opacity:.55}
+.ligne-choix .ok{flex:none;width:30px;height:30px;border-radius:50%;background:#120B1F;color:#3DDC97;display:flex;align-items:center;justify-content:center;font-size:18px}
+body.tele .ligne-choix .lib{font-size:30px}
+.ex-txt{background:#0F1530;color:#FFF4E2;border:3px solid #120B1F;border-radius:14px;padding:10px 14px;font-size:16px;box-shadow:0 4px 0 #120B1F}
+body.tele .ex-txt{font-size:24px}
+@media (prefers-reduced-motion:reduce){.marque,.vraie,.pm-ref{animation:none}}
 </style>
 <link rel="stylesheet" href="../commun/theme.css?v=1">
 </head>
@@ -82,16 +151,50 @@ body.tele .vrai-txt{font-size:44px}
     <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
     <div class="grandecran">
       <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="case">
+        <div class="case carte-q">
+          <span class="q-type" id="q-type"></span>
           <p class="petit" id="qui-repond"></p>
           <p class="question" id="question"></p>
+          <div class="q-extra" id="q-extra" style="display:none"></div>
         </div>
         <div id="chrono"></div>
         <!-- répondre -->
         <div id="bloc-reponse" style="display:flex;flex-direction:column;gap:14px">
-          <div class="saisie">
+          <div class="saisie" id="rep-nombre">
             <input type="text" id="valeur" inputmode="decimal" autocomplete="off" placeholder="?" aria-label="Ta réponse">
             <span class="unite" id="unite"></span>
+          </div>
+          <div class="rep-curseur" id="rep-curseur">
+            <div class="compteur"><span id="curseur-val">0</span><small id="curseur-unite"></small></div>
+            <div class="piste" id="piste">
+              <input type="range" id="curseur" min="0" max="100" step="1" aria-label="Ta réponse">
+              <div class="bornes"><span id="curseur-min"></span><span id="curseur-mil"></span><span id="curseur-max"></span></div>
+            </div>
+          </div>
+          <div class="rep-qcm" id="rep-qcm"></div>
+          <div class="rep-vf" id="rep-vf">
+            <button type="button" class="buzz" data-v="1" aria-label="Vrai">
+              <svg viewBox="0 0 200 180" aria-hidden="true"><defs><radialGradient id="dome-v" cx=".38" cy=".25" r=".85"><stop offset="0" stop-color="#D8FFE8"/><stop offset=".35" stop-color="#4FE89F"/><stop offset="1" stop-color="#128A4C"/></radialGradient><linearGradient id="cote-v" x1="0" x2="1"><stop offset="0" stop-color="#1FBF6A"/><stop offset="1" stop-color="#0E6B3A"/></linearGradient><linearGradient id="socle-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5A6396"/><stop offset="1" stop-color="#2A3060"/></linearGradient><linearGradient id="socle-c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E3566"/><stop offset="1" stop-color="#141938"/></linearGradient><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#B8C0D8"/><stop offset="1" stop-color="#5E6588"/></linearGradient></defs>
+                <ellipse cx="100" cy="166" rx="86" ry="10" fill="#000" opacity=".4"/><path d="M22 112v22q78 34 156 0v-22z" fill="url(#socle-c)" stroke="#120B1F" stroke-width="3.5" stroke-linejoin="round"/><ellipse cx="100" cy="112" rx="78" ry="26" fill="url(#socle-h)" stroke="#120B1F" stroke-width="3.5"/><ellipse cx="100" cy="106" rx="62" ry="20" fill="url(#chrome)" stroke="#120B1F" stroke-width="3"/><ellipse cx="100" cy="104" rx="53" ry="16" fill="#0B0F24"/>
+                <g class="dome"><path d="M47 70v30q53 22 106 0V70z" fill="url(#cote-v)" stroke="#120B1F" stroke-width="3.5" stroke-linejoin="round"/><path d="M47 70c0-40 106-40 106 0 0 14-106 14-106 0z" fill="url(#dome-v)" stroke="#120B1F" stroke-width="3.5"/><ellipse cx="80" cy="47" rx="22" ry="8" fill="#fff" opacity=".6" transform="rotate(-10 80 47)"/><g transform="translate(100 63) scale(1 .62)"><path d="M-18 0l12 12 25-25" fill="none" stroke="#120B1F" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M-18 0l12 12 25-25" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg>
+              <span class="plaque vert">VRAI</span>
+            </button>
+            <button type="button" class="buzz" data-v="0" aria-label="Faux">
+              <svg viewBox="0 0 200 180" aria-hidden="true"><defs><radialGradient id="dome-f" cx=".38" cy=".25" r=".85"><stop offset="0" stop-color="#FFE0E5"/><stop offset=".35" stop-color="#FF5470"/><stop offset="1" stop-color="#A8123F"/></radialGradient><linearGradient id="cote-f" x1="0" x2="1"><stop offset="0" stop-color="#E0243E"/><stop offset="1" stop-color="#7A0F20"/></linearGradient></defs>
+                <ellipse cx="100" cy="166" rx="86" ry="10" fill="#000" opacity=".4"/><path d="M22 112v22q78 34 156 0v-22z" fill="url(#socle-c)" stroke="#120B1F" stroke-width="3.5" stroke-linejoin="round"/><ellipse cx="100" cy="112" rx="78" ry="26" fill="url(#socle-h)" stroke="#120B1F" stroke-width="3.5"/><ellipse cx="100" cy="106" rx="62" ry="20" fill="url(#chrome)" stroke="#120B1F" stroke-width="3"/><ellipse cx="100" cy="104" rx="53" ry="16" fill="#0B0F24"/>
+                <g class="dome"><path d="M47 70v30q53 22 106 0V70z" fill="url(#cote-f)" stroke="#120B1F" stroke-width="3.5" stroke-linejoin="round"/><path d="M47 70c0-40 106-40 106 0 0 14-106 14-106 0z" fill="url(#dome-f)" stroke="#120B1F" stroke-width="3.5"/><ellipse cx="80" cy="47" rx="22" ry="8" fill="#fff" opacity=".6" transform="rotate(-10 80 47)"/><g transform="translate(100 63) scale(1 .62)"><path d="M-14-14l28 28m0-28l-28 28" fill="none" stroke="#120B1F" stroke-width="13" stroke-linecap="round"/><path d="M-14-14l28 28m0-28l-28 28" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/></g></g></svg>
+              <span class="plaque rouge">FAUX</span>
+            </button>
+          </div>
+          <div class="rep-pm" id="rep-pm">
+            <button type="button" class="pm-btn plus" data-v="1"><svg viewBox="0 0 54 44" aria-hidden="true"><path d="M27 4 50 38H4z" fill="#FFF4E2" stroke="#120B1F" stroke-width="4" stroke-linejoin="round"/></svg>PLUS</button>
+            <div class="pm-ref"><small>QUE</small><b id="pm-ref"></b></div>
+            <button type="button" class="pm-btn moins" data-v="0"><svg viewBox="0 0 54 44" aria-hidden="true"><path d="M27 40 50 6H4z" fill="#FFF4E2" stroke="#120B1F" stroke-width="4" stroke-linejoin="round"/></svg>MOINS</button>
+          </div>
+          <div class="rep-ordre" id="rep-ordre">
+            <div class="jetons-ordre" id="jetons-ordre"></div>
+            <div class="rail"><span class="rail-bout" id="ordre-lo"></span><div class="cases-ordre" id="cases-ordre"></div><span class="rail-bout" id="ordre-hi"></span></div>
+            <button class="btn plat" id="ordre-reset" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rejouer"/></svg>Recommencer</button>
           </div>
           <button class="btn" id="valider" type="button"><svg class="ico" aria-hidden="true"><use href="#i-envoyer"/></svg>VALIDER</button>
           <p class="bandeau alerte" id="err-valeur" role="alert" style="display:none"></p>
@@ -102,6 +205,8 @@ body.tele .vrai-txt{font-size:44px}
           <svg id="regle" viewBox="0 0 360 160" role="img" aria-label="Réponses placées sur une règle"></svg>
           <p class="vrai-txt" id="vrai-txt"></p>
         </div>
+        <div class="bloc-choix" id="bloc-choix" style="display:none"></div>
+        <p class="ex-txt" id="ex-txt" style="display:none"></p>
         <div class="boum" id="resultat" style="display:none">
           <svg aria-hidden="true" viewBox="0 0 240 110"><polygon points="120,2 138,26 168,8 170,36 206,26 194,52 236,58 198,72 216,100 176,88 168,108 142,88 120,108 100,88 70,106 68,84 26,96 46,70 4,58 44,46 30,20 68,34 74,8 100,26" fill="#FFE600" stroke="#111" stroke-width="4" stroke-linejoin="round"/></svg>
           <div id="resultat-texte"><span id="res-mot"></span><span class="reel">+<b id="res-num">0</b></span></div>
@@ -145,6 +250,155 @@ body.tele .vrai-txt{font-size:44px}
 "use strict";
 /* ---------- Questions : [question, réponse, unité, "a" si c'est une année] ---------- */
 const QUESTIONS = [["En quelle année a eu lieu la prise de la Bastille ?", 1789, "", "a", "histoire"], ["Combien d'os compte le squelette d'un adulte ?", 206, "os", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et la Lune ?", 384400, "km", "", "sciences"], ["Quelle est la hauteur du mont Everest ?", 8849, "m", "", "geo"], ["En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", 1969, "", "a", "histoire"], ["Combien de pays sont membres de l'ONU ?", 193, "pays", "", "geo"], ["Combien de touches compte un piano classique ?", 88, "touches", "", "loisirs"], ["Combien de cases compte un échiquier ?", 64, "cases", "", "loisirs"], ["Quelle est la vitesse de la lumière ?", 299792, "km/s", "", "sciences"], ["Combien y a-t-il de départements en France (outre-mer compris) ?", 101, "départements", "", "geo"], ["En quelle année la tour Eiffel a-t-elle été inaugurée ?", 1889, "", "a", "histoire"], ["Combien de cartes compte un jeu de tarot ?", 78, "cartes", "", "loisirs"], ["Combien de dents a un adulte (dents de sagesse comprises) ?", 32, "dents", "", "sciences"], ["En quelle année le mur de Berlin est-il tombé ?", 1989, "", "a", "histoire"], ["Combien de minutes y a-t-il dans une semaine ?", 10080, "minutes", "", "sciences"], ["Combien de secondes y a-t-il dans une journée ?", 86400, "secondes", "", "sciences"], ["Quelle est la profondeur de la fosse des Mariannes, environ ?", 10994, "m", "", "geo"], ["En quelle année est né Napoléon Bonaparte ?", 1769, "", "a", "histoire"], ["En quelle année est sorti le premier iPhone ?", 2007, "", "a", "loisirs"], ["Combien de cœurs a une pieuvre ?", 3, "cœurs", "", "sciences"], ["Quelle vitesse peut atteindre un guépard en pointe, environ ?", 110, "km/h", "", "sciences"], ["En quelle année a eu lieu la toute première Coupe du monde de football ?", 1930, "", "a", "loisirs"], ["Quel est le diamètre de la Terre, environ ?", 12742, "km", "", "sciences"], ["Quelle est la distance moyenne entre la Terre et le Soleil ?", 150, "millions de km", "", "sciences"], ["Combien de litres de sang contient le corps d'un adulte, environ ?", 5, "litres", "", "sciences"], ["Combien de marches faut-il monter pour atteindre le sommet de la tour Eiffel ?", 1665, "marches", "", "geo"], ["Quelle est la hauteur de la tour Eiffel, antennes comprises ?", 330, "m", "", "geo"], ["En quelle année le tunnel sous la Manche a-t-il été inauguré ?", 1994, "", "a", "histoire"], ["Quelle est la longueur officielle d'un marathon ?", 42.195, "km", "", "loisirs"], ["Combien y a-t-il d'États aux États-Unis ?", 50, "États", "", "geo"], ["Combien d'habitants compte Paris intra-muros, environ ?", 2.1, "millions", "", "geo"], ["En quelle année la peine de mort a-t-elle été abolie en France ?", 1981, "", "a", "histoire"], ["En quelle année les Françaises ont-elles obtenu le droit de vote ?", 1944, "", "a", "histoire"], ["Combien de pièces y a-t-il au total au début d'une partie d'échecs ?", 32, "pièces", "", "loisirs"], ["Combien de langues officielles a la Suisse ?", 4, "langues", "", "geo"], ["Quelle est la hauteur de la statue de la Liberté, sans son socle ?", 46, "m", "", "geo"], ["En quelle année a eu lieu la révolution russe ?", 1917, "", "a", "histoire"], ["Combien de pays font partie de l'Union européenne ?", 27, "pays", "", "geo"], ["Combien d'étoiles y a-t-il sur le drapeau européen ?", 12, "étoiles", "", "loisirs"], ["Quelle est la longueur de la Seine, environ ?", 777, "km", "", "geo"], ["Combien de vertèbres compte la colonne vertébrale humaine, environ ?", 33, "vertèbres", "", "sciences"], ["Quelle est la température à la surface du Soleil, environ ?", 5500, "°C", "", "sciences"], ["Quel est l'âge de l'Univers, environ ?", 13.8, "milliards d'années", "", "sciences"], ["En quelle année est sorti le premier livre Harry Potter ?", 1997, "", "a", "loisirs"], ["En quelle année est sorti le tout premier film Star Wars ?", 1977, "", "a", "loisirs"], ["En quelle année Google a-t-il été créé ?", 1998, "", "a", "loisirs"], ["En quelle année YouTube a-t-il été créé ?", 2005, "", "a", "loisirs"], ["En quelle année Facebook a-t-il été créé ?", 2004, "", "a", "loisirs"], ["En quelle année est sortie la version complète de Minecraft ?", 2011, "", "a", "loisirs"], ["En quelle année le mode Battle Royale de Fortnite est-il sorti ?", 2017, "", "a", "loisirs"], ["Combien de Pokémon compte la toute première génération ?", 151, "Pokémon", "", "loisirs"], ["Quelle est la vitesse du son dans l'air, environ ?", 343, "m/s", "", "sciences"], ["Combien de ponts traversent la Seine à Paris, environ ?", 37, "ponts", "", "geo"], ["Combien de fois bat le cœur d'un adulte au repos, en moyenne, par minute ?", 70, "battements", "", "sciences"], ["Combien de pays compte l'Afrique ?", 54, "pays", "", "geo"], ["Quelle est la hauteur du Burj Khalifa, la plus haute tour du monde ?", 828, "m", "", "geo"], ["Combien de neurones compte le cerveau humain, environ ?", 86, "milliards", "", "sciences"], ["Combien d'œufs pond une poule pondeuse par an, environ ?", 300, "œufs", "", "sciences"], ["Jusqu'à quel âge a vécu Jeanne Calment, la doyenne de l'humanité ?", 122, "ans", "", "histoire"], ["Combien de pays le Danube traverse-t-il ?", 10, "pays", "", "geo"], ["Quelle part de la surface de la Terre est couverte d'eau ?", 71, "%", "", "sciences"], ["Quelle part du corps humain est faite d'eau, environ ?", 60, "%", "", "sciences"], ["Combien d'éléments compte le tableau périodique ?", 118, "éléments", "", "sciences"], ["Quel est le numéro atomique de l'or ?", 79, "", "", "sciences"], ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?", 1492, "", "a", "histoire"], ["En quelle année a eu lieu la bataille de Marignan ?", 1515, "", "a", "histoire"], ["En quelle année la Seconde Guerre mondiale s'est-elle terminée ?", 1945, "", "a", "histoire"], ["En quelle année la Première Guerre mondiale a-t-elle commencé ?", 1914, "", "a", "histoire"], ["Quelle est la hauteur d'un panier de basket ?", 305, "cm", "", "loisirs"], ["Quelle est la longueur d'une piscine olympique ?", 50, "m", "", "loisirs"], ["Combien de lettres compte l'alphabet français ?", 26, "lettres", "", "loisirs"], ["Combien de cases compte le plateau du Monopoly ?", 40, "cases", "", "loisirs"], ["Combien de dominos compte un jeu classique ?", 28, "dominos", "", "loisirs"], ["Combien de joueurs s'affrontent au début d'une partie de Fortnite Battle Royale ?", 100, "joueurs", "", "loisirs"], ["Combien de trous compte un parcours de golf classique ?", 18, "trous", "", "loisirs"], ["Quelle distance sépare Paris de Marseille par la route, environ ?", 775, "km", "", "geo"], ["Quelle distance sépare Paris de New York à vol d'oiseau, environ ?", 5840, "km", "", "geo"], ["Combien d'habitants compte la Chine, environ ?", 1.4, "milliard", "", "geo"], ["Quel est le record de vitesse d'un TGV, établi en 2007 ?", 575, "km/h", "", "loisirs"], ["À quelle température l'eau gèle-t-elle, en degrés Fahrenheit ?", 32, "°F", "", "sciences"], ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", 7, "couleurs", "", "sciences"], ["Combien de planètes compte le système solaire ?", 8, "planètes", "", "sciences"], ["Combien de pattes a une araignée ?", 8, "pattes", "", "sciences"], ["Combien de semaines y a-t-il dans une année ?", 52, "semaines", "", "sciences"], ["Combien de cordes a une guitare classique ?", 6, "cordes", "", "loisirs"], ["Quelle est la hauteur du mont Blanc, environ ?", 4807, "m", "", "geo"], ["Combien d'habitants compte la France, environ ?", 68, "millions", "", "geo"], ["Combien d'humains vivent sur Terre, environ ?", 8, "milliards", "", "geo"], ["En quelle année Gutenberg a-t-il mis au point l'imprimerie, environ ?", 1450, "", "a", "histoire"], ["Quelle est la profondeur moyenne des océans, environ ?", 3688, "m", "", "geo"], ["Combien de kilomètres sépare la Terre de Mars au plus près, environ ?", 55, "millions de km", "", "sciences"], ["Quelle est la hauteur d'un filet de volley-ball masculin ?", 243, "cm", "", "loisirs"], ["Quelle est la longueur d'un court de tennis ?", 23.77, "m", "", "loisirs"], ["Combien de petits cubes visibles a un Rubik's Cube classique ?", 26, "cubes", "", "loisirs"], ["Combien d'étoiles y a-t-il sur le drapeau des États-Unis ?", 50, "étoiles", "", "loisirs"], ["En quelle année Charlemagne a-t-il été sacré empereur ?", 800, "", "a", "histoire"], ["En quelle année a eu lieu la bataille d'Hastings ?", 1066, "", "a", "histoire"], ["En quelle année Jeanne d'Arc est-elle morte à Rouen ?", 1431, "", "a", "histoire"], ["En quelle année Napoléon a-t-il été sacré empereur ?", 1804, "", "a", "histoire"], ["En quelle année a eu lieu la bataille de Waterloo ?", 1815, "", "a", "histoire"], ["En quelle année l'esclavage a-t-il été définitivement aboli en France ?", 1848, "", "a", "histoire"], ["En quelle année les États-Unis ont-ils déclaré leur indépendance ?", 1776, "", "a", "histoire"], ["En quelle année le Titanic a-t-il coulé ?", 1912, "", "a", "histoire"], ["En quelle année a eu lieu le débarquement en Normandie ?", 1944, "", "a", "histoire"], ["En quelle année l'URSS a-t-elle disparu ?", 1991, "", "a", "histoire"], ["En quelle année les pièces et billets en euros sont-ils arrivés ?", 2002, "", "a", "histoire"], ["En quelle année Louis XVI a-t-il été guillotiné ?", 1793, "", "a", "histoire"], ["En quelle année a été votée la loi de séparation des Églises et de l'État en France ?", 1905, "", "a", "histoire"], ["En quelle année Youri Gagarine est-il devenu le premier homme dans l'espace ?", 1961, "", "a", "histoire"], ["En quelle année l'Empire romain d'Occident est-il tombé ?", 476, "", "a", "histoire"], ["En quelle année Louis XIV est-il mort ?", 1715, "", "a", "histoire"], ["Combien d'années a duré le règne de Louis XIV ?", 72, "ans", "", "histoire"], ["Combien d'années a réellement duré la guerre de Cent Ans ?", 116, "ans", "", "histoire"], ["En quelle année le président John F. Kennedy a-t-il été assassiné ?", 1963, "", "a", "histoire"], ["En quelle année Nelson Mandela est-il devenu président de l'Afrique du Sud ?", 1994, "", "a", "histoire"], ["Combien d'années Nelson Mandela a-t-il passées en prison ?", 27, "ans", "", "histoire"], ["En quelle année la Ve République a-t-elle été fondée ?", 1958, "", "a", "histoire"], ["En quelle année l'Algérie est-elle devenue indépendante ?", 1962, "", "a", "histoire"], ["En quelle année les frères Lumière ont-ils fait leur première projection publique de cinéma ?", 1895, "", "a", "histoire"], ["En quelle année la tombe de Toutânkhamon a-t-elle été découverte ?", 1922, "", "a", "histoire"], ["En quelle année la ville de Pompéi a-t-elle été ensevelie par le Vésuve ?", 79, "", "a", "histoire"], ["En quelle année la première ligne du métro de Paris a-t-elle ouvert ?", 1900, "", "a", "histoire"], ["En quelle année le Concorde a-t-il fait son dernier vol commercial ?", 2003, "", "a", "histoire"], ["En quelle année a eu lieu la catastrophe nucléaire de Tchernobyl ?", 1986, "", "a", "histoire"], ["En quelle année Marie Curie a-t-elle reçu son premier prix Nobel ?", 1903, "", "a", "histoire"], ["En quelle année Louis Pasteur a-t-il testé son vaccin contre la rage sur un enfant ?", 1885, "", "a", "histoire"], ["Combien de présidents a eu la Ve République, de Charles de Gaulle à Emmanuel Macron compris ?", 8, "présidents", "", "histoire"], ["En quelle année a eu lieu le tout premier Tour de France ?", 1903, "", "a", "histoire"], ["En quelle année ont eu lieu les premiers Jeux olympiques modernes ?", 1896, "", "a", "histoire"], ["Combien de fois Paris a-t-elle accueilli les Jeux olympiques d'été, 2024 compris ?", 3, "fois", "", "histoire"], ["Jusqu'à quel âge Napoléon Bonaparte a-t-il vécu ?", 51, "ans", "", "histoire"], ["En quelle année la Joconde a-t-elle été volée au Louvre ?", 1911, "", "a", "histoire"], ["En quelle année la cathédrale Notre-Dame de Paris a-t-elle brûlé ?", 2019, "", "a", "histoire"], ["Combien de mois a duré la construction de la tour Eiffel, environ ?", 26, "mois", "", "histoire"], ["En quelle année l'école est-elle devenue obligatoire en France (lois Jules Ferry) ?", 1882, "", "a", "histoire"], ["En quelle année est sorti le premier long métrage parlant, « Le Chanteur de jazz » ?", 1927, "", "a", "histoire"], ["En quelle année des alpinistes ont-ils atteint le sommet de l'Everest pour la première fois ?", 1953, "", "a", "histoire"], ["En quelle année Vasco de Gama a-t-il atteint l'Inde par la mer ?", 1498, "", "a", "histoire"], ["En quelle année le traité de Versailles a-t-il été signé ?", 1919, "", "a", "histoire"], ["En quelle année Martin Luther King a-t-il prononcé son discours « I have a dream » ?", 1963, "", "a", "histoire"], ["En quelle année Magellan est-il parti pour le premier tour du monde ?", 1519, "", "a", "histoire"], ["En quelle année Gustave Eiffel est-il né ?", 1832, "", "a", "histoire"], ["Combien de chromosomes possède une cellule humaine ?", 46, "chromosomes", "", "sciences"], ["Combien de minutes met la lumière du Soleil pour arriver sur Terre, environ ?", 8, "minutes", "", "sciences"], ["Combien de lunes tournent autour de Mars ?", 2, "lunes", "", "sciences"], ["Combien de jours terrestres dure une année sur Mars, environ ?", 687, "jours", "", "sciences"], ["Combien de jours terrestres dure une année sur Vénus, environ ?", 225, "jours", "", "sciences"], ["Combien d'os compte une main humaine ?", 27, "os", "", "sciences"], ["Quelle est la température normale du corps humain ?", 37, "°C", "", "sciences"], ["Combien d'yeux a une abeille ?", 5, "yeux", "", "sciences"], ["Combien de pattes a un insecte ?", 6, "pattes", "", "sciences"], ["Combien de dents de lait a un enfant ?", 20, "dents", "", "sciences"], ["Combien de muscles compte le corps humain, environ ?", 600, "muscles", "", "sciences"], ["Quelle vitesse atteint un faucon pèlerin en piqué, environ ?", 390, "km/h", "", "sciences"], ["Combien de mois dure la grossesse d'une éléphante, environ ?", 22, "mois", "", "sciences"], ["Combien pèse un éléphant d'Afrique adulte, environ ?", 6, "tonnes", "", "sciences"], ["Quel est le diamètre de la Lune, environ ?", 3474, "km", "", "sciences"], ["Combien de Terres pourrait-on aligner sur le diamètre du Soleil, environ ?", 109, "Terres", "", "sciences"], ["À quelle altitude tourne la Station spatiale internationale, environ ?", 400, "km", "", "sciences"], ["À quelle vitesse file la Station spatiale internationale, environ ?", 28000, "km/h", "", "sciences"], ["Combien de fois la Station spatiale internationale fait-elle le tour de la Terre en une journée, environ ?", 16, "fois", "", "sciences"], ["À quelle température l'eau bout-elle, en degrés Fahrenheit ?", 212, "°F", "", "sciences"], ["Combien de gènes compte l'ADN humain, environ ?", 20000, "gènes", "", "sciences"], ["Combien d'années vit un chat domestique en moyenne, environ ?", 15, "ans", "", "sciences"], ["Quelle vitesse de pointe a atteint Usain Bolt lors de son record du 100 m, environ ?", 44, "km/h", "", "sciences"], ["Combien de bras a la plupart des étoiles de mer ?", 5, "bras", "", "sciences"], ["Combien pèse un cerveau humain adulte, environ ?", 1.4, "kg", "", "sciences"], ["Quelle surface de peau recouvre le corps d'un adulte, environ ?", 2, "m²", "", "sciences"], ["Combien d'heures par jour dort un koala, environ ?", 20, "heures", "", "sciences"], ["Quelle est la température au cœur du Soleil, environ ?", 15, "millions de °C", "", "sciences"], ["Quelle part de l'air est faite d'oxygène, environ ?", 21, "%", "", "sciences"], ["Quelle part de l'air est faite d'azote, environ ?", 78, "%", "", "sciences"], ["Quel est le numéro atomique du carbone ?", 6, "", "", "sciences"], ["Quel est le numéro atomique du fer ?", 26, "", "", "sciences"], ["Quel est le numéro atomique de l'oxygène ?", 8, "", "", "sciences"], ["Combien de degrés fait la somme des angles d'un triangle ?", 180, "°", "", "sciences"], ["Combien de zéros y a-t-il dans un milliard ?", 9, "zéros", "", "sciences"], ["Quelle est la longueur de l'équateur, environ ?", 40075, "km", "", "sciences"], ["Quelle est la hauteur d'Olympus Mons, le plus haut volcan de Mars, environ ?", 22, "km", "", "sciences"], ["À combien d'années-lumière se trouve Proxima du Centaure, l'étoile la plus proche du Soleil ?", 4.2, "années-lumière", "", "sciences"], ["Combien de jours la Lune met-elle pour faire le tour de la Terre, environ ?", 27, "jours", "", "sciences"], ["Combien de pattes a un crabe ?", 10, "pattes", "", "sciences"], ["Quelle est la longueur du Nil, environ ?", 6650, "km", "", "geo"], ["Quelle est la superficie de la France métropolitaine, environ ?", 550000, "km²", "", "geo"], ["Combien de régions compte la France métropolitaine ?", 13, "régions", "", "geo"], ["Combien de régions compte la France, outre-mer compris ?", 18, "régions", "", "geo"], ["Avec combien de pays la France métropolitaine a-t-elle une frontière terrestre ?", 8, "pays", "", "geo"], ["Quelle est la hauteur du Kilimandjaro, le plus haut sommet d'Afrique ?", 5895, "m", "", "geo"], ["Quelle est la superficie de la Russie, environ ?", 17, "millions de km²", "", "geo"], ["Combien de fuseaux horaires traverse la Russie ?", 11, "fuseaux", "", "geo"], ["Combien d'habitants compte l'agglomération de Tokyo, environ ?", 37, "millions", "", "geo"], ["Combien de pays compte l'Amérique du Sud ?", 12, "pays", "", "geo"], ["Combien de provinces compte le Canada ?", 10, "provinces", "", "geo"], ["Quelle est la longueur de la Grande Muraille de Chine, toutes branches comprises, environ ?", 21000, "km", "", "geo"], ["Quelle est la profondeur du lac Baïkal, le plus profond du monde ?", 1642, "m", "", "geo"], ["Quelle distance sépare Paris de Lyon par la route, environ ?", 465, "km", "", "geo"], ["Quelle distance sépare Paris de Londres à vol d'oiseau, environ ?", 344, "km", "", "geo"], ["Quelle est la hauteur du Salto Ángel, la plus haute chute d'eau du monde, environ ?", 979, "m", "", "geo"], ["Combien d'îles compte l'Indonésie, environ ?", 17000, "îles", "", "geo"], ["Quelle est la superficie du Sahara, environ ?", 9, "millions de km²", "", "geo"], ["Combien d'habitants compte l'Inde, environ ?", 1.4, "milliard", "", "geo"], ["Combien d'arrondissements compte Paris ?", 20, "arrondissements", "", "geo"], ["Combien de départements compte la France métropolitaine ?", 96, "départements", "", "geo"], ["Quelle est la hauteur du puy de Dôme ?", 1465, "m", "", "geo"], ["Quelle est la longueur du Rhône, environ ?", 812, "km", "", "geo"], ["À quelle altitude se trouve le lac Titicaca, environ ?", 3812, "m", "", "geo"], ["Quelle est la hauteur de l'Empire State Building jusqu'au toit, environ ?", 381, "m", "", "geo"], ["Quelle est la hauteur de l'Arc de Triomphe de Paris, environ ?", 50, "m", "", "geo"], ["Quelle est la longueur de l'avenue des Champs-Élysées, environ ?", 1910, "m", "", "geo"], ["Combien d'États compte l'Australie ?", 6, "États", "", "geo"], ["Combien d'habitants compte Marseille, environ ?", 870000, "habitants", "", "geo"], ["Quelle est la hauteur du Mont-Saint-Michel, flèche comprise, environ ?", 92, "m", "", "geo"], ["Quelle est la superficie de Paris intra-muros (bois compris), environ ?", 105, "km²", "", "geo"], ["Combien de joueurs par équipe sont sur le terrain au volley-ball ?", 6, "joueurs", "", "loisirs"], ["Combien de minutes dure un match de rugby (hors prolongations) ?", 80, "minutes", "", "loisirs"], ["Combien de minutes dure un match de basket NBA (hors prolongations) ?", 48, "minutes", "", "loisirs"], ["Combien de points vaut un essai au rugby ?", 5, "points", "", "loisirs"], ["Combien de buts la France a-t-elle marqués en finale de la Coupe du monde 2018 ?", 4, "buts", "", "loisirs"], ["En quelle année la France a-t-elle gagné sa première Coupe du monde de football ?", 1998, "", "a", "loisirs"], ["Combien de Coupes du monde de football le Brésil a-t-il gagnées ?", 5, "Coupes", "", "loisirs"], ["Quelle est la hauteur d'un but de football ?", 2.44, "m", "", "loisirs"], ["Quelle est la largeur d'un but de football ?", 7.32, "m", "", "loisirs"], ["Combien de cartes compte un jeu de belote ?", 32, "cartes", "", "loisirs"], ["Combien de cases compte le plateau du Scrabble ?", 225, "cases", "", "loisirs"], ["Combien de jetons compte un Scrabble en français ?", 102, "jetons", "", "loisirs"], ["Combien de fantômes poursuivent Pac-Man ?", 4, "fantômes", "", "loisirs"], ["En quelle année est sorti Super Mario Bros. sur NES ?", 1985, "", "a", "loisirs"], ["En quelle année est sortie la toute première PlayStation au Japon ?", 1994, "", "a", "loisirs"], ["En quelle année est sortie la Nintendo Switch ?", 2017, "", "a", "loisirs"], ["En quelle année est sorti GTA V ?", 2013, "", "a", "loisirs"], ["En quelle année Roblox est-il sorti ?", 2006, "", "a", "loisirs"], ["En quelle année Wikipédia a-t-il été créé ?", 2001, "", "a", "loisirs"], ["En quelle année Instagram a-t-il été lancé ?", 2010, "", "a", "loisirs"], ["En quelle année Apple a-t-il été fondé ?", 1976, "", "a", "loisirs"], ["En quelle année Microsoft a-t-il été fondé ?", 1975, "", "a", "loisirs"], ["En quelle année Netflix a-t-il été fondé ?", 1997, "", "a", "loisirs"], ["Combien de caractères pouvait contenir un tweet à l'origine ?", 140, "caractères", "", "loisirs"], ["Combien de jeux faut-il gagner, au minimum, pour remporter un set au tennis ?", 6, "jeux", "", "loisirs"], ["Combien de tournois du Grand Chelem y a-t-il chaque année au tennis ?", 4, "tournois", "", "loisirs"], ["Combien d'étapes compte le Tour de France ?", 21, "étapes", "", "loisirs"], ["Combien de kilomètres parcourt le Tour de France, environ ?", 3400, "km", "", "loisirs"], ["Combien de cases compte un damier de dames internationales ?", 100, "cases", "", "loisirs"], ["Combien de pions a chaque joueur au jeu de dames international ?", 20, "pions", "", "loisirs"], ["Combien de lettres compte le mot « anticonstitutionnellement » ?", 25, "lettres", "", "loisirs"], ["Combien de cordes a un violon ?", 4, "cordes", "", "loisirs"], ["Combien de symphonies Beethoven a-t-il composées ?", 9, "symphonies", "", "loisirs"], ["Combien de tomes compte la saga Harry Potter ?", 7, "tomes", "", "loisirs"], ["Combien d'épisodes compte la saga principale Star Wars ?", 9, "épisodes", "", "loisirs"], ["À partir de quel âge peut-on passer le permis de conduire voiture en France ?", 17, "ans", "", "loisirs"], ["Combien de mètres mesure un mile ?", 1609, "m", "", "loisirs"], ["Combien de centimètres mesure un pouce ?", 2.54, "cm", "", "loisirs"], ["Combien de grammes pèse une livre anglaise, environ ?", 454, "g", "", "loisirs"], ["Combien d'heures y a-t-il dans une année non bissextile ?", 8760, "heures", "", "sciences"], ["Combien de pièces (pentagones et hexagones) forment un ballon de football classique ?", 32, "pièces", "", "loisirs"], ["Quel est le score parfait au bowling ?", 300, "points", "", "loisirs"], ["Quel est le record du monde du 100 m d'Usain Bolt ?", 9.58, "secondes", "", "loisirs"], ["Quelle est la hauteur d'une table de ping-pong ?", 76, "cm", "", "loisirs"], ["Combien pèse une balle de tennis, environ ?", 57, "g", "", "loisirs"], ["Combien de boules compte un jeu de billard américain, blanche comprise ?", 16, "boules", "", "loisirs"], ["Combien de cartes compte le jeu Dobble ?", 55, "cartes", "", "loisirs"], ["Combien de symboles y a-t-il sur chaque carte de Dobble ?", 8, "symboles", "", "loisirs"], ["Combien de cases compte le jeu de l'oie ?", 63, "cases", "", "loisirs"], ["Combien de questions faut-il réussir pour gagner le million à « Qui veut gagner des millions ? » ?", 15, "questions", "", "loisirs"], ["Combien de joueurs par équipe sont sur le terrain au football américain ?", 11, "joueurs", "", "loisirs"], ["Combien de joueurs par équipe sont sur le terrain au handball, gardien compris ?", 7, "joueurs", "", "loisirs"], ["Combien de minutes dure un match de handball (hors prolongations) ?", 60, "minutes", "", "loisirs"]];
+/* ---------- Les nouvelles façons de répondre ----------
+   t : "qcm" (4 réponses), "vf" (vrai ou faux), "pm" (plus ou moins qu'une valeur),
+       "ordre" (ranger 4 éléments), "jauge" (curseur), "frise" (année sur une frise), "nombre" (taper un nombre) */
+const QCM = [
+  ["Quelle est la capitale de l'Australie ?", ["Sydney", "Canberra", "Melbourne", "Perth"], 1, "geo", "Sydney est la plus grande ville, mais la capitale est Canberra."],
+  ["Quel est le plus long fleuve de France ?", ["La Seine", "Le Rhône", "La Loire", "La Garonne"], 2, "geo", "La Loire fait environ 1 000 km."],
+  ["Dans quel pays se trouve Marrakech ?", ["Algérie", "Tunisie", "Égypte", "Maroc"], 3, "geo", ""],
+  ["Quelle est la capitale du Canada ?", ["Toronto", "Ottawa", "Montréal", "Vancouver"], 1, "geo", ""],
+  ["Quel est le plus grand océan du monde ?", ["Atlantique", "Indien", "Pacifique", "Arctique"], 2, "geo", ""],
+  ["Quel pays a la forme d'une botte ?", ["Grèce", "Italie", "Espagne", "Portugal"], 1, "geo", ""],
+  ["Quelle est la capitale du Japon ?", ["Kyoto", "Osaka", "Tokyo", "Séoul"], 2, "geo", ""],
+  ["Quel est le plus haut sommet des Alpes ?", ["Le mont Blanc", "Le Cervin", "Le mont Rose", "La Barre des Écrins"], 0, "geo", ""],
+  ["Quelle mer borde Marseille ?", ["La mer du Nord", "La Manche", "La Méditerranée", "La mer Baltique"], 2, "geo", ""],
+  ["Quelle est la capitale de l'Espagne ?", ["Barcelone", "Madrid", "Séville", "Valence"], 1, "geo", ""],
+  ["Qui a été le premier homme à marcher sur la Lune ?", ["Buzz Aldrin", "Youri Gagarine", "Neil Armstrong", "Thomas Pesquet"], 2, "histoire", "C'était le 21 juillet 1969 (heure française)."],
+  ["Qui a peint La Joconde ?", ["Michel-Ange", "Léonard de Vinci", "Raphaël", "Botticelli"], 1, "histoire", ""],
+  ["Quel empereur a fini sa vie exilé sur l'île de Sainte-Hélène ?", ["Napoléon Ier", "Napoléon III", "Charlemagne", "Louis XIV"], 0, "histoire", ""],
+  ["Quel roi était surnommé le Roi-Soleil ?", ["Louis XIV", "Louis XVI", "Henri IV", "François Ier"], 0, "histoire", ""],
+  ["Quelle civilisation a construit les pyramides de Gizeh ?", ["Les Romains", "Les Grecs", "Les Égyptiens", "Les Mayas"], 2, "histoire", ""],
+  ["Qui a été le premier président de la Ve République ?", ["Georges Pompidou", "Charles de Gaulle", "François Mitterrand", "Valéry Giscard d'Estaing"], 1, "histoire", ""],
+  ["Quel paquebot a coulé en 1912 après avoir heurté un iceberg ?", ["Le Titanic", "Le Lusitania", "Le Britannic", "Le Queen Mary"], 0, "histoire", ""],
+  ["Dans quelle ville Jeanne d'Arc a-t-elle été brûlée ?", ["Orléans", "Reims", "Rouen", "Paris"], 2, "histoire", ""],
+  ["Quelle planète est surnommée la planète rouge ?", ["Vénus", "Mars", "Jupiter", "Mercure"], 1, "sciences", ""],
+  ["Quel est le symbole chimique de l'or ?", ["Or", "Au", "Ag", "Go"], 1, "sciences", "Au, du latin aurum. Ag, c'est l'argent."],
+  ["Quel gaz les plantes absorbent-elles pour faire la photosynthèse ?", ["L'oxygène", "L'azote", "Le dioxyde de carbone", "L'hélium"], 2, "sciences", ""],
+  ["Quel est le plus grand organe du corps humain ?", ["Le foie", "La peau", "Le cerveau", "Les poumons"], 1, "sciences", ""],
+  ["Combien de pattes a une araignée ?", ["6", "8", "10", "12"], 1, "sciences", ""],
+  ["Quel est le plus grand animal du monde ?", ["L'éléphant d'Afrique", "La baleine bleue", "La girafe", "Le cachalot"], 1, "sciences", ""],
+  ["Quelle planète est la plus proche du Soleil ?", ["Vénus", "Mercure", "Mars", "La Terre"], 1, "sciences", ""],
+  ["Quel est l'animal terrestre le plus rapide ?", ["Le lion", "Le guépard", "L'antilope", "Le lévrier"], 1, "sciences", ""],
+  ["Combien de couleurs compte-t-on traditionnellement dans un arc-en-ciel ?", ["5", "6", "7", "8"], 2, "sciences", ""],
+  ["Combien de joueurs par équipe sur un terrain de football ?", ["9", "10", "11", "12"], 2, "loisirs", ""],
+  ["Quel pays a gagné la Coupe du monde de football 2018 ?", ["La Croatie", "La France", "Le Brésil", "L'Allemagne"], 1, "loisirs", ""],
+  ["Dans quel jeu vidéo croise-t-on des Creepers ?", ["Fortnite", "Minecraft", "Roblox", "Terraria"], 1, "loisirs", ""],
+  ["Combien de cases compte un échiquier ?", ["36", "49", "64", "81"], 2, "loisirs", ""],
+  ["Combien de joueurs par équipe dans une partie classée de Valorant ?", ["4", "5", "6", "7"], 1, "loisirs", ""],
+  ["Quelle ville a accueilli les Jeux olympiques d'été de 2024 ?", ["Londres", "Paris", "Los Angeles", "Tokyo"], 1, "loisirs", ""],
+  ["Combien de points rapporte un essai au rugby à XV ?", ["3", "4", "5", "7"], 2, "loisirs", ""],
+  ["Quel sport pratiquait Tony Parker ?", ["Le football", "Le tennis", "Le basket", "Le handball"], 2, "loisirs", ""]
+];
+const VF = [
+  ["La pieuvre a trois cœurs.", 1, "sciences", "Deux cœurs pour les branchies, un pour le reste du corps."],
+  ["La Grande Muraille de Chine se voit à l'œil nu depuis la Lune.", 0, "geo", "Elle est bien trop étroite pour ça."],
+  ["Le Soleil est une étoile.", 1, "sciences", ""],
+  ["Pour les botanistes, la tomate est un fruit.", 1, "sciences", "Elle contient des graines, c'est donc un fruit."],
+  ["Les autruches cachent leur tête dans le sable quand elles ont peur.", 0, "sciences", "C'est une légende."],
+  ["La tour Eiffel a été construite pour l'Exposition universelle de 1889.", 1, "histoire", ""],
+  ["Napoléon était très petit pour son époque.", 0, "histoire", "Il mesurait environ 1,69 m, dans la moyenne de l'époque."],
+  ["Le dauphin est un poisson.", 0, "sciences", "C'est un mammifère : il respire de l'air."],
+  ["La chauve-souris est un mammifère.", 1, "sciences", ""],
+  ["Le Sahara est le plus grand désert chaud du monde.", 1, "geo", ""],
+  ["Le Brésil a gagné cinq fois la Coupe du monde de football.", 1, "loisirs", "1958, 1962, 1970, 1994 et 2002."],
+  ["La foudre ne tombe jamais deux fois au même endroit.", 0, "sciences", "Les grands bâtiments sont frappés très souvent."],
+  ["Nous n'utilisons que 10 % de notre cerveau.", 0, "sciences", "C'est un mythe : toutes les zones servent."],
+  ["La Lune produit sa propre lumière.", 0, "sciences", "Elle renvoie la lumière du Soleil."],
+  ["Le français est une langue officielle au Canada.", 1, "geo", "Avec l'anglais."],
+  ["Paris est plus au nord que Londres.", 0, "geo", "Londres est plus au nord."],
+  ["Le cœur humain a quatre cavités.", 1, "sciences", "Deux oreillettes et deux ventricules."],
+  ["Le verre est fabriqué surtout à partir de sable.", 1, "sciences", ""],
+  ["Le premier film Harry Potter est sorti en 2001.", 1, "loisirs", ""],
+  ["Les Vikings portaient des casques à cornes au combat.", 0, "histoire", "C'est une invention du XIXe siècle."],
+  ["Le hérisson est un rongeur.", 0, "sciences", "C'est un insectivore."],
+  ["Le requin est un poisson.", 1, "sciences", ""],
+  ["Christophe Colomb a atteint l'Amérique en 1492.", 1, "histoire", ""],
+  ["Pluton est encore considérée comme une planète.", 0, "sciences", "C'est une planète naine depuis 2006."]
+];
+const PM = [
+  ["La tour Eiffel mesure-t-elle plus ou moins de…", "300 m", 1, "geo", "Environ 330 m avec ses antennes."],
+  ["La Grande Muraille de Chine mesure-t-elle plus ou moins de…", "5 000 km", 1, "geo", "Plus de 20 000 km en comptant toutes ses parties."],
+  ["Un éléphant d'Afrique adulte pèse-t-il plus ou moins de…", "2 tonnes", 1, "sciences", "Un mâle peut dépasser 6 tonnes."],
+  ["La France compte-t-elle plus ou moins de…", "50 millions d'habitants", 1, "geo", "Environ 68 millions."],
+  ["Un cœur humain bat-il en une journée plus ou moins de…", "50 000 fois", 1, "sciences", "Environ 100 000 fois."],
+  ["Le mont Blanc mesure-t-il plus ou moins de…", "5 000 m", 0, "geo", "Environ 4 806 m."],
+  ["Un marathon fait-il plus ou moins de…", "40 km", 1, "loisirs", "42,195 km."],
+  ["La lumière du Soleil met-elle pour nous atteindre plus ou moins de…", "5 minutes", 1, "sciences", "Environ 8 minutes et 20 secondes."],
+  ["Le corps d'un adulte contient-il plus ou moins de…", "3 litres de sang", 1, "sciences", "Environ 5 litres."],
+  ["La Seine mesure-t-elle plus ou moins de…", "1 000 km", 0, "geo", "Environ 777 km."],
+  ["Un match de football (sans les prolongations) dure-t-il plus ou moins de…", "100 minutes", 0, "loisirs", "90 minutes, plus le temps additionnel."],
+  ["Un guépard peut-il courir à plus ou moins de…", "80 km/h", 1, "sciences", "Il dépasse les 100 km/h en pointe."],
+  ["Le Japon compte-t-il plus ou moins de…", "1 000 îles", 1, "geo", "Plus de 14 000 îles."],
+  ["La tour de Pise penche-t-elle de plus ou moins de…", "10 degrés", 0, "geo", "Environ 4 degrés."],
+  ["Une baleine bleue peut-elle mesurer plus ou moins de…", "20 m", 1, "sciences", "Jusqu'à une trentaine de mètres."],
+  ["L'Everest mesure-t-il plus ou moins de…", "8 000 m", 1, "geo", "Environ 8 849 m."],
+  ["La Terre a-t-elle plus ou moins de…", "4 milliards d'années", 1, "sciences", "Environ 4,5 milliards d'années."],
+  ["Un escargot a-t-il plus ou moins de…", "100 dents", 1, "sciences", "Des milliers de minuscules dents sur sa langue."],
+  ["Le Sahara fait-il plus ou moins de…", "5 millions de km²", 1, "geo", "Environ 9 millions de km²."],
+  ["Une année sur Mars dure-t-elle plus ou moins de…", "500 jours terrestres", 1, "sciences", "Environ 687 jours."]
+];
+const ORDRE = [
+  ["Range ces astres du plus petit au plus grand.", ["La Lune", "Mars", "La Terre", "Jupiter"], "Plus petit", "Plus grand", "sciences"],
+  ["Range du plus ancien au plus récent.", ["Les pyramides de Gizeh", "Jules César", "Charlemagne", "La Révolution française"], "Plus ancien", "Plus récent", "histoire"],
+  ["Range ces pays du moins peuplé au plus peuplé.", ["La Belgique", "L'Espagne", "La France", "Les États-Unis"], "Moins peuplé", "Plus peuplé", "geo"],
+  ["Range ces animaux du plus léger au plus lourd.", ["La souris", "Le chat", "Le cheval", "L'éléphant"], "Plus léger", "Plus lourd", "sciences"],
+  ["Range ces inventions de la plus ancienne à la plus récente.", ["L'imprimerie", "Le téléphone", "La télévision", "Internet"], "Plus ancienne", "Plus récente", "histoire"],
+  ["Range ces fleuves du plus court au plus long.", ["La Seine", "La Loire", "Le Danube", "Le Nil"], "Plus court", "Plus long", "geo"],
+  ["Range ces océans du plus petit au plus grand.", ["L'Arctique", "L'Indien", "L'Atlantique", "Le Pacifique"], "Plus petit", "Plus grand", "geo"],
+  ["Range ces sommets du plus bas au plus haut.", ["Le puy de Dôme", "Le mont Ventoux", "Le mont Blanc", "L'Everest"], "Plus bas", "Plus haut", "geo"],
+  ["Range ces consoles de la plus ancienne à la plus récente.", ["La Game Boy", "La PlayStation", "La Wii", "La Nintendo Switch"], "Plus ancienne", "Plus récente", "loisirs"],
+  ["Range ces pays du plus petit au plus grand (superficie).", ["La Belgique", "La France", "Le Brésil", "La Russie"], "Plus petit", "Plus grand", "geo"],
+  ["Range ces planètes de la plus proche à la plus éloignée du Soleil.", ["Mercure", "Vénus", "La Terre", "Mars"], "Plus proche", "Plus loin", "sciences"],
+  ["Range du plus lent au plus rapide (en pointe).", ["L'escargot", "Un sprinteur", "Le cheval", "Le guépard"], "Plus lent", "Plus rapide", "sciences"],
+  ["Range ces jeux vidéo du plus ancien au plus récent.", ["Pac-Man", "Tetris", "Minecraft", "Fortnite"], "Plus ancien", "Plus récent", "loisirs"],
+  ["Range ces présidents du premier au plus récent.", ["Charles de Gaulle", "François Mitterrand", "Jacques Chirac", "Emmanuel Macron"], "Le premier", "Le plus récent", "histoire"]
+];
+const JAUGE = [
+  ["Quel pourcentage de la surface de la Terre est couvert d'eau ?", 71, "%", 0, 100, "sciences"],
+  ["Combien de touches compte un piano classique ?", 88, "touches", 0, 200, "loisirs"],
+  ["À quelle température l'eau bout-elle, en degrés Fahrenheit ?", 212, "°F", 0, 500, "sciences"],
+  ["Combien de dents a un adulte, dents de sagesse comprises ?", 32, "dents", 0, 100, "sciences"],
+  ["Combien d'États composent les États-Unis ?", 50, "États", 0, 200, "geo"],
+  ["Combien de cartes compte un jeu de cartes classique ?", 52, "cartes", 0, 200, "loisirs"],
+  ["Combien de pays font partie de l'Union européenne ?", 27, "pays", 0, 100, "geo"],
+  ["Combien de joueurs au total sur le terrain d'un match de rugby à XV ?", 30, "joueurs", 0, 100, "loisirs"],
+  ["Quel pourcentage du corps d'un adulte est fait d'eau, environ ?", 60, "%", 0, 100, "sciences"],
+  ["Combien la France compte-t-elle de départements, outre-mer compris ?", 101, "départements", 0, 200, "geo"],
+  ["Combien de minutes de jeu dure un match de basket NBA ?", 48, "minutes", 0, 200, "loisirs"],
+  ["Combien de chromosomes contient une cellule humaine ?", 46, "chromosomes", 0, 200, "sciences"]
+];
+const borneFrise = r => r >= 1900 ? [1900, 2025] : r >= 1500 ? [1500, 2025] : r >= 1000 ? [1000, 2025] : [0, 2025];
+const QS = [].concat(
+  QUESTIONS.map(x => x[3] === "a" ? { t: "frise", q: x[0], r: x[1], u: "", cat: x[4], min: borneFrise(x[1])[0], max: borneFrise(x[1])[1] } : { t: "nombre", q: x[0], r: x[1], u: x[2], cat: x[4] }),
+  QCM.map(x => ({ t: "qcm", q: x[0], c: x[1], r: x[2], cat: x[3], ex: x[4] })),
+  VF.map(x => ({ t: "vf", q: x[0], r: x[1], cat: x[2], ex: x[3] })),
+  PM.map(x => ({ t: "pm", q: x[0], ref: x[1], r: x[2], cat: x[3], ex: x[4] })),
+  ORDRE.map(x => ({ t: "ordre", q: x[0], items: x[1], lo: x[2], hi: x[3], cat: x[4] })),
+  JAUGE.map(x => ({ t: "jauge", q: x[0], r: x[1], u: x[2], min: x[3], max: x[4], cat: x[5] }))
+);
+const TYPES = { qcm: "4 RÉPONSES", vf: "VRAI OU FAUX", pm: "PLUS OU MOINS", ordre: "DANS L'ORDRE", jauge: "LA JAUGE", frise: "LA FRISE", nombre: "ESTIMATION" };
+const numerique = q => q.t === "nombre" || q.t === "jauge" || q.t === "frise";
+// Ordre d'affichage des 4 éléments à ranger : mélangé, mais le même sur tous les téléphones.
+function ordreAffiche(q) {
+  let h = 0; for (const ch of q.q) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const idx = [0, 1, 2, 3];
+  for (let i = 3; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  if (idx.every((v, i) => v === i)) idx.reverse();
+  return idx;
+}
+// Une réponse « dans l'ordre » voyage comme un nombre : 2413 = élément 1, puis 3, puis 0, puis 2 (chiffres + 1).
+const codeOrdre = arr => +arr.map(i => i + 1).join("");
+const lireOrdre = v => String(v).split("").map(c => +c - 1);
+const texteReponse = (q, v) => {
+  if (v === undefined) return "pas de réponse";
+  if (q.t === "qcm") return q.c[v] || "?";
+  if (q.t === "vf") return v ? "Vrai" : "Faux";
+  if (q.t === "pm") return v ? "Plus" : "Moins";
+  if (q.t === "ordre") { const o = lireOrdre(v); return o.filter((x, i) => x === i).length + "/4 bien placés"; }
+  return fmt(v) + (q.u && q.t !== "frise" ? " " + q.u : "");
+};
+const bonneReponse = q => q.t === "qcm" ? q.c[q.r] : q.t === "vf" ? (q.r ? "VRAI" : "FAUX") : q.t === "pm" ? (q.r ? "PLUS" : "MOINS") + " de " + q.ref : q.t === "ordre" ? q.items.join(" → ") : fmt(q.r) + (q.u ? " " + q.u : "");
 const NB = [5, 10, 15];
 const nbChoisi = () => +document.querySelector("#nbq input:checked").value;
 $("nbq").innerHTML = NB.map(n => `<label class="jeton"><input type="radio" name="nbq" value="${n}" ${n === 10 ? "checked" : ""}><span>${n}</span></label>`).join("");
@@ -153,7 +407,7 @@ $("cats").innerHTML = Object.keys(CATS).map(k => `<label class="jeton"><input ty
 $("chronos").innerHTML = [0, 20, 40].map(n => `<label class="jeton"><input type="radio" name="chrono" value="${n}" ${n === 0 ? "checked" : ""}><span>${n ? n + " s" : "Aucun"}</span></label>`).join("");
 const catsChoisies = () => [...document.querySelectorAll("#cats input:checked")].map(i => i.value);
 const chronoChoisi = () => +document.querySelector("#chronos input:checked").value;
-const indicesDispo = () => { const c = catsChoisies(); return QUESTIONS.map((x, i) => i).filter(i => c.includes(QUESTIONS[i][4])); };
+const indicesDispo = () => { const c = catsChoisies(); return QS.map((x, i) => i).filter(i => c.includes(QS[i].cat)); };
 function majNbQ() { const n = indicesDispo().length, c = catsChoisies().length; $("nb-q").textContent = (c === 4 ? "tous" : c + " sur 4") + " · " + n + " question" + (n > 1 ? "s" : ""); }
 majNbQ();
 $("nbq").onchange = $("chronos").onchange = () => Lobby.envoyerReglages();
@@ -175,16 +429,18 @@ const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
 
 /* ---------- Points ---------- */
 function pointsPour(q, v) {
-  const r = q[1];
-  if (q[3] === "a") { const d = Math.abs(v - r); return d <= 1 ? 4 : d <= 5 ? 3 : d <= 15 ? 2 : d <= 40 ? 1 : 0; }
+  const r = q.r;
+  if (q.t === "qcm" || q.t === "vf" || q.t === "pm") return v === r ? 3 : 0;
+  if (q.t === "ordre") { const o = lireOrdre(v), b = o.filter((x, i) => x === i).length; return b === 4 ? 4 : b; }
+  if (q.t === "frise") { const d = Math.abs(v - r); return d <= 1 ? 4 : d <= 5 ? 3 : d <= 15 ? 2 : d <= 40 ? 1 : 0; }
   const e = r === 0 ? Math.abs(v) : Math.abs(v - r) / Math.abs(r);
   return e <= 0.02 ? 4 : e <= 0.1 ? 3 : e <= 0.25 ? 2 : e <= 0.5 ? 1 : 0;
 }
 function calculer(q, reps) {
-  const ids = Object.keys(reps), pts = {}, ecart = id => Math.abs(reps[id] - q[1]);
+  const ids = Object.keys(reps), pts = {}, ecart = id => Math.abs(reps[id] - q.r);
   ids.forEach(id => { pts[id] = pointsPour(q, reps[id]); });
   let proches = [];
-  if (ids.length > 1) { const min = Math.min(...ids.map(ecart)); proches = ids.filter(id => ecart(id) === min); proches.forEach(id => { pts[id] += 1; }); }
+  if (ids.length > 1 && numerique(q)) { const min = Math.min(...ids.map(ecart)); proches = ids.filter(id => ecart(id) === min); proches.forEach(id => { pts[id] += 1; }); }
   return { pts, proches };
 }
 
@@ -193,22 +449,21 @@ Lobby.monter({
   jeu: "plus-ou-moins", titre: "PLUS OU MOINS", min: 1, max: 8,
   texteLocal: "Seul, ou en se passant le téléphone.",
   couverture: `<svg viewBox="0 0 220 120" aria-hidden="true" style="max-width:300px">
-      <rect x="10" y="66" width="200" height="34" fill="#111" transform="translate(5 5)"/>
-      <rect x="10" y="66" width="200" height="34" fill="#fff" stroke="#111" stroke-width="4"/>
-      <path d="M30 66v12M50 66v7M70 66v12M90 66v7M110 66v12M130 66v7M150 66v12M170 66v7M190 66v12" stroke="#111" stroke-width="3"/>
-      <path d="M78 62V18l30 11-30 11" fill="#FF2D2D" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M150 62V30l24 9-24 9" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M42 62V38l22 8-22 8" fill="#00C46A" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse cx="110" cy="112" rx="96" ry="6" fill="#000" opacity=".25"/>
+      <rect x="12" y="30" width="44" height="70" rx="10" fill="#E8344E" stroke="#120B1F" stroke-width="4"/><text x="34" y="78" text-anchor="middle" font-family="Titan One,sans-serif" font-size="34" fill="#FFF4E2" stroke="#120B1F" stroke-width="3" paint-order="stroke">A</text>
+      <rect x="64" y="18" width="44" height="82" rx="10" fill="#1F8FE0" stroke="#120B1F" stroke-width="4"/><text x="86" y="72" text-anchor="middle" font-family="Titan One,sans-serif" font-size="34" fill="#FFF4E2" stroke="#120B1F" stroke-width="3" paint-order="stroke">B</text>
+      <rect x="116" y="38" width="44" height="62" rx="10" fill="#3DDC97" stroke="#120B1F" stroke-width="4"/><text x="138" y="82" text-anchor="middle" font-family="Titan One,sans-serif" font-size="34" fill="#FFF4E2" stroke="#120B1F" stroke-width="3" paint-order="stroke">C</text>
+      <rect x="168" y="26" width="44" height="74" rx="10" fill="#FFD23A" stroke="#120B1F" stroke-width="4"/><text x="190" y="76" text-anchor="middle" font-family="Titan One,sans-serif" font-size="34" fill="#120B1F">?</text>
     </svg>
-    <p class="accroche">Combien de marches a la tour Eiffel ? Le plus proche gagne !</p>`,
+    <p class="accroche">Le quiz de culture générale : 7 façons de répondre !</p>`,
   regles: `<ol>
-      <li>Une question tombe, la réponse est un nombre : une année, une distance, une quantité…</li>
-      <li>Chacun donne son estimation en secret.</li>
-      <li>Toutes les réponses apparaissent sur une règle, puis la vraie réponse tombe.</li>
-      <li>Points : 4 si tu es pile-poil (à 2 % près, ou à 1 an près), 3 si tu es très proche, 2 si tu es proche, 1 si tu n'es pas trop loin. +1 pour le plus proche de la manche.</li>
+      <li>Une question de culture générale tombe. Selon la question, on répond d'une façon différente :</li>
+      <li><b>4 réponses</b> : une seule est la bonne. <b>Vrai ou faux</b> : on tape sur le bon buzzer. <b>Plus ou moins</b> : la vraie valeur est-elle au-dessus ou en dessous ?</li>
+      <li><b>Dans l'ordre</b> : touche les 4 éléments dans le bon ordre. <b>La jauge</b> et <b>la frise</b> : glisse le curseur sur le bon nombre ou la bonne année. <b>Estimation</b> : tape ton nombre.</li>
+      <li>Points : 3 pour une bonne réponse à choix. Dans l'ordre : 1 par élément bien placé, 4 si tout est bon. Pour les nombres : jusqu'à 4 selon ta précision, +1 pour le plus proche.</li>
     </ol>
     <h4>Sur un appareil</h4><p class="petit">Joue seul, ou passez-vous le téléphone : chacun répond à son tour sans que les autres voient.</p>
-    <h4>En ligne ou en salon</h4><p class="petit">Chacun répond sur son téléphone. En salon, la télé affiche la question, la règle et le classement.</p>`,
+    <h4>En ligne ou en salon</h4><p class="petit">Chacun répond sur son téléphone. En salon, la télé affiche la question, les choix et le classement.</p>`,
   ecransJeu: ["jeu", "passe", "fin"],
   ordre: ["p-question", "p-reponse", "p-reveal", "p-fin"],
   remise: ["p-question"],
@@ -263,15 +518,19 @@ $("lancer-local").onclick = () => {
 // On ne repioche dans les anciennes que quand il n'en reste plus assez de nouvelles dans les thèmes choisis.
 const Vues = {
   lire() { try { return new Set(JSON.parse(localStorage.getItem("pom-vues") || "[]")); } catch (e) { return new Set(); } },
-  ajouter(q) { const v = [...this.lire()].filter(x => x !== q[0]); v.push(q[0]); try { localStorage.setItem("pom-vues", JSON.stringify(v.slice(-600))); } catch (e) {} },
+  ajouter(q) { const v = [...this.lire()].filter(x => x !== q.q); v.push(q.q); try { localStorage.setItem("pom-vues", JSON.stringify(v.slice(-600))); } catch (e) {} },
   pioche(besoin) {
     const dispo = indicesDispo(), vues = this.lire();
-    let neuves = dispo.filter(i => !vues.has(QUESTIONS[i][0]));
+    let neuves = dispo.filter(i => !vues.has(QS[i].q));
     if (neuves.length < besoin) { // presque tout vu : on oublie les plus anciennes de ces thèmes
-      const ordre = [...vues], age = i => ordre.indexOf(QUESTIONS[i][0]);
-      neuves = neuves.concat(dispo.filter(i => vues.has(QUESTIONS[i][0])).sort((a, b) => age(a) - age(b)).slice(0, Math.max(besoin - neuves.length, Math.floor(dispo.length / 2))));
+      const ordre = [...vues], age = i => ordre.indexOf(QS[i].q);
+      neuves = neuves.concat(dispo.filter(i => vues.has(QS[i].q)).sort((a, b) => age(a) - age(b)).slice(0, Math.max(besoin - neuves.length, Math.floor(dispo.length / 2))));
     }
-    return melange(neuves);
+    // On alterne les façons de répondre : chaque type a sa file, on pioche à tour de rôle.
+    const files = {}; melange(neuves).forEach(i => { (files[QS[i].t] = files[QS[i].t] || []).push(i); });
+    const types = melange(Object.keys(files)), sortie = [];
+    while (types.some(t => files[t].length)) types.forEach(t => { if (files[t].length) sortie.push(files[t].pop()); });
+    return sortie.reverse();
   }
 };
 function nouvellePartie() {
@@ -280,17 +539,17 @@ function nouvellePartie() {
 }
 function poserQuestion() {
   if (!P.pioche.length) P.pioche = Vues.pioche(P.total - P.n);
-  const qi = P.pioche.pop(); Vues.ajouter(QUESTIONS[qi]);
+  const qi = P.pioche.pop(); Vues.ajouter(QS[qi]);
   const m = { t: "p-question", pid: P.pid, n: P.n, total: P.total, qi, joueurs: P.joueurs, scores: P.scores, chrono: P.chrono || 0 };
   if (enLigne()) Salon.envoyer(m, true);
   debutQuestion(m);
 }
 function debutQuestion(m) {
   if (m.n === 0 || m.pid !== P.pid) P.journal = [];
-  P.pid = m.pid; P.n = m.n; P.total = m.total; P.q = QUESTIONS[m.qi]; P.joueurs = m.joueurs; P.scores = Object.assign({}, m.scores); P.reps = {}; P.tour = 0; P.chrono = m.chrono || 0;
+  P.pid = m.pid; P.n = m.n; P.total = m.total; P.q = QS[m.qi]; P.joueurs = m.joueurs; P.scores = Object.assign({}, m.scores); P.reps = {}; P.tour = 0; P.chrono = m.chrono || 0;
   COULS = Avatar.couleurs(P.joueurs);
-  enTete(); $("question").textContent = P.q[0]; $("unite").textContent = P.q[2];
-  ["bloc-regle", "resultat", "bloc-resultats", "suivante", "arreter", "reveler-mnt"].forEach(i => { $(i).style.display = "none"; });
+  enTete(); $("question").textContent = P.q.q; $("q-type").textContent = TYPES[P.q.t]; preparerReponse(P.q);
+  ["bloc-regle", "bloc-choix", "ex-txt", "resultat", "bloc-resultats", "suivante", "arreter", "reveler-mnt"].forEach(i => { $(i).style.display = "none"; });
   alerte("deco");
   if (!enLigne()) { tourLocal(); return; }
   if (jeJoue()) phaseRepondre(); else phaseAttente();
@@ -313,7 +572,7 @@ function enTete() {
 }
 function tourLocal() { // chacun répond à son tour, sans voir les autres
   const j = P.joueurs[P.tour];
-  const suite = () => { phaseRepondre(); $("qui-repond").textContent = P.joueurs.length > 1 ? "À " + j.nom + " de répondre" : ""; ecran("jeu"); setTimeout(() => $("valeur").focus(), 60); lancerChrono(true); };
+  const suite = () => { phaseRepondre(); $("qui-repond").textContent = P.joueurs.length > 1 ? "À " + j.nom + " de répondre" : ""; ecran("jeu"); if (P.q.t === "nombre") setTimeout(() => $("valeur").focus(), 60); lancerChrono(true); };
   if (P.joueurs.length === 1) { suite(); return; }
   $("passe-titre").textContent = "À " + j.nom + " de répondre !";
   $("passe-texte").textContent = "Les autres ne regardent pas l'écran.";
@@ -322,21 +581,31 @@ function tourLocal() { // chacun répond à son tour, sans voir les autres
   ecran("passe");
 }
 function phaseRepondre() {
-  P.phase = "repondre"; $("valeur").value = ""; alerte("err-valeur");
-  $("bloc-reponse").style.display = "flex"; $("attente").style.display = "none";
+  P.phase = "repondre"; $("valeur").value = ""; alerte("err-valeur"); remettreReponse();
+  $("bloc-reponse").style.display = "flex"; $("attente").style.display = "none"; $("q-extra").style.display = "none";
   $("qui-repond").textContent = "";
 }
 function phaseAttente(envoye) {
   P.phase = "attente"; $("bloc-reponse").style.display = "none"; $("attente").style.display = "";
   $("attente").textContent = envoye ? "Réponse envoyée ! On attend les autres…" : Salon.role === "ecran" ? "Tout le monde répond sur son téléphone…" : "Les joueurs répondent…";
   $("qui-repond").textContent = Salon.role === "ecran" ? "Répondez sur vos téléphones !" : "";
+  $("q-extra").style.display = P.q && $("q-extra").innerHTML ? "" : "none";
   majBoutonReveler();
 }
 function valider() {
   if (P.phase !== "repondre") return;
-  const v = lireNombre($("valeur").value);
-  if (!isFinite(v)) { alerte("err-valeur", "Écris un nombre (par exemple 1789 ou 42,5)."); return; }
-  if (Math.abs(v) > 1e15) { alerte("err-valeur", "Ce nombre est trop grand."); return; }
+  let v;
+  if (P.q.t === "nombre") {
+    v = lireNombre($("valeur").value);
+    if (!isFinite(v)) { alerte("err-valeur", "Écris un nombre (par exemple 1789 ou 42,5)."); return; }
+    if (Math.abs(v) > 1e15) { alerte("err-valeur", "Ce nombre est trop grand."); return; }
+  } else if (P.q.t === "jauge" || P.q.t === "frise") v = +$("curseur").value;
+  else if (P.q.t === "ordre") { if (R.ordre.length < 4) { alerte("err-valeur", "Range les 4 éléments d'abord."); return; } v = codeOrdre(R.ordre); }
+  else return;
+  repondre(v);
+}
+function repondre(v) {
+  if (P.phase !== "repondre") return;
   sons.clic();
   if (!enLigne()) {
     P.reps[P.joueurs[P.tour].id] = v; P.tour++;
@@ -349,6 +618,60 @@ function valider() {
 }
 $("valider").onclick = valider;
 $("valeur").addEventListener("keydown", e => { if (e.key === "Enter") valider(); });
+
+
+/* ---------- Les façons de répondre ---------- */
+const R = { ordre: [] };
+const ABCD = ["A", "B", "C", "D"];
+function preparerReponse(q) {
+  $("bloc-reponse").dataset.t = q.t;
+  $("unite").textContent = q.t === "nombre" ? q.u : "";
+  let extra = "";
+  if (q.t === "qcm") extra = q.c.map((c, i) => `<span><b>${ABCD[i]}.</b> ${echapper(c)}</span>`).join("");
+  if (q.t === "pm") extra = `<span>Plus ou moins de <b>${echapper(q.ref)}</b> ?</span>`;
+  if (q.t === "ordre") extra = ordreAffiche(q).map(i => `<span>${echapper(q.items[i])}</span>`).join("");
+  if (q.t === "vf") extra = "<span>Vrai ou faux ?</span>";
+  $("q-extra").innerHTML = extra;
+  if (q.t === "qcm") {
+    $("rep-qcm").innerHTML = q.c.map((c, i) => `<button type="button" class="opt o${i}" data-v="${i}"><i>${ABCD[i]}</i><span>${echapper(c)}</span></button>`).join("");
+    $("rep-qcm").querySelectorAll(".opt").forEach(b => { b.onclick = () => repondre(+b.dataset.v); });
+  }
+  if (q.t === "pm") $("pm-ref").textContent = q.ref;
+  if (q.t === "jauge" || q.t === "frise") {
+    const c = $("curseur"); c.min = q.min; c.max = q.max;
+    $("curseur-min").textContent = q.min; $("curseur-max").textContent = q.max; $("curseur-mil").textContent = "";
+    $("curseur-unite").textContent = q.t === "frise" ? "" : q.u;
+  }
+  if (q.t === "ordre") { $("ordre-lo").textContent = "▲ " + q.lo; $("ordre-hi").textContent = "▼ " + q.hi; }
+}
+function remettreReponse() {
+  const q = P.q; if (!q) return;
+  if (q.t === "jauge" || q.t === "frise") { $("curseur").value = q.min; $("curseur-val").textContent = $("curseur").value; }
+  if (q.t === "ordre") { R.ordre = []; dessinerOrdre(); }
+}
+function dessinerOrdre() {
+  const q = P.q;
+  $("jetons-ordre").innerHTML = ordreAffiche(q).map(i => { const r = R.ordre.indexOf(i); return `<button type="button" class="tok" data-i="${i}" ${r >= 0 ? "disabled" : ""}>${echapper(q.items[i])}${r >= 0 ? `<em>${r + 1}</em>` : ""}</button>`; }).join("");
+  $("jetons-ordre").querySelectorAll(".tok").forEach(b => { b.onclick = () => { if (R.ordre.length < 4) { sons.clic(); R.ordre.push(+b.dataset.i); dessinerOrdre(); } }; });
+  $("cases-ordre").innerHTML = [0, 1, 2, 3].map(k => { const i = R.ordre[k]; return `<div class="case-ordre${i !== undefined ? " pleine" : ""}"><b>${k + 1}</b>${i !== undefined ? echapper(q.items[i]) : "…"}</div>`; }).join("");
+  $("ordre-reset").style.visibility = R.ordre.length ? "" : "hidden";
+}
+$("ordre-reset").onclick = () => { R.ordre = []; dessinerOrdre(); };
+$("curseur").addEventListener("input", () => { $("curseur-val").textContent = $("curseur").value; });
+$("rep-vf").querySelectorAll(".buzz").forEach(b => { b.onclick = () => repondre(+b.dataset.v); });
+$("rep-pm").querySelectorAll(".pm-btn").forEach(b => { b.onclick = () => repondre(+b.dataset.v); });
+// Révélation des questions à choix : chaque réponse possible, avec les avatars de ceux qui l'ont choisie.
+function dessinerChoix(m, revele) {
+  const q = P.q, ids = Object.keys(m.reps);
+  const av = list => list.map(id => Avatar.svg(avDe(id), 30)).join("");
+  let lignes = [];
+  if (q.t === "qcm") lignes = q.c.map((c, i) => ({ lib: ABCD[i] + ". " + c, juste: i === q.r, qui: ids.filter(id => m.reps[id] === i) }));
+  if (q.t === "vf") lignes = [1, 0].map(v => ({ lib: v ? "VRAI" : "FAUX", juste: v === q.r, qui: ids.filter(id => m.reps[id] === v) }));
+  if (q.t === "pm") lignes = [1, 0].map(v => ({ lib: (v ? "PLUS" : "MOINS") + " de " + q.ref, juste: v === q.r, qui: ids.filter(id => m.reps[id] === v) }));
+  if (q.t === "ordre") lignes = q.items.map((it, k) => ({ lib: (k + 1) + ". " + it, juste: true, qui: ids.filter(id => lireOrdre(m.reps[id])[k] === k) }));
+  $("bloc-choix").innerHTML = (q.t === "ordre" && revele ? '<p class="vrai-txt">LE BON ORDRE</p>' : "") + lignes.map(l => `<div class="ligne-choix${revele ? (l.juste ? " juste" : " terne") : ""}">${revele && l.juste ? '<span class="ok">✓</span>' : ""}<span class="lib">${echapper(l.lib)}</span><span class="qui">${q.t === "ordre" && !revele ? "" : av(l.qui)}</span></div>`).join("");
+  if (q.t === "ordre" && !revele) $("bloc-choix").innerHTML = '<p class="vrai-txt">Quel est le bon ordre ?</p>';
+}
 
 /* ---------- En ligne : qui a répondu ---------- */
 const attendus = () => P.joueurs.map(j => j.id).filter(id => Salon.present(id));
@@ -391,15 +714,17 @@ function afficherReveal(m) {
   Object.keys(m.pts).forEach(id => { P.scores[id] = (P.scores[id] || 0) + m.pts[id]; });
   $("bloc-reponse").style.display = "none"; $("attente").style.display = "none"; $("reveler-mnt").style.display = "none";
   $("qui-repond").textContent = ""; enTete(); majStatut();
-  $("bloc-regle").style.display = ""; $("vrai-txt").textContent = ""; $("resultat").style.display = "none";
+  $("q-extra").style.display = "none";
+  const num = numerique(P.q);
+  $("bloc-regle").style.display = num ? "" : "none"; $("bloc-choix").style.display = num ? "none" : ""; $("vrai-txt").textContent = ""; $("resultat").style.display = "none";
   ecran("jeu");
-  dessinerRegle(m);
+  if (num) dessinerRegle(m); else dessinerChoix(m, false);
   sons.tambour();
   const pid = P.pid, n = P.n, garde = () => P.phase === "revele" && P.pid === pid && P.n === n;
   setTimeout(() => {
     if (!garde()) return;
-    $("vrai-txt").textContent = "RÉPONSE : " + fmt(P.q[1]) + (P.q[2] ? " " + P.q[2] : "");
-    rejouerAnim($("vrai-txt"), "pop");
+    if (num) { $("vrai-txt").textContent = "RÉPONSE : " + bonneReponse(P.q); rejouerAnim($("vrai-txt"), "pop"); } else dessinerChoix(m, true);
+    if (P.q.ex) { $("ex-txt").textContent = P.q.ex; $("ex-txt").style.display = ""; }
     // les points : les miens sur mon téléphone, ceux du joueur seul, ou le meilleur sur l'écran du salon
     let mes = null, mot = "";
     if (enLigne() && jeJoue()) mes = m.pts[Salon.id];
@@ -409,9 +734,10 @@ function afficherReveal(m) {
       $("resultat").style.display = "";
       const base = mes - ((m.proches || []).includes(enLigne() ? Salon.id : P.joueurs[0].id) && Object.keys(m.reps).length > 1 ? 1 : 0);
       rouleau($("res-num"), [4, 3, 2, 1, 0], mes, garde, () => {
-        $("res-mot").textContent = mot || (base >= 4 ? "PILE-POIL ! " : base === 3 ? "TOUT PRÈS ! " : base === 2 ? "PAS MAL ! " : base === 1 ? "BOF… " : "À CÔTÉ ! ");
+        const choix = !num && P.q.t !== "ordre";
+        $("res-mot").textContent = mot || (choix ? (base >= 3 ? "BONNE RÉPONSE ! " : "RATÉ ! ") : P.q.t === "ordre" ? (base >= 4 ? "PARFAIT ! " : base >= 2 ? "PRESQUE ! " : "RATÉ ! ") : base >= 4 ? "PILE-POIL ! " : base === 3 ? "TOUT PRÈS ! " : base === 2 ? "PAS MAL ! " : base === 1 ? "BOF… " : "À CÔTÉ ! ");
         rejouerAnim($("resultat-texte"), "pop");
-        (base >= 4 ? sons.bon : base >= 2 ? sons.moyen : sons.rate)();
+        (base >= (choix ? 3 : 4) ? sons.bon : base >= 2 ? sons.moyen : sons.rate)();
         if (enLigne()) compteur($("score"), avant, P.scores[Salon.id] || 0); else enTete();
       });
     } else { (Object.values(m.pts).some(p => p >= 4) ? sons.bon : sons.moyen)(); enTete(); }
@@ -429,7 +755,7 @@ function afficherResultats(m) {
     sw.className = "pastille"; sw.style.background = couleurDe(id);
     t.insertAdjacentHTML("afterbegin", Avatar.svg(avDe(id), 22, ' style="vertical-align:-6px;margin-right:6px"'));
     const v = m.reps[id];
-    t.append(document.createTextNode(nomDe(id) + " : " + (v === undefined ? "pas de réponse" : fmt(v))));
+    t.append(document.createTextNode(nomDe(id) + " : " + texteReponse(P.q, v)));
     if ((m.proches || []).includes(id)) { const e = document.createElement("span"); e.className = "etoile"; e.textContent = " ★ le plus proche"; t.append(e); }
     b.textContent = "+" + (m.pts[id] || 0); li.append(t, b); ul.append(li);
   });
@@ -437,7 +763,7 @@ function afficherResultats(m) {
 }
 // La règle graduée : réponses en drapeaux de couleur, vraie réponse en flèche rouge.
 function dessinerRegle(m) {
-  const ids = Object.keys(m.reps), vrai = P.q[1], vals = ids.map(id => m.reps[id]).concat([vrai]);
+  const ids = Object.keys(m.reps), vrai = P.q.r, vals = ids.map(id => m.reps[id]).concat([vrai]);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const log = lo > 0 && hi / lo > 30, f = log ? Math.log10 : x => x;
   let a = f(lo), b = f(hi);
@@ -453,15 +779,15 @@ function dessinerRegle(m) {
   let ticks = [];
   if (log) { for (let e = Math.ceil(a); e <= Math.floor(b); e++) ticks.push(Math.pow(10, e)); }
   else { const pas0 = Math.pow(10, Math.floor(Math.log10((b - a) / 4))), pas = [1, 2, 5, 10].map(k => k * pas0).find(p => (b - a) / p <= 6); for (let v = Math.ceil(a / pas) * pas; v <= b; v += pas) ticks.push(+v.toFixed(10)); }
-  let s = `<rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#111" transform="translate(4 4)"/><rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" fill="#fff" stroke="#111" stroke-width="3"/>`;
-  ticks.forEach(v => { const px = x(v); if (px < X0 - 4 || px > X1 + 4) return; s += `<path d="M${px.toFixed(1)} ${Y}v10" stroke="#111" stroke-width="2.5"/><text x="${px.toFixed(1)}" y="${Y + 19}" font-size="9" text-anchor="middle" font-family="Comic Neue,sans-serif" font-weight="700">${echapper(court(v))}</text>`; });
+  let s = `<rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" rx="6" fill="#120B1F" transform="translate(0 4)"/><rect x="${X0 - 12}" y="${Y}" width="${X1 - X0 + 24}" height="22" rx="6" fill="#F0B878" stroke="#120B1F" stroke-width="3"/>`;
+  ticks.forEach(v => { const px = x(v); if (px < X0 - 4 || px > X1 + 4) return; s += `<path d="M${px.toFixed(1)} ${Y}v10" stroke="#111" stroke-width="2.5"/><text x="${px.toFixed(1)}" y="${Y + 19}" font-size="9" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900">${echapper(P.q.t === "frise" ? String(v) : court(v))}</text>`; });
   tries.forEach((id, k) => {
     const px = x(m.reps[id]).toFixed(1), py = Y - 16 - rang[id] * 28;
     s += `<g class="marque" style="animation-delay:${(k * 0.12).toFixed(2)}s"><path d="M${px} ${Y}V${py}" stroke="#111" stroke-width="3"/>${Avatar.groupe(avDe(id), +px, py, 26)}</g>`;
   });
   const vx = x(vrai).toFixed(1);
-  s += `<g class="vraie" style="animation-delay:1.05s"><path d="M${vx} ${Y + 24}l-12 22h24z" fill="#FF2D2D" stroke="#111" stroke-width="3" stroke-linejoin="round"/><path d="M${vx} ${Y - 4}V${Y + 26}" stroke="#FF2D2D" stroke-width="4"/></g>`;
-  if (log) s += `<text x="${X1 + 10}" y="${H - 4}" font-size="9" text-anchor="end" font-family="Comic Neue,sans-serif" font-weight="700">échelle ×10</text>`;
+  s += `<g class="vraie" style="animation-delay:1.05s"><path d="M${vx} ${Y + 24}l-12 22h24z" fill="#E8344E" stroke="#120B1F" stroke-width="3" stroke-linejoin="round"/><path d="M${vx} ${Y - 4}V${Y + 26}" stroke="#E8344E" stroke-width="4"/></g>`;
+  if (log) s += `<text x="${X1 + 10}" y="${H - 4}" font-size="9" text-anchor="end" font-family="Nunito,sans-serif" font-weight="900">échelle ×10</text>`;
   $("regle").setAttribute("viewBox", `0 0 360 ${H}`); $("regle").innerHTML = s;
 }
 
@@ -506,22 +832,25 @@ $("changer").onclick = () => { sons.clic(); P.phase = ""; if (enLigne()) Lobby.r
 // Moments forts : la réponse la plus juste, la plus à côté, le plus souvent le plus proche.
 function momentsForts() {
   const tout = [];
-  (P.journal || []).forEach(e => Object.keys(e.reps).forEach(id => {
-    const r = e.q[1], v = e.reps[id], an = e.q[3] === "a";
+  (P.journal || []).filter(e => numerique(e.q)).forEach(e => Object.keys(e.reps).forEach(id => {
+    const r = e.q.r, v = e.reps[id], an = e.q.t === "frise";
     tout.push({ id, e, v, d: an ? Math.abs(v - r) / 40 : (r === 0 ? Math.abs(v) : Math.abs(v - r) / Math.abs(r)) / 0.5 });
   }));
-  const court = t => t.length > 46 ? t.slice(0, 44) + "…" : t, unite = e => e.q[2] ? " " + e.q[2] : "";
+  const court = t => t.length > 46 ? t.slice(0, 44) + "…" : t, unite = e => e.q.u && e.q.t !== "frise" ? " " + e.q.u : "";
   const badges = [];
   if (tout.length) {
     const top = tout.reduce((a, b) => b.d < a.d ? b : a), flop = tout.reduce((a, b) => b.d > a.d ? b : a);
-    badges.push({ titre: "PILE-POIL !", qui: nomDe(top.id), av: avDe(top.id), detail: "« " + court(top.e.q[0]) + " » : " + fmt(top.v) + " au lieu de " + fmt(top.e.q[1]) + unite(top.e) });
-    if (flop !== top) badges.push({ titre: "À LA RAMASSE", qui: nomDe(flop.id), av: avDe(flop.id), detail: "« " + court(flop.e.q[0]) + " » : " + fmt(flop.v) + " au lieu de " + fmt(flop.e.q[1]) + unite(flop.e) });
+    badges.push({ titre: "PILE-POIL !", qui: nomDe(top.id), av: avDe(top.id), detail: "« " + court(top.e.q.q) + " » : " + fmt(top.v) + " au lieu de " + fmt(top.e.q.r) + unite(top.e) });
+    if (flop !== top) badges.push({ titre: "À LA RAMASSE", qui: nomDe(flop.id), av: avDe(flop.id), detail: "« " + court(flop.e.q.q) + " » : " + fmt(flop.v) + " au lieu de " + fmt(flop.e.q.r) + unite(flop.e) });
   }
   if (P.joueurs.length > 1) {
     const c = {}; (P.journal || []).forEach(e => e.proches.forEach(id => { c[id] = (c[id] || 0) + 1; }));
     const ids = Object.keys(c);
     if (ids.length) { const roi = ids.reduce((a, b) => c[b] > c[a] ? b : a); badges.push({ titre: "ROI DE L'ESTIMATION", qui: nomDe(roi), av: avDe(roi), detail: "Le plus proche " + c[roi] + " fois" }); }
   }
+  const justes = {}; (P.journal || []).filter(e => !numerique(e.q)).forEach(e => Object.keys(e.pts).forEach(id => { if (e.pts[id] >= 3) justes[id] = (justes[id] || 0) + 1; }));
+  const jids = Object.keys(justes);
+  if (jids.length) { const cerveau = jids.reduce((a, b) => justes[b] > justes[a] ? b : a); badges.push({ titre: "INCOLLABLE", qui: nomDe(cerveau), av: avDe(cerveau), detail: justes[cerveau] + " bonne" + (justes[cerveau] > 1 ? "s" : "") + " réponse" + (justes[cerveau] > 1 ? "s" : "") + " aux questions à choix" }); }
   dessinerBadges($("badges"), badges); $("titre-badges").style.display = badges.length ? "" : "none";
 }
 
@@ -530,7 +859,7 @@ function recevoir(m) {
   const meme = m.pid === P.pid && m.n === P.n;
   switch (m.t) {
     case "p-question":
-      if (Salon.autorite() || !Array.isArray(m.joueurs) || !QUESTIONS[m.qi]) break;
+      if (Salon.autorite() || !Array.isArray(m.joueurs) || !QS[m.qi]) break;
       if (!m.joueurs.some(j => j.id === Salon.id)) { if (!P.phase || P.phase === "spectateur") { P.phase = "spectateur"; Lobby.spectateur(); } break; }
       if (m.pid > P.pid || (m.pid === P.pid && m.n > P.n) || (m.pid === P.pid && m.n === P.n && (!P.phase || P.phase === "fin" || P.phase === "spectateur"))) { P.mode = "ligne"; sons.clic(); debutQuestion(m); }
       break;

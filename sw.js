@@ -1,5 +1,5 @@
 // Garde le site en mémoire pour qu'il s'ouvre vite (et sans internet pour les parties « sur cet appareil »).
-const CACHE = "boite-a-jeux-v9";
+const CACHE = "boite-a-jeux-v10";
 const FICHIERS = [
   "./", "index.html", "manifest.webmanifest",
   "commun/commun.css?v=5", "commun/commun.js?v=6", "commun/avatars.js?v=3", "commun/ambiance.js?v=2",
