@@ -278,7 +278,7 @@ body.tele .bloc-code{gap:28px}
 #s-reglages label,.options-corps label{font-size:16px}
 body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #s-reglages>#bloc-manches,body.tele #s-reglages>details{max-width:620px;width:100%}
 </style>
-<link rel="stylesheet" href="../commun/theme.css?v=1">
+<link rel="stylesheet" href="../commun/theme.css?v=2">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -590,7 +590,7 @@ body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #
   </div>
 </div>
 
-<script src="../commun/avatars.js?v=3"></script>
+<script src="../commun/avatars.js?v=4"></script>
 <script src="../commun/ambiance.js?v=2"></script>
 <script>
 "use strict";
@@ -685,7 +685,7 @@ const jeDevine = () => !jeDonne();
 const COULEURS = ["#19B5F0", "#9B5CFF", "#00C46A", "#FF4FB0", "#FF8A00", "#FFFFFF"];
 let COULS = {};
 const couleurDe = id => COULS[id] || COULEURS[Math.max(0, P.gj.findIndex(j => j.id === id)) % COULEURS.length];
-const avDe = id => { const j = P.gj.find(x => x.id === id) || S.gens.find(g => g.cle === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
+const avDe = id => { const j = P.gj.find(x => x.id === id) || S.gens.find(g => g.cle === id), c = Avatar.COUL.indexOf(couleurDe(id)); return Avatar.avec(j && j.av, couleurDe(id)); };
 const majCouls = () => { COULS = Avatar.couleurs(P.gj); };
 
 /* ---------- Réglages ---------- */

@@ -136,3 +136,30 @@ html body::before{background-image:radial-gradient(ellipse 60% 42% at 50% 0%,rgb
 html .fond .fond-rayons,html .fond .fond-points{display:none}
 html .fond .fond-dessin{opacity:.07}
 html .fond .fond-confetti{border-color:var(--noir);border-radius:3px}
+
+/* Le vestiaire : créateur d'avatar */
+.vestiaire{display:flex;flex-direction:column;gap:0}
+.vs-scene{position:relative;height:210px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.vs-halo{position:absolute;top:0;left:50%;width:200px;height:200px;margin-left:-100px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.55),rgba(255,255,255,0) 68%)}
+.vs-perso{position:relative;z-index:2;animation:vs-tourne 4s ease-in-out infinite;filter:drop-shadow(0 8px 0 rgba(0,0,0,.3))}
+.vs-perso svg{display:block}
+@keyframes vs-tourne{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-6px)}}
+.vs-socle{position:relative;z-index:1;margin-top:-22px;width:200px;height:40px;border-radius:50%;background:radial-gradient(ellipse at 50% 35%,#F0B878,#C98A4E 70%);border:3.5px solid #120B1F;box-shadow:0 10px 0 #6B3D1C,0 10px 0 3.5px #120B1F,0 22px 22px rgba(0,0,0,.35)}
+.vs-hasard{position:absolute;right:4px;top:8px;z-index:3;width:54px;height:54px;padding:0;border-radius:16px;border:3px solid #120B1F;background:linear-gradient(#9A78FF,#6B3FE0);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 #3E2290,0 5px 0 3px #120B1F;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.vs-hasard svg{width:30px;height:30px}
+.vs-hasard:active{transform:translateY(4px)}
+.vs-onglets{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:22px 0 12px}
+.vs-onglet{font-family:var(--titre);font-size:14px;padding:6px 12px;border:2.5px solid #120B1F;border-radius:999px;background:#2E3566;color:#FFF4E2;cursor:pointer;box-shadow:0 3px 0 #120B1F}
+.vs-onglet[aria-selected="true"]{background:#FFF4E2;color:#120B1F;transform:translateY(-2px);box-shadow:0 5px 0 #120B1F}
+.vs-panneau{position:relative;background:#FFFDF6;border:3px solid #120B1F;border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:12px;box-shadow:0 5px 0 rgba(18,11,31,.25)}
+.vs-grille{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.vs-vignette{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px 5px;background:#fff;color:#120B1F;border:2.5px solid #120B1F;border-radius:14px;box-shadow:0 4px 0 #C9B48A,0 4px 0 2.5px #120B1F;cursor:pointer;font:inherit;transition:transform .1s}
+.vs-vignette span{font-weight:900;font-size:11px;line-height:1.1;text-align:center}
+.vs-vignette[aria-checked="true"]{background:linear-gradient(#FFE57A,#FFC21A);box-shadow:0 4px 0 #B87A00,0 4px 0 2.5px #120B1F}
+.vs-vignette[aria-checked="true"]::after{content:"✓";position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:#3DDC97;border:2.5px solid #120B1F;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
+.vs-vignette:active{transform:translateY(3px)}
+.vs-couleurs{display:flex;flex-wrap:wrap;gap:8px;border-top:3px dashed rgba(18,11,31,.18);padding-top:12px}
+.vs-coul{width:34px;height:34px;padding:0;border-radius:10px;border:3px solid #120B1F;cursor:pointer;box-shadow:0 3px 0 #120B1F}
+.vs-coul[aria-checked="true"]{box-shadow:0 0 0 3px #FFFDF6,0 0 0 6px #120B1F}
+@media (max-width:380px){.vs-onglet{font-family:var(--titre);font-size:14px;padding:6px 12px;border:2.5px solid #120B1F;border-radius:999px;background:#2E3566;color:#FFF4E2;cursor:pointer;box-shadow:0 3px 0 #120B1F}.vs-grille{gap:7px}}
+@media (prefers-reduced-motion:reduce){.vs-perso{animation:none}}

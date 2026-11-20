@@ -1,127 +1,148 @@
 "use strict";
 /* =====================================================================
-   Avatars : 12 personnages de BD en buste, dans une couleur au choix (8 teintes).
+   Avatars à composer soi-même (le « vestiaire ») : peau, coiffure et sa couleur,
+   yeux, bouche, accessoire, tenue et sa couleur, fond.
    Fichier autonome, utilisé par tous les jeux et par l'accueil.
+   Un avatar : { c, p, h, hc, y, b, a, t, f }
+     c = couleur de la tenue (c'est aussi la couleur du joueur dans les parties)
+   Les anciens avatars { c, v } (12 personnages) restent acceptés et sont convertis.
    ===================================================================== */
 const Avatar = (() => {
-  const COUL = ["#19B5F0", "#FF2D2D", "#FFE600", "#00C46A", "#9B5CFF", "#FF8A00", "#FF4FB0", "#C69A6B"];
-  // Personnages de BD en buste : chacun a sa tête, la couleur choisie colore le fond et le haut.
-  const NOMS = ["Le héros", "La rockeuse", "Le punk", "L'intello", "La reine", "Le pirate", "La sportive", "Le ninja", "L'astronaute", "Le sorcier", "Le robot", "Le chat"];
-  const N = "#111";
-  const fonce = (h, k) => "#" + [1, 3, 5].map(i => Math.round(parseInt(h.slice(i, i + 2), 16) * k).toString(16).padStart(2, "0")).join("");
-  // morceaux réutilisés
-  const tete = (peau, extra) => `<ellipse cx="12.2" cy="19.6" rx="2.2" ry="2.5" fill="${peau}" stroke="${N}" stroke-width="1.6"/><ellipse cx="27.8" cy="19.6" rx="2.2" ry="2.5" fill="${peau}" stroke="${N}" stroke-width="1.6"/>` +
-    `<ellipse cx="20" cy="18.5" rx="8" ry="9" fill="${peau}" stroke="${N}" stroke-width="1.8"/>` +
-    `<path d="M20 9.5A8 9 0 0 1 20 27.5A5.6 9 0 0 0 20 9.5z" fill="#000" opacity=".13"/>` + (extra || "");
-  const cou = peau => `<path d="M17.2 23.5h5.6v4.5h-5.6z" fill="${peau}" stroke="${N}" stroke-width="1.6"/>`;
-  const haut = c => `<path d="M7.5 31.5C9 26.6 13.6 25.4 20 25.4S31 26.6 32.5 31.5A17 17 0 0 1 7.5 31.5z" fill="${c}" stroke="${N}" stroke-width="1.8" stroke-linejoin="round"/>`;
-  const col = `<path d="M17 25.6 20 29l3-3.4" fill="none" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/>`;
-  const oeil = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="1.25" ry="1.65" fill="${N}"/><circle cx="${x + .45}" cy="${y - .6}" r=".5" fill="#fff"/>`;
-  const yeux = (y = 19) => oeil(16.6, y) + oeil(23.4, y);
-  const sourire = (c = N) => `<path d="M17 23.2q3 2.6 6 0" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/>`;
-  const joues = `<ellipse cx="14.6" cy="22.4" rx="1.6" ry="1" fill="#FF6F91" opacity=".45"/><ellipse cx="25.4" cy="22.4" rx="1.6" ry="1" fill="#FF6F91" opacity=".45"/>`;
-  const sourcils = (d = "M14.8 15.6q1.8-1 3.4 0M21.8 15.6q1.8-1 3.4 0") => `<path d="${d}" fill="none" stroke="${N}" stroke-width="1.3" stroke-linecap="round"/>`;
-  const PERSOS = [
-    // 0 le héros : mèche brune
-    c => haut(fonce(c, .62)) + col + cou("#F5C9A0") + tete("#F5C9A0") +
-      `<path d="M11.7 17.5C10.6 10.6 14.6 7.6 20.4 7.6S29.6 10.4 28.4 17.5C27.4 14.2 25.6 12.7 23 12.4 21 14.6 16.8 15.2 13.9 14.4 12.9 15.2 12.2 16.2 11.7 17.5z" fill="#5A3A22" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 9.6q3 .2 5.5 2" fill="none" stroke="#8A5E3B" stroke-width="1.1" stroke-linecap="round"/>` +
-      sourcils() + yeux() + sourire() + joues,
-    // 1 la rockeuse : longs cheveux rouges
-    c => `<path d="M10.6 18C9.4 8.8 14.8 6.6 20 6.6S30.6 8.8 29.4 18L31.4 30.6C27.8 31.6 25 30.4 23.6 28.2H16.4C15 30.4 12.2 31.6 8.6 30.6z" fill="#A8172E" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/>` +
-      haut(fonce(c, .62)) + cou("#F2D0B5") + tete("#F2D0B5") +
-      `<path d="M11.8 16.4C11.8 10.2 15.8 8.2 20 8.2S28.2 10.2 28.2 16.4C25.8 13.6 22.6 12.6 19.4 13 17 13.4 14.2 14.6 11.8 16.4z" fill="#A8172E" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 11.4q4-2.4 9 -1.6" fill="none" stroke="#FF6B7D" stroke-width="1.1" stroke-linecap="round"/>` +
-      `<path d="M15 17.4l-1-.8M25 17.4l1-.8" stroke="${N}" stroke-width="1" stroke-linecap="round"/>` + yeux() + `<path d="M17.6 23.2q2.4 1.9 4.8 0" fill="#E0314F" stroke="${N}" stroke-width="1.2" stroke-linejoin="round"/>` + joues,
-    // 2 le punk : crête verte et boucle d'oreille
-    c => haut(fonce(c, .62)) + `<path d="M15 25.8l-1.8 4.6M25 25.8l1.8 4.6" stroke="#C9CED6" stroke-width="1.4"/>` + cou("#E8B48F") + tete("#E8B48F", `<path d="M13.4 13.2q6.6-4 13.2 0" fill="none" stroke="#3A3A3A" stroke-width="2.4" opacity=".35"/>`) +
-      `<path d="M17.2 11.4 15.6 2.6 18.6 6.2 20.2 .8 21.8 6.2 25 2.8 23 11.4z" fill="#2BD45F" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/>` +
-      `<circle cx="12.2" cy="22.6" r="1.1" fill="none" stroke="#FFD23F" stroke-width="1"/>` +
-      sourcils("M14.6 15.2l3.6 1.3M25.4 15.2l-3.6 1.3") + yeux(19.2) + `<path d="M17.4 23.6q2.6 1 5.4-1" fill="none" stroke="${N}" stroke-width="1.5" stroke-linecap="round"/>`,
-    // 3 l'intello : lunettes rondes
-    c => haut(fonce(c, .62)) + col + cou("#8D5A3B") + tete("#8D5A3B") +
-      `<path d="M11.8 16.8C11 9.4 15 7.4 20 7.4S29 9.4 28.2 16.8C27.2 13.6 25.8 12.4 23.6 11.8L14 13.4C12.9 14.4 12.2 15.4 11.8 16.8z" fill="#1E1E1E" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M22.5 8.2 21 12.2" stroke="#4A4A4A" stroke-width="1"/>` +
-      yeux() + `<circle cx="16.6" cy="19" r="3" fill="#fff" fill-opacity=".22" stroke="${N}" stroke-width="1.3"/><circle cx="23.4" cy="19" r="3" fill="#fff" fill-opacity=".22" stroke="${N}" stroke-width="1.3"/><path d="M19.6 18.6h.8M13.6 18.4 11.6 17.8M26.4 18.4l2-.6" stroke="${N}" stroke-width="1.2"/>` + sourire(),
-    // 4 la reine : cheveux blonds et couronne
-    c => `<path d="M11 19C9.6 11 14 7.8 20 7.8S30.4 11 29 19L29.6 26.6C27 27.6 25 27 24 25.4H16C15 27 13 27.6 10.4 26.6z" fill="#F2C14E" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/>` +
-      haut(fonce(c, .62)) + `<circle cx="20" cy="27.6" r="1.3" fill="#FFD23F" stroke="${N}" stroke-width="1"/>` + cou("#F6D3B8") + tete("#F6D3B8") +
-      `<path d="M11.9 17C12 11.4 15.2 9.6 20 9.6S28 11.4 28.1 17C26.6 14 24 12.6 20 12.4 16 12.6 13.4 14 11.9 17z" fill="#F2C14E" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/>` +
-      `<path d="M14.4 10.4 13.6 4.2 17 7 20 2.6 23 7 26.4 4.2 25.6 10.4z" fill="#FFD23F" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="20" cy="7.8" r="1.1" fill="#FF2D2D" stroke="${N}" stroke-width=".8"/>` +
-      `<path d="M14.6 17.6l-1-.7M15.6 17l-.5-.9M25.4 17.6l1-.7M24.4 17l.5-.9" stroke="${N}" stroke-width=".9" stroke-linecap="round"/>` + yeux() + `<path d="M17.8 23.2q2.2 1.7 4.4 0" fill="#E0314F" stroke="${N}" stroke-width="1.2" stroke-linejoin="round"/>` + joues,
-    // 5 le pirate : bandana, cache-œil, barbe
-    c => haut(fonce(c, .62)) + `<path d="M13.4 25.8h13.2" stroke="#fff" stroke-width="1.2" stroke-dasharray="2 1.6"/>` + cou("#C98B62") + tete("#C98B62") +
-      `<path d="M12.6 21.4C13.6 28.4 26.4 28.4 27.4 21.4 24.6 25.4 15.4 25.4 12.6 21.4z" fill="#4A2E1A" stroke="${N}" stroke-width="1.3" stroke-linejoin="round"/>` +
-      `<path d="M11.6 15.8C11.4 9.4 15.4 7.4 20 7.4S28.6 9.4 28.4 15.8z" fill="#E63946" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M28 12.6l4.6-2.2-.6 3.8 2.4 1.8-4.4.4z" fill="#E63946" stroke="${N}" stroke-width="1.3" stroke-linejoin="round"/><circle cx="16" cy="11.6" r=".7" fill="#fff"/><circle cx="20.4" cy="10.2" r=".7" fill="#fff"/><circle cx="24.4" cy="12" r=".7" fill="#fff"/>` +
-      oeil(16.6, 19) + `<path d="M12.4 16.6 27.6 21" stroke="${N}" stroke-width="1"/><ellipse cx="23.6" cy="19.2" rx="2.4" ry="2.2" fill="${N}"/>` +
-      `<path d="M17 23q3 2.4 6 0" fill="#fff" stroke="${N}" stroke-width="1.3" stroke-linejoin="round"/>`,
-    // 6 la sportive : casquette et queue de cheval
-    c => `<path d="M27 13C33.4 12.6 34.6 19.6 31.4 25 30.6 20.6 29.2 17.6 27 16.4z" fill="#1E1E1E" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/>` +
-      haut(fonce(c, .62)) + `<path d="M20 25.4v6" stroke="#fff" stroke-width="1.2"/>` + cou("#6B4128") + tete("#6B4128") +
-      `<path d="M11.6 15.4C11.4 9 15.4 7 20 7S28.6 9 28.4 15.4z" fill="#FFFFFF" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.8 15.4H4.6C5.6 13.2 8 12.8 11.9 12.9z" fill="${fonce(c, .62)}" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="20" cy="7.4" r=".9" fill="${N}"/><path d="M16.4 8.2C15.2 10 14.8 12.4 14.8 15.4M23.6 8.2c1.2 1.8 1.6 4.2 1.6 7.2" fill="none" stroke="${fonce(c, .9)}" stroke-width="1.6"/>` +
-      sourcils("M14.8 16.2q1.8-.6 3.4 0M21.8 16.2q1.8-.6 3.4 0") + yeux(19.2) + `<path d="M17 23q3 2.8 6 0z" fill="#fff" stroke="${N}" stroke-width="1.3" stroke-linejoin="round"/>`,
-    // 7 le ninja : cagoule et bandeau rouge
-    c => haut("#22222E") + `<path d="M16 25.6 20 30l4-4.4" fill="none" stroke="${fonce(c, 1)}" stroke-width="1.5"/>` + cou("#22222E") +
-      `<ellipse cx="20" cy="18.5" rx="8.6" ry="9.6" fill="#22222E" stroke="${N}" stroke-width="1.8"/>` +
-      `<rect x="12.4" y="16.2" width="15.2" height="5.2" rx="2.6" fill="#E8B48F" stroke="${N}" stroke-width="1.2"/>` +
-      `<path d="M11.8 13.2h16.4v2.4H11.8z" fill="#E63946" stroke="${N}" stroke-width="1.2"/><path d="M28 14.4l5.4-1.8-1.6 3.4 2.6 2.4-6-1.6z" fill="#E63946" stroke="${N}" stroke-width="1.2" stroke-linejoin="round"/>` +
-      `<path d="M15 18.2l3.4.8M25 18.2l-3.4.8" stroke="${N}" stroke-width="1.2" stroke-linecap="round"/>` + oeil(16.8, 19.4).replace(/ry="1.65"/, 'ry="1.2"') + oeil(23.2, 19.4).replace(/ry="1.65"/, 'ry="1.2"'),
-    // 8 l'astronaute : casque bulle
-    c => haut("#E9EEF2") + `<rect x="14.6" y="27.4" width="4.6" height="3" rx=".6" fill="${c}" stroke="${N}" stroke-width="1"/><circle cx="24" cy="29" r="1.2" fill="#FF2D2D" stroke="${N}" stroke-width=".8"/>` +
-      cou("#F5C9A0") + tete("#F5C9A0") + `<path d="M12 16C11.6 10.6 15.2 8.6 20 8.6S28.4 10.6 28 16C26.4 13 23 12 20 12.2 17 12 13.6 13 12 16z" fill="#7A4A2A" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/>` +
-      sourcils() + yeux() + `<path d="M17 23q3 2.8 6 0z" fill="#fff" stroke="${N}" stroke-width="1.3" stroke-linejoin="round"/>` + joues +
-      `<circle cx="20" cy="17.6" r="11.4" fill="#9FDCFF" fill-opacity=".28" stroke="${N}" stroke-width="1.8"/><path d="M12.6 12.4a9 9 0 0 1 6-4.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.4" r=".9" fill="#fff"/>` +
-      `<path d="M11 26.6h18v2.6H11z" fill="#C9D3DC" stroke="${N}" stroke-width="1.4"/>`,
-    // 9 le sorcier : chapeau pointu et barbe blanche
-    c => haut(fonce(c, .62)) + `<path d="M12 28.6l1.4.6M27.4 28.4l-1.6.8" stroke="#FFE600" stroke-width="1.2" stroke-linecap="round"/>` + cou("#F5C9A0") + tete("#F5C9A0") +
-      `<path d="M12.4 20.4C11.6 29.6 15.6 33.6 20 34.6 24.4 33.6 28.4 29.6 27.6 20.4 25.2 24 14.8 24 12.4 20.4z" fill="#F4F4F4" stroke="${N}" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 22.4q2-1.4 4 0 2-1.4 4 0-2 1.6-4 .4-2 1.2-4-.4z" fill="#E6E6E6" stroke="${N}" stroke-width="1.1" stroke-linejoin="round"/>` +
-      sourcils("M14.4 16q2-1.4 3.8-.2M21.8 15.8q2-1.2 3.8.2") + yeux(18.6) +
-      `<path d="M14 12.2 21.6 .6C22.6 3 25 7.6 27.6 11.8z" fill="#6C3FD1" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="20" cy="12.6" rx="11.4" ry="2.4" fill="#6C3FD1" stroke="${N}" stroke-width="1.6"/><path d="M21.2 6.4l.6 1.3 1.4.2-1 1 .2 1.4-1.2-.7-1.3.7.3-1.4-1-1 1.4-.2z" fill="#FFE600"/>`,
-    // 10 le robot : tête de métal et yeux lumineux
-    c => haut(fonce(c, .62)) + `<rect x="15" y="27" width="10" height="3.6" rx="1" fill="#C9D3DC" stroke="${N}" stroke-width="1.2"/><circle cx="17.6" cy="28.8" r=".7" fill="#FF2D2D"/><circle cx="20" cy="28.8" r=".7" fill="#00C46A"/>` +
-      `<path d="M17.2 23.5h5.6v4h-5.6z" fill="#8C98A4" stroke="${N}" stroke-width="1.4"/><path d="M20 9V4.6" stroke="${N}" stroke-width="1.5"/><circle cx="20" cy="3.8" r="1.7" fill="#FF2D2D" stroke="${N}" stroke-width="1.2"/>` +
-      `<rect x="9.6" y="15.6" width="3" height="6" rx="1" fill="#8C98A4" stroke="${N}" stroke-width="1.3"/><rect x="27.4" y="15.6" width="3" height="6" rx="1" fill="#8C98A4" stroke="${N}" stroke-width="1.3"/>` +
-      `<rect x="11.6" y="9" width="16.8" height="16" rx="3" fill="#C9D3DC" stroke="${N}" stroke-width="1.8"/><path d="M24.4 9.6h2.4a1.6 1.6 0 0 1 1.6 1.6v12.4a1.6 1.6 0 0 1-1.6 1.6h-2.4z" fill="#000" opacity=".12"/>` +
-      `<rect x="13.6" y="13" width="12.8" height="9" rx="1.6" fill="#1B2430" stroke="${N}" stroke-width="1.2"/><rect x="15.2" y="15.2" width="3.2" height="2.4" rx=".6" fill="#3BE8FF"/><rect x="21.6" y="15.2" width="3.2" height="2.4" rx=".6" fill="#3BE8FF"/><path d="M16.4 19.8h7.2" stroke="#3BE8FF" stroke-width="1.1" stroke-dasharray="1.2 .8"/>` +
-      `<circle cx="13.2" cy="10.6" r=".55" fill="${N}"/><circle cx="26.8" cy="10.6" r=".55" fill="${N}"/>`,
-    // 11 le chat : oreilles, rayures, moustaches
-    c => haut(fonce(c, .62)) + `<path d="M17.4 25.8 20 28.4l2.6-2.6" fill="#FFE600" stroke="${N}" stroke-width="1.2" stroke-linejoin="round"/>` + cou("#F79B3B") +
-      `<path d="M12.4 13.6 11.6 4.6 18 10.2zM27.6 13.6l.8-9-6.4 5.6z" fill="#F79B3B" stroke="${N}" stroke-width="1.6" stroke-linejoin="round"/><path d="M13.4 11.6 13 7.4l3 2.6zM26.6 11.6l.4-4.2-3 2.6z" fill="#FF9FB6"/>` +
-      `<ellipse cx="20" cy="18.6" rx="8.6" ry="8.6" fill="#F79B3B" stroke="${N}" stroke-width="1.8"/><path d="M20 10A8.6 8.6 0 0 1 20 27.2 6 8.6 0 0 0 20 10z" fill="#000" opacity=".12"/>` +
-      `<path d="M18.2 10.4l.6 2.6M20 10v3M21.8 10.4l-.6 2.6" stroke="#B85E12" stroke-width="1.2" stroke-linecap="round"/>` +
-      `<ellipse cx="20" cy="22.6" rx="4.6" ry="3.2" fill="#FFF3E2" stroke="${N}" stroke-width="1.1"/><path d="M18.9 20.6h2.2L20 21.8z" fill="#FF6F91" stroke="${N}" stroke-width=".8" stroke-linejoin="round"/><path d="M20 21.8v1.2M20 23q-1.4 1.4-2.6.4M20 23q1.4 1.4 2.6.4" fill="none" stroke="${N}" stroke-width="1" stroke-linecap="round"/>` +
-      `<path d="M14.6 22.2l-4-.8M14.6 23.6l-4 .6M25.4 22.2l4-.8M25.4 23.6l4 .6" stroke="${N}" stroke-width=".8" stroke-linecap="round"/>` +
-      `<ellipse cx="16.4" cy="18.2" rx="1.6" ry="2" fill="#2E7D32" stroke="${N}" stroke-width="1"/><ellipse cx="23.6" cy="18.2" rx="1.6" ry="2" fill="#2E7D32" stroke="${N}" stroke-width="1"/><ellipse cx="16.4" cy="18.2" rx=".5" ry="1.5" fill="${N}"/><ellipse cx="23.6" cy="18.2" rx=".5" ry="1.5" fill="${N}"/><circle cx="16.9" cy="17.4" r=".45" fill="#fff"/><circle cx="24.1" cy="17.4" r=".45" fill="#fff"/>`
+  const I = "#120B1F";
+  const COUL = ["#E8344E", "#1F8FE0", "#3DDC97", "#FFD23A", "#6B3FE0", "#FF8A3D", "#FF6FB0", "#2A3060"];
+  const COUL_NOMS = ["Rouge", "Bleu", "Vert", "Jaune", "Violet", "Orange", "Rose", "Nuit"];
+  const PEAUX = ["#F9D7B5", "#F1C29A", "#D9A06E", "#B37446", "#8A5431", "#5E3A22"];
+  const PEAUX_NOMS = ["Très claire", "Claire", "Mate", "Hâlée", "Foncée", "Très foncée"];
+  const CH_COUL = ["#2A1B12", "#6B3E22", "#E9B949", "#C2410C", "#F2F2F2", "#6B3FE0", "#3DDC97", "#FF6FB0"];
+  const CH_NOMS = ["Brun foncé", "Châtain", "Blond", "Roux", "Blanc", "Violet", "Vert", "Rose"];
+  const FONDS = ["#5DB8FF", "#FF8A9A", "#8FF5BE", "#FFE57A", "#B39BFF", "#FFB070", "#FFB3D9", "#C7CDE6"];
+  const FONDS_NOMS = ["Bleu", "Rouge", "Vert", "Jaune", "Violet", "Orange", "Rose", "Gris"];
+  const CHEVEUX = ["Court", "Mèche", "Longs", "Crête", "Bouclés", "Chignon", "Queue de cheval", "Chauve"];
+  const YEUX = ["Ronds", "Joyeux", "Grands", "Endormis", "Clin d'œil", "Déterminés"];
+  const BOUCHES = ["Sourire", "Grand rire", "Neutre", "Langue", "Surpris", "En coin"];
+  const ACCS = ["Rien", "Lunettes", "Lunettes de soleil", "Couronne", "Casquette", "Casque audio", "Bandeau", "Cache-œil"];
+  const TENUES = ["T-shirt", "Sweat", "Chemise", "Maillot"];
+  // nombre de choix pour chaque partie
+  const MAX = { c: COUL.length, p: PEAUX.length, h: CHEVEUX.length, hc: CH_COUL.length, y: YEUX.length, b: BOUCHES.length, a: ACCS.length, t: TENUES.length, f: FONDS.length };
+  const CHAMPS = Object.keys(MAX);
+  // les 12 anciens personnages, refaits avec les nouvelles pièces
+  const ANCIENS = [
+    { p: 1, h: 1, hc: 1, y: 0, b: 0, a: 0, t: 0 }, { p: 0, h: 2, hc: 3, y: 2, b: 1, a: 0, t: 1 }, { p: 2, h: 3, hc: 6, y: 5, b: 5, a: 0, t: 0 },
+    { p: 4, h: 0, hc: 0, y: 0, b: 0, a: 1, t: 2 }, { p: 0, h: 2, hc: 2, y: 2, b: 0, a: 3, t: 2 }, { p: 3, h: 0, hc: 0, y: 0, b: 5, a: 7, t: 3 },
+    { p: 5, h: 6, hc: 0, y: 5, b: 1, a: 4, t: 3 }, { p: 2, h: 7, hc: 0, y: 5, b: 2, a: 6, t: 1 }, { p: 1, h: 0, hc: 1, y: 1, b: 1, a: 5, t: 0 },
+    { p: 0, h: 4, hc: 4, y: 3, b: 0, a: 1, t: 1 }, { p: 3, h: 5, hc: 5, y: 4, b: 3, a: 2, t: 0 }, { p: 1, h: 4, hc: 3, y: 1, b: 3, a: 0, t: 1 }
   ];
-  const DETAILS = PERSOS;
-  const valide = av => av && Number.isInteger(av.c) && Number.isInteger(av.v) && av.c >= 0 && av.c < COUL.length && av.v >= 0 && av.v < DETAILS.length;
-  // Dessin dans un carré de 40×40, sans balise <svg> : à glisser dans un autre dessin.
-  function dessin(av) {
-    if (!valide(av)) av = { c: 0, v: 0 };
-    const c = COUL[av.c];
-    // médaillon de couleur, trame de points dans l'angle, reflet, puis le personnage en buste
-    return `<circle cx="20" cy="20" r="17" fill="${c}"/>` +
-      `<g fill="#000" opacity=".14"><circle cx="27" cy="7.5" r=".9"/><circle cx="30.5" cy="10" r=".9"/><circle cx="33" cy="13.6" r=".9"/><circle cx="24" cy="5.6" r=".7"/><circle cx="29.6" cy="5.8" r=".5"/><circle cx="33.4" cy="9.4" r=".5"/><circle cx="34.4" cy="17.6" r=".7"/></g>` +
-      `<path d="M5.6 16.4A15 15 0 0 1 13.4 5.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".55"/>` +
-      `<circle cx="20" cy="20" r="17" fill="none" stroke="#111" stroke-width="2.2"/>` + PERSOS[av.v](c);
+  const entier = (v, n) => Number.isInteger(v) && v >= 0 && v < n;
+  // Rend un avatar complet et sûr, quel que soit ce qu'on reçoit (ancien format, champ manquant…)
+  function normal(av) {
+    if (!av || typeof av !== "object") return null;
+    if (!entier(av.c, MAX.c)) return null;
+    if (av.h === undefined && entier(av.v, ANCIENS.length)) return Object.assign({ c: av.c, f: av.c }, ANCIENS[av.v]);
+    const r = { c: av.c };
+    for (const k of CHAMPS) { if (k === "c") continue; if (!entier(av[k], MAX[k])) return null; r[k] = av[k]; }
+    return r;
   }
-  const svg = (av, taille, extra) => `<svg class="avatar" viewBox="0 0 40 40" width="${taille || 28}" height="${taille || 28}" aria-hidden="true"${extra || ""}>${dessin(av)}</svg>`;
+  const valide = av => !!normal(av);
+
+  /* ---------- Dessin, dans un carré de 100×100 ---------- */
+  const E = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0z`;
+  const P = (d, f, w, st, o) => `<path d="${d}" fill="${f || "none"}" stroke="${st === undefined ? I : st}" stroke-width="${w === undefined ? 2.6 : w}"${o !== undefined ? ` opacity="${o}"` : ""} stroke-linecap="round" stroke-linejoin="round"/>`;
+  const sombre = (h, k) => "#" + [1, 3, 5].map(i => Math.round(parseInt(h.slice(i, i + 2), 16) * k).toString(16).padStart(2, "0")).join("");
+  function corps(a) {
+    const p = PEAUX[a.p], h = CH_COUL[a.hc], t = COUL[a.c]; let s = "";
+    if (a.h === 2) s += P("M26 46C22 22 38 15 50 15S78 22 74 46L78 82C70 86 62 82 60 76H40C38 82 30 86 22 82Z", h);
+    if (a.h === 6) s += P("M68 30C86 30 88 54 79 70C78 58 75 47 68 41Z", h);
+    if (a.t === 1) s += P("M28 84C28 70 39 66 50 66S72 70 72 84Z", sombre(t, .7));
+    s += P("M43 60h14v16h-14z", p);
+    s += P("M12 102C14 82 30 75 50 75S86 82 88 102Z", t);
+    s += P("M50 75C66 75 86 82 88 102H50Z", "#000", 0, "none", .15);
+    if (a.t === 0) s += P("M42 76q8 8 16 0", "none", 2.4);
+    if (a.t === 1) s += P("M45 80v12M55 80v12", "none", 2.4, "#FFF4E2");
+    if (a.t === 2) s += P("M40 75L50 86L45 89L36 79Z", "#FFF4E2", 2.2) + P("M60 75L50 86L55 89L64 79Z", "#FFF4E2", 2.2) + P(E(50, 94, 1.6, 1.6), I, 0, "none");
+    if (a.t === 3) s += P("M42 76q8 8 16 0", "none", 2.4) + P("M22 90h56", "none", 4, "#FFF4E2");
+    s += P(E(28, 46, 4.5, 5.5), p) + P(E(72, 46, 4.5, 5.5), p) + P(E(50, 44, 22, 24), p, 2.8);
+    s += P("M50 20a22 24 0 0 1 0 48a15 24 0 0 0 0-48z", "#000", 0, "none", .12);
+    s += P(E(37, 54, 4, 2.4), "#FF6F91", 0, "none", .45) + P(E(63, 54, 4, 2.4), "#FF6F91", 0, "none", .45);
+    s += a.y === 5 ? P("M35 37l10 3.5M65 37l-10 3.5", "none", 2.8) : P("M36 38q5-3 9 0M55 38q5-3 9 0", "none", 2.2);
+    const rond = x => P(E(x, 46, 3, 4), I, 0, "none") + P(E(x + 1, 44.4, 1.1, 1.1), "#fff", 0, "none");
+    if (a.y === 0 || a.y === 5) s += rond(41) + rond(59);
+    if (a.y === 1) s += P("M37 48q4-6 8 0M55 48q4-6 8 0", "none", 2.8);
+    if (a.y === 2) { [41, 59].forEach(x => { s += P(E(x, 46, 4.6, 5.6), "#fff", 2.2) + P(E(x + .5, 47, 2.6, 3), I, 0, "none") + P(E(x + 1.4, 45.4, 1, 1), "#fff", 0, "none"); }); s += P("M35 41l-2-2M65 41l2-2", "none", 1.8); }
+    if (a.y === 3) s += P("M37 47q4 3 8 0M55 47q4 3 8 0", "none", 2.8);
+    if (a.y === 4) s += rond(41) + P("M55 47q4-5 8 0", "none", 2.8);
+    if (a.b === 0) s += P("M43 56q7 6 14 0", "none", 2.6);
+    if (a.b === 1) s += P("M42 55q8 11 16 0z", "#7A1F2B", 2.4);
+    if (a.b === 2) s += P("M44 58h12", "none", 2.6);
+    if (a.b === 3) s += P("M47 58.5q3 7 6 0", "#FF6F91", 2) + P("M43 56q7 5 14 0", "none", 2.6);
+    if (a.b === 4) s += P(E(50, 58, 3.2, 4), "#7A1F2B", 2.4);
+    if (a.b === 5) s += P("M44 58q8 2 12-4", "none", 2.6);
+    const coiffe = "M28 40C28 24 38 19 50 19S72 24 72 40C66 30 58 27 50 27S34 30 28 40Z";
+    if (a.h === 0) s += P("M28 42C27 24 38 18 50 18S73 24 72 42C69 33 63 29 56 28C50 31 40 32 32 30C30 33 29 37 28 42Z", h);
+    if (a.h === 1) s += P("M27 42C25 22 40 15 54 17C66 18 74 27 73 42C70 34 64 30 56 29C50 36 38 38 27 42Z", h);
+    if (a.h === 2) s += P("M28 40C29 24 39 20 50 20S71 24 72 40C66 32 58 29 50 29S34 32 28 40Z", h);
+    if (a.h === 3) s += P("M31 34q19-12 38 0", "none", 5, h, .4) + P("M44 25L40 5L47 13L50 1L53 13L60 5L56 25Z", h);
+    if (a.h === 4) [[30, 37, 7], [35, 27, 8], [46, 21, 9], [58, 21, 9], [67, 28, 8], [71, 38, 6]].forEach(b => { s += P(E(b[0], b[1], b[2], b[2]), h, 2.2); });
+    if (a.h === 5) s += P(E(50, 13, 9, 8), h) + P(coiffe, h);
+    if (a.h === 6) s += P(coiffe, h);
+    if (a.h === 7) s += P(E(43, 27, 6, 2.6), "#fff", 0, "none", .45);
+    if (a.h !== 7 && a.h !== 4) s += P("M38 24q6-3 13-2", "none", 2, "#fff", .35);
+    if (a.a === 1) s += P(E(41, 46, 7, 7), "#fff", 0, "none", .25) + P(E(59, 46, 7, 7), "#fff", 0, "none", .25) + P(E(41, 46, 7, 7), "none", 2.4) + P(E(59, 46, 7, 7), "none", 2.4) + P("M48 46h4M34 45L28 43M66 45L72 43", "none", 2.2);
+    if (a.a === 2) s += P("M32 41h16v5q0 7-8 7t-8-7z", I, 2) + P("M52 41h16v5q0 7-8 7t-8-7z", I, 2) + P("M48 42h4M32 42L27 40M68 42L73 40", "none", 2.4) + P("M35 44l5-1M55 44l5-1", "none", 1.6, "#fff", .6);
+    if (a.a === 3) s += P("M33 24L31 7L41 15L50 3L59 15L69 7L67 24Z", "#FFD23A", 2.4) + P(E(50, 17, 2.6, 2.6), "#E8344E", 1.6) + P("M36 20h28", "none", 1.6, "#fff", .5);
+    if (a.a === 4) s += P("M27 36C27 19 38 14 50 14S73 19 73 36Z", "#E8344E") + P("M27 36H9C11 30 18 29 28 31Z", "#A2243A") + P(E(50, 14, 2.2, 2.2), "#FFF4E2", 1.6) + P("M36 22q8-5 16-4", "none", 2, "#fff", .4);
+    if (a.a === 5) s += P("M26 44C23 14 77 14 74 44", "none", 6) + P("M26 44C23 14 77 14 74 44", "none", 3, "#2A3060") + P(E(25, 48, 6, 9), "#E8344E", 2.4) + P(E(75, 48, 6, 9), "#E8344E", 2.4);
+    if (a.a === 6) s += P("M27 31h46v8h-46z", "#E8344E", 2.2) + P("M72 32l13-4-3 7 6 4-15-2z", "#E8344E", 2);
+    if (a.a === 7) s += P("M28 37L73 54", "none", 2.2) + P(E(59, 46, 6.4, 6), I, 2);
+    return s;
+  }
+  let nClip = 0;
+  // Médaillon complet en 100×100 : fond, buste découpé dans le cercle, contour.
+  function medaillon(av) {
+    const a = normal(av) || auto(0), id = "avc" + (++nClip);
+    return `<defs><clipPath id="${id}"><circle cx="50" cy="50" r="46"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="${FONDS[a.f]}"/>` +
+      `<path d="M12 40A40 40 0 0 1 34 10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/>` +
+      `<g clip-path="url(#${id})">${corps(a)}</g><circle cx="50" cy="50" r="46" fill="none" stroke="${I}" stroke-width="5"/>`;
+  }
+  // Dessin dans un carré de 40×40, sans balise <svg> : à glisser dans un autre dessin.
+  const dessin = av => `<g transform="scale(.4)">${medaillon(av)}</g>`;
+  const svg = (av, taille, extra) => `<svg class="avatar" viewBox="0 0 100 100" width="${taille || 28}" height="${taille || 28}" aria-hidden="true"${extra || ""}>${medaillon(av)}</svg>`;
   // Dans un dessin SVG : centré en (x, y), de la taille voulue.
-  const groupe = (av, x, y, taille) => { const k = taille / 40; return `<g transform="translate(${(x - taille / 2).toFixed(1)} ${(y - taille / 2).toFixed(1)}) scale(${k.toFixed(3)})">${dessin(av)}</g>`; };
+  const groupe = (av, x, y, taille) => { const k = taille / 100; return `<g transform="translate(${(x - taille / 2).toFixed(1)} ${(y - taille / 2).toFixed(1)}) scale(${k.toFixed(3)})">${medaillon(av)}</g>`; };
+
+  const hasard = () => { const r = {}; CHAMPS.forEach(k => { r[k] = Math.floor(Math.random() * MAX[k]); }); if (r.a > 0 && Math.random() < .35) r.a = 0; return r; };
   function lire() {
-    try { const v = JSON.parse(localStorage.getItem("jeux-avatar") || "null"); if (valide(v)) return v; } catch (e) {}
-    const v = { c: Math.floor(Math.random() * COUL.length), v: Math.floor(Math.random() * DETAILS.length) };
-    ecrire(v); return v;
+    try { const v = normal(JSON.parse(localStorage.getItem("jeux-avatar") || "null")); if (v) return v; } catch (e) {}
+    const v = hasard(); ecrire(v); return v;
   }
   function ecrire(av) { try { localStorage.setItem("jeux-avatar", JSON.stringify(av)); } catch (e) {} }
-  // Choix de l'avatar : une rangée de couleurs et une grille de têtes.
+
+  /* ---------- Le vestiaire : choisir chaque partie de son avatar ---------- */
+  const ONGLETS = [
+    { id: "p", nom: "Peau", noms: PEAUX_NOMS },
+    { id: "h", nom: "Cheveux", noms: CHEVEUX, coul: "hc", couls: CH_COUL, coulNoms: CH_NOMS },
+    { id: "y", nom: "Yeux", noms: YEUX },
+    { id: "b", nom: "Bouche", noms: BOUCHES },
+    { id: "a", nom: "Objet", noms: ACCS },
+    { id: "t", nom: "Tenue", noms: TENUES, coul: "c", couls: COUL, coulNoms: COUL_NOMS },
+    { id: "f", nom: "Fond", noms: FONDS_NOMS }
+  ];
   function choisisseur(el, surChange) {
-    let av = lire(); el.classList.add("avatar-choix");
+    let av = lire(), onglet = "h";
+    el.classList.add("vestiaire");
+    const changer = nv => { av = nv; ecrire(av); dessiner(); surChange && surChange(av); };
     function dessiner() {
-      el.innerHTML = `<div class="av-apercu">${svg(av, 76)}</div>
-        <div class="av-choix">
-          <div class="av-couleurs" role="radiogroup" aria-label="Couleur de ton avatar">${COUL.map((c, i) => `<button type="button" class="av-coul" role="radio" aria-checked="${i === av.c}" aria-label="Couleur ${i + 1}" data-c="${i}" style="background:${c}"></button>`).join("")}</div>
-          <div class="av-tetes" role="radiogroup" aria-label="Tête de ton avatar">${DETAILS.map((_, i) => `<button type="button" class="av-tete" role="radio" aria-checked="${i === av.v}" aria-label="${NOMS[i]}" data-v="${i}">${svg({ c: av.c, v: i }, 40)}</button>`).join("")}</div>
+      const o = ONGLETS.find(x => x.id === onglet);
+      el.innerHTML = `<div class="vs-scene"><div class="vs-halo"></div><div class="vs-perso">${svg(av, 150)}</div><div class="vs-socle"></div>
+          <button type="button" class="vs-hasard" aria-label="Avatar au hasard"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="6" fill="#FFF4E2" stroke="#120B1F" stroke-width="2.5"/><circle cx="9" cy="9" r="2.2" fill="#120B1F"/><circle cx="19" cy="19" r="2.2" fill="#120B1F"/><circle cx="14" cy="14" r="2.2" fill="#120B1F"/><circle cx="19" cy="9" r="2.2" fill="#120B1F"/><circle cx="9" cy="19" r="2.2" fill="#120B1F"/></svg></button></div>
+        <div class="vs-onglets" role="tablist" aria-label="Parties de ton avatar">${ONGLETS.map(x => `<button type="button" role="tab" class="vs-onglet" aria-selected="${x.id === onglet}" data-o="${x.id}">${x.nom}</button>`).join("")}</div>
+        <div class="vs-panneau">
+          <div class="vs-grille" role="radiogroup" aria-label="${o.nom}">${o.noms.map((n, i) => `<button type="button" class="vs-vignette" role="radio" aria-checked="${av[o.id] === i}" aria-label="${n}" data-v="${i}">${svg(Object.assign({}, av, { [o.id]: i }), 56)}<span>${n}</span></button>`).join("")}</div>
+          ${o.coul ? `<div class="vs-couleurs" role="radiogroup" aria-label="Couleur">${o.couls.map((c, i) => `<button type="button" class="vs-coul" role="radio" aria-checked="${av[o.coul] === i}" aria-label="${o.coulNoms[i]}" data-c="${i}" style="background:${c}"></button>`).join("")}</div>` : ""}
         </div>`;
-      el.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { av = { c: +b.dataset.c, v: av.v }; ecrire(av); dessiner(); surChange && surChange(av); });
-      el.querySelectorAll("[data-v]").forEach(b => b.onclick = () => { av = { c: av.c, v: +b.dataset.v }; ecrire(av); dessiner(); surChange && surChange(av); });
+      el.querySelectorAll("[data-o]").forEach(b => b.onclick = () => { onglet = b.dataset.o; dessiner(); if (typeof sons !== "undefined" && sons.clic) sons.clic(); });
+      el.querySelectorAll("[data-v]").forEach(b => b.onclick = () => changer(Object.assign({}, av, { [o.id]: +b.dataset.v })));
+      el.querySelectorAll("[data-c]").forEach(b => b.onclick = () => changer(Object.assign({}, av, { [o.coul]: +b.dataset.c })));
+      el.querySelector(".vs-hasard").onclick = () => changer(hasard());
     }
     dessiner();
     return () => av;
@@ -130,13 +151,18 @@ const Avatar = (() => {
   function couleurs(joueurs) {
     const prises = new Set(), res = {};
     joueurs.forEach(j => {
-      let c = valide(j.av) ? COUL[j.av.c] : null;
+      const a = normal(j.av); let c = a ? COUL[a.c] : null;
       if (!c || prises.has(c)) c = COUL.find(x => !prises.has(x)) || "#fff";
       prises.add(c); res[j.id] = c;
     });
     return res;
   }
   // Avatar automatique pour les joueurs du mode local (tous différents).
-  const auto = k => ({ c: k % COUL.length, v: (k * 5) % DETAILS.length });
-  return { COUL, valide, dessin, svg, groupe, lire, ecrire, choisisseur, couleurs, auto, n: DETAILS.length };
+  function auto(k) {
+    const b = ANCIENS[(k * 5) % ANCIENS.length];
+    return Object.assign({ c: k % COUL.length, f: (k + 3) % FONDS.length }, b);
+  }
+  // Avatar d'un joueur, avec la couleur qu'il a dans la partie (pour que tout le monde soit différent).
+  const avec = (av, couleur) => { const a = normal(av) || auto(0), i = COUL.indexOf(couleur); return i < 0 ? a : Object.assign({}, a, { c: i }); };
+  return { COUL, valide, normal, dessin, svg, groupe, lire, ecrire, choisisseur, couleurs, auto, avec, n: ANCIENS.length };
 })();

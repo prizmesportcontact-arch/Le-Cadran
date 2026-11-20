@@ -71,7 +71,7 @@ body.tele .pion{transform:scale(1.3)}
 @media (prefers-reduced-motion:reduce){.pion .corps svg,.pion .sol{animation:none}.carte-mot{transition:none}}
 
 </style>
-<link rel="stylesheet" href="../commun/theme.css?v=1">
+<link rel="stylesheet" href="../commun/theme.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -229,7 +229,7 @@ body.tele .pion{transform:scale(1.3)}
   </section>
 </div>
 
-<script src="../commun/avatars.js?v=3"></script>
+<script src="../commun/avatars.js?v=4"></script>
 <script src="../commun/ambiance.js?v=2"></script>
 <script src="../commun/commun.js?v=6"></script>
 <script>
@@ -271,7 +271,7 @@ const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
 const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
 let COULS = {};
 const couleurDe = id => COULS[id] || "#fff";
-const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
+const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return Avatar.avec(j && j.av, couleurDe(id)); };
 const avTxt = (id, t) => Avatar.svg(avDe(id), t || 22, ' style="vertical-align:-6px;margin-right:6px"');
 const nbIndices = () => P.tours * P.ordre.length;
 const parleur = () => P.ordre[P.indices.length % P.ordre.length];

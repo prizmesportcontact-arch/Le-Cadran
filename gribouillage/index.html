@@ -62,7 +62,7 @@ body.tele .toile-boite{width:fit-content;max-width:100%;margin:0 auto}
 body.tele #toile{width:auto;height:calc(100vh - 290px);min-height:300px;max-width:100%}
 body.tele #role{display:none}
 </style>
-<link rel="stylesheet" href="../commun/theme.css?v=1">
+<link rel="stylesheet" href="../commun/theme.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -165,7 +165,7 @@ body.tele #role{display:none}
   </section>
 </div>
 
-<script src="../commun/avatars.js?v=3"></script>
+<script src="../commun/avatars.js?v=4"></script>
 <script src="../commun/ambiance.js?v=2"></script>
 <script src="../commun/commun.js?v=6"></script>
 <script>
@@ -189,7 +189,7 @@ const jeJoue = () => !enLigne() || P.joueurs.some(j => j.id === Salon.id);
 const jeDessine = () => !enLigne() || P.dess === Salon.id;
 let COULS = {};
 const couleurDe = id => COULS[id] || "#fff";
-const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return { c: c < 0 ? 0 : c, v: j && Avatar.valide(j.av) ? j.av.v : 0 }; };
+const avDe = id => { const j = P.joueurs.find(x => x.id === id), c = Avatar.COUL.indexOf(couleurDe(id)); return Avatar.avec(j && j.av, couleurDe(id)); };
 const nomDe = id => (P.joueurs.find(j => j.id === id) || { nom: "?" }).nom;
 const devineurs = () => P.joueurs.map(j => j.id).filter(id => id !== P.dess && (!enLigne() || Salon.present(id)));
 
