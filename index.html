@@ -129,6 +129,15 @@
         <span class="planche"></span>
         <span class="infos"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>2 à 8 joueurs</span>
       </a>
+      <a class="boite" href="bluff/" aria-label="Le Bluff, 3 à 8 joueurs">
+        <span class="scene"><span class="cube">
+          <span class="f-top" style="background:#FFC08A"></span>
+          <span class="f-cote" style="background:linear-gradient(#D9692A,#A84C18)"><i></i></span>
+          <span class="f-face" style="background:linear-gradient(160deg,#FFB070,#FF8A3D 55%,#E0701F)"><i>BOÎTE À JEUX</i><svg viewBox="0 0 120 70" aria-hidden="true"><rect x="10" y="14" width="34" height="46" rx="6" fill="#FFF4E2" stroke="#120B1F" stroke-width="3" transform="rotate(-10 27 37)"/><rect x="76" y="14" width="34" height="46" rx="6" fill="#FFF4E2" stroke="#120B1F" stroke-width="3" transform="rotate(10 93 37)"/><rect x="43" y="8" width="34" height="52" rx="6" fill="#6B3FE0" stroke="#120B1F" stroke-width="3"/><path d="M51 28q9-6 18 0" fill="none" stroke="#FFF4E2" stroke-width="3" stroke-linecap="round"/><path d="M52 44q8 5 16-1" fill="none" stroke="#FFF4E2" stroke-width="3" stroke-linecap="round"/><text x="27" y="44" text-anchor="middle" font-family="Titan One,sans-serif" font-size="18" fill="#E8344E" transform="rotate(-10 27 37)">?</text><text x="93" y="44" text-anchor="middle" font-family="Titan One,sans-serif" font-size="18" fill="#1F8FE0" transform="rotate(10 93 37)">!</text></svg><b>LE BLUFF</b></span>
+        </span></span>
+        <span class="planche"></span>
+        <span class="infos"><svg class="ico" aria-hidden="true"><use href="#i-gens"/></svg>3 à 8 joueurs</span>
+      </a>
     </div>
 
     <h2>3 façons de jouer</h2>
@@ -156,7 +165,7 @@
 </div>
 <script src="commun/avatars.js?v=4"></script>
 <script src="commun/ambiance.js?v=2"></script>
-<script src="commun/commun.js?v=6"></script>
+<script src="commun/commun.js?v=7"></script>
 <script>
 "use strict";
 brancherEntete();
@@ -169,7 +178,8 @@ const JEUX = [
   { id: "cadran", nom: "Le Cadran", min: 2, max: 6, ico: "jaune", ph: "Un indice, une aiguille." },
   { id: "imposteur", nom: "L'Imposteur", min: 3, max: 8, ico: "rouge", ph: "Tous le même mot, sauf un." },
   { id: "plus-ou-moins", nom: "Plus ou moins", min: 1, max: 8, ico: "jaune", ph: "Le quiz de culture générale." },
-  { id: "gribouillage", nom: "Le Gribouillage", min: 2, max: 8, ico: "rouge", ph: "L'un dessine, les autres devinent." }
+  { id: "gribouillage", nom: "Le Gribouillage", min: 2, max: 8, ico: "rouge", ph: "L'un dessine, les autres devinent." },
+  { id: "bluff", nom: "Le Bluff", min: 3, max: 8, ico: "jaune", ph: "Invente une fausse réponse crédible." }
 ];
 Salon.ordre = []; Salon.remise = [];
 const chef = () => Salon.autorite();

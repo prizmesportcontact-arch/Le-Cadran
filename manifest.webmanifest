@@ -1,7 +1,7 @@
 {
   "name": "La Boîte à jeux",
   "short_name": "Boîte à jeux",
-  "description": "Le Cadran, L'Imposteur et Plus ou moins : à jouer entre amis et en famille.",
+  "description": "Le Cadran, L'Imposteur, Plus ou moins, Le Gribouillage et Le Bluff : à jouer entre amis et en famille.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

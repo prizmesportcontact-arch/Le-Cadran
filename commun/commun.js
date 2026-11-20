@@ -252,7 +252,7 @@ const SUPA_URL = "wss://cbbnrdfvaaikawszaysu.supabase.co/realtime/v1";
 const SUPA_CLE = "sb_publishable_rfB8KSptjcdTpp8QxvST9A_UlpQ8rW0";
 const LETTRES = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const nouveauCode = () => Array.from({ length: 4 }, () => LETTRES[Math.floor(Math.random() * LETTRES.length)]).join("");
-const NOMS_JEUX = { cadran: "Le Cadran", imposteur: "L'Imposteur", "plus-ou-moins": "Plus ou moins", gribouillage: "Le Gribouillage" };
+const NOMS_JEUX = { cadran: "Le Cadran", imposteur: "L'Imposteur", "plus-ou-moins": "Plus ou moins", gribouillage: "Le Gribouillage", bluff: "Le Bluff" };
 
 const Salon = {
   client: null, canal: null, code: "", nom: "", role: "", jeu: "", max: 8, t: 0,
