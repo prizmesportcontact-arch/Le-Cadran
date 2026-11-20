@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Cadran</title>
 <meta name="description" content="Un jeu à deux : l'un donne un indice, l'autre place l'aiguille sur le cadran. En ligne ou sur un seul appareil.">
-<meta name="theme-color" content="#19B5F0">
+<meta name="theme-color" content="#1A2140">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M4 50a28 28 0 0 1 56 0z' fill='%23FFE600' stroke='%23111' stroke-width='5'/%3E%3Cpath d='M32 50 44 22' stroke='%23111' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='50' r='6' fill='%23FF2D2D' stroke='%23111' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icones/icone-180.png">
@@ -278,6 +278,7 @@ body.tele .bloc-code{gap:28px}
 #s-reglages label,.options-corps label{font-size:16px}
 body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #s-reglages>#bloc-manches,body.tele #s-reglages>details{max-width:620px;width:100%}
 </style>
+<link rel="stylesheet" href="../commun/theme.css?v=1">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -450,36 +451,59 @@ body.tele #s-reglages>#bloc-format,body.tele #s-reglages>#bloc-tours,body.tele #
     <p class="bandeau alerte" id="deco" role="alert" style="display:none"></p>
     <p class="bandeau" id="role" aria-live="polite"></p>
     <div class="case poste">
-      <svg id="cadran" viewBox="-12 -8 372 232" role="img" aria-label="Cadran">
+      <svg id="cadran" viewBox="-30 -12 400 262" role="img" aria-label="Cadran">
         <defs>
-          <pattern id="trame" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.5" fill="#19B5F0" opacity=".4"/></pattern>
-          <pattern id="trame-volet" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2" fill="#111" opacity=".22"/></pattern>
+          <filter id="grain" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.25  0 0 0 0 0.15  0 0 0 0 0.08  0 0 0 0.3 0" result="t"/><feComposite in="t" in2="SourceGraphic" operator="in" result="g"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="g"/></feMerge></filter>
+          <filter id="bois" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.25" numOctaves="3" seed="4" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.30  0 0 0 0 0.15  0 0 0 0 0.05  0 0 0 0.9 -0.2" result="t"/><feComposite in="t" in2="SourceGraphic" operator="in" result="g"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="g"/></feMerge></filter>
+          <linearGradient id="g-bois-face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D99A5B"/><stop offset="1" stop-color="#9A5A28"/></linearGradient>
+          <linearGradient id="g-bois-haut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0B878"/><stop offset="1" stop-color="#D3914F"/></linearGradient>
+          <linearGradient id="g-tranche" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C42A42"/><stop offset="1" stop-color="#7A0F20"/></linearGradient>
+          <linearGradient id="g-rebord" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF6C80"/><stop offset="1" stop-color="#D42640"/></linearGradient>
+          <radialGradient id="g-face" cx="0.5" cy="1" r="1"><stop offset="0" stop-color="#FFFDF6"/><stop offset="0.75" stop-color="#FBEFD6"/><stop offset="1" stop-color="#E9D3A8"/></radialGradient>
+          <pattern id="rayures" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="16" height="16" fill="#6B48E8"/><rect width="8" height="16" fill="#5A38D0"/></pattern>
+          <radialGradient id="g-ombre-volet" cx="0.5" cy="1" r="1"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1A0B4A" stop-opacity="0.45"/></radialGradient>
+          <linearGradient id="g-aig" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8ACDFF"/><stop offset="0.5" stop-color="#2F8FE8"/><stop offset="1" stop-color="#1557A8"/></linearGradient>
+          <radialGradient id="g-moyeu" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#FFFBE0"/><stop offset="0.3" stop-color="#FFD23A"/><stop offset="0.8" stop-color="#D98A00"/><stop offset="1" stop-color="#9A5A00"/></radialGradient>
+          <radialGradient id="g-rivet" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF6C8"/><stop offset="0.5" stop-color="#FFC21A"/><stop offset="1" stop-color="#A86A00"/></radialGradient>
           <clipPath id="c-face"><path d="M24,175 A146,146 0 0 1 316,175 Z"/></clipPath>
         </defs>
-        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111" transform="translate(8 8)"/>
-        <path d="M-2,175 A172,172 0 0 1 342,175 L342,198 Q342,208 332,208 L8,208 Q-2,208 -2,198 Z" fill="#111"/>
-        <path d="M6,175 A164,164 0 0 1 334,175 Z" fill="#FFE600"/>
-        <g id="grad" stroke="#111" stroke-linecap="round"></g>
-        <path d="M18,175 A152,152 0 0 1 322,175 Z" fill="#111"/>
-        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#fff"/>
-        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame)"/>
+        <ellipse cx="170" cy="240" rx="196" ry="10" fill="#000" opacity=".4"/>
+        <path d="M-16 200 L356 200 Q362 200 364 206 L366 212 L-26 212 L-24 206 Q-22 200 -16 200 Z" fill="url(#g-bois-haut)" stroke="#120B1F" stroke-width="4" stroke-linejoin="round" filter="url(#bois)"/>
+        <rect x="-26" y="212" width="392" height="24" rx="6" fill="url(#g-bois-face)" stroke="#120B1F" stroke-width="4" filter="url(#bois)"/>
+        <rect x="-20" y="217" width="34" height="14" rx="4" fill="#2F8FE8" stroke="#120B1F" stroke-width="2.5"/>
+        <rect x="326" y="217" width="34" height="14" rx="4" fill="#E8344E" stroke="#120B1F" stroke-width="2.5"/>
+        <path d="M-2,175 A172,172 0 0 1 342,175 L342,196 Q342,206 332,206 L8,206 Q-2,206 -2,196 Z" fill="url(#g-tranche)" stroke="#120B1F" stroke-width="4" stroke-linejoin="round" filter="url(#grain)"/>
+        <path d="M6,175 A164,164 0 0 1 334,175 Z" fill="url(#g-rebord)" stroke="#120B1F" stroke-width="4" filter="url(#grain)"/>
+        <path d="M14 168 A156 156 0 0 1 104 34" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+        <g id="grad" stroke="#8A6A3A" stroke-linecap="round"></g>
+        <path d="M18,175 A152,152 0 0 1 322,175 Z" fill="#120B1F"/>
+        <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#g-face)" filter="url(#grain)"/>
         <g clip-path="url(#c-face)">
           <g id="cible"></g>
           <g id="volet">
-            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="#FF2D2D"/>
-            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#trame-volet)"/>
-            <text x="170" y="132" font-family="Bangers,Impact,sans-serif" font-size="96" text-anchor="middle" fill="#FFE600" stroke="#111" stroke-width="5" paint-order="stroke" stroke-linejoin="round">?</text>
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#rayures)"/>
+            <path d="M24,175 A146,146 0 0 1 316,175 Z" fill="url(#g-ombre-volet)"/>
+            <path d="M40 166 A130 130 0 0 1 110 58" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".35"/>
+            <rect x="148" y="34" width="44" height="14" rx="7" fill="#FFD23A" stroke="#120B1F" stroke-width="3.5"/>
+            <text x="173" y="137" font-family="'Titan One',sans-serif" font-size="78" text-anchor="middle" fill="#120B1F">?</text>
+            <text x="170" y="132" font-family="'Titan One',sans-serif" font-size="78" text-anchor="middle" fill="#FFF4E2" stroke="#120B1F" stroke-width="4" paint-order="stroke" stroke-linejoin="round">?</text>
           </g>
         </g>
-        <rect x="6" y="178" width="328" height="22" fill="#FFE600"/>
-        <circle cx="20" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="320" cy="189" r="5" fill="#fff" stroke="#111" stroke-width="3"/>
+        <rect x="6" y="178" width="328" height="20" rx="5" fill="#FFD23A" stroke="#120B1F" stroke-width="3"/>
+        <path d="M14 182 L326 182" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+        <circle cx="20" cy="188" r="5.5" fill="url(#g-rivet)" stroke="#120B1F" stroke-width="2.5"/><circle cx="320" cy="188" r="5.5" fill="url(#g-rivet)" stroke="#120B1F" stroke-width="2.5"/>
+        <circle cx="170" cy="15" r="5.5" fill="url(#g-rivet)" stroke="#120B1F" stroke-width="2.5"/><circle cx="54" cy="63" r="5.5" fill="url(#g-rivet)" stroke="#120B1F" stroke-width="2.5"/><circle cx="286" cy="63" r="5.5" fill="url(#g-rivet)" stroke="#120B1F" stroke-width="2.5"/>
         <g id="aig-autres"></g>
         <g id="aiguille">
-          <polygon points="164,175 176,175 173.5,56 181,56 170,31 159,56 166.5,56" fill="#19B5F0" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M168 180 L169 59 L161 62 L174 34 L187 62 L179 59 L180 180 Z" fill="#000" opacity=".22"/>
+          <path d="M164 175 L165.5 56 L157 59 L170 30 L183 59 L174.5 56 L176 175 Z" fill="url(#g-aig)" stroke="#120B1F" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M167.5 168 L168.3 60" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
         </g>
-        <circle cx="170" cy="175" r="23" fill="#111"/>
-        <circle cx="170" cy="175" r="12" fill="#FF2D2D"/>
-        <circle cx="165" cy="170" r="4" fill="#fff"/>
+        <circle cx="172.5" cy="178.5" r="24" fill="#000" opacity=".25"/>
+        <circle cx="170" cy="175" r="24" fill="url(#g-moyeu)" stroke="#120B1F" stroke-width="4"/>
+        <circle cx="170" cy="175" r="10" fill="#C77800" stroke="#120B1F" stroke-width="3"/>
+        <line x1="164" y1="181" x2="176" y2="169" stroke="#120B1F" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="160" cy="164" rx="7" ry="4" fill="#fff" opacity=".75" transform="rotate(-30 160 164)"/>
       </svg>
       <div class="carte"><span id="gauche"></span><span id="droite"></span></div>
     </div>
@@ -800,11 +824,11 @@ const pt = (a, r) => [170 - r * Math.cos(a * Math.PI / 180), 175 - r * Math.sin(
 $("grad").innerHTML = Array.from({ length: 35 }, (_, i) => { const a = 5 + i * 5, g = a % 15 === 0, [x1, y1] = pt(a, 154), [x2, y2] = pt(a, g ? 163 : 159); return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${g ? 3.5 : 2}"/>`; }).join("");
 function dessinerCible(t) {
   if (t === null) { $("cible").innerHTML = ""; return; }
-  const zones = [[-20, -12, "#FFE600", 2, "#111"], [-12, -4, "#FF8A00", 3, "#111"], [-4, 4, "#FF2D2D", 4, "#fff"], [4, 12, "#FF8A00", 3, "#111"], [12, 20, "#FFE600", 2, "#111"]];
+  const zones = [[-20, -12, "#FFD23A", 2, "#120B1F"], [-12, -4, "#FF8A3D", 3, "#120B1F"], [-4, 4, "#E8344E", 4, "#FFF4E2"], [4, 12, "#FF8A3D", 3, "#120B1F"], [12, 20, "#FFD23A", 2, "#120B1F"]];
   $("cible").innerHTML = zones.map(([d1, d2, coul, pts, enc]) => {
     const [x1, y1] = pt(t + d1, 150), [x2, y2] = pt(t + d2, 150), [tx, ty] = pt(t + (d1 + d2) / 2, 122);
-    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}" stroke="#111" stroke-width="3" stroke-linejoin="round"/>` +
-      `<text x="${tx.toFixed(1)}" y="${(ty + 5).toFixed(1)}" font-family="Bangers,Impact,sans-serif" font-size="16" text-anchor="middle" fill="${enc}">${pts}</text>`;
+    return `<path d="M170,175 L${x1.toFixed(1)},${y1.toFixed(1)} A150,150 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${coul}" stroke="#120B1F" stroke-width="3" stroke-linejoin="round"/>` +
+      `<text x="${tx.toFixed(1)}" y="${(ty + 5).toFixed(1)}" font-family="'Titan One',sans-serif" font-size="16" text-anchor="middle" fill="${enc}">${pts}</text>`;
   }).join("");
 }
 function volet(ouvert, vite) {
